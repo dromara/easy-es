@@ -1,41 +1,52 @@
-# [Easy-Es](https://www.yuque.com/laohan-14b9d/foyrfa/naw1ie)
----
-![Easy-Es-Logo](http://wmb830.bvimg.com/13869/cee1aea7ab269a00.png)
----
+<p align="center">
+  <a href="https://github.com/xpc1024/easy-es">
+   <img alt="East-Es-Logo" src="https://camo.githubusercontent.com/961415f83545b4d502da50314cfcfb879ece8cd5298f538a5960b8a3d23d6b0a/687474703a2f2f776d623833302e6276696d672e636f6d2f31333836392f636565316165613761623236396130302e706e67">
+  </a>
+</p>
 
-## Easy-Es是什么?
----
+<p align="center">
+  为简化开发工作、提高生产效率而生
+</p>
 
-Easy-Es是一款简化ElasticSearch(后面简称为Es)搜索引擎操作的开源框架,可以更好的帮助开发者减轻开发负担.
+<p align="center">
+  <a href="https://search.maven.org/search?q=g:com.baomidou%20a:mybatis-*">
+    <img alt="maven" src="https://img.shields.io/maven-central/v/com.baomidou/mybatis-plus.svg?style=flat-square">
+  </a>
 
-## 优势
----
+  <a href="https://www.apache.org/licenses/LICENSE-2.0">
+    <img alt="code style" src="https://img.shields.io/badge/license-Apache%202-4EB1BA.svg?style=flat-square">
+  </a>
+</p>
 
- **屏蔽语言差异：**开发者只需要会MySQL语法即可使用Es
-+ **低码:** 与直接使用RestHighLevelClient相比,相同的查询平均可以节省2-3倍左右的代码量
-+ **零魔法值:**字段名称直接从实体中获取,无需输入字段名称字符串这种魔法值
-+ **零额外学习成本：**开发者只要会国内最受欢迎的Mybatis-Plus语法,即可无缝迁移至Easy-Es
-+ **降低开发者门槛:** 即便是只了解ES基础的初学者也可以轻松驾驭ES完成绝大多数需求的开发
-+ **...**
+# 简介 | Intro
 
-## 完整文档
----
-[Easy-Es开发者文档](https://www.yuque.com/laohan-14b9d/foyrfa/qelho0)
+Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,简化`CRUD`操作,可以更好的帮助开发者减轻开发负担
 
-## 对比
----
+底层采用Es官方提供的RestHighLevelClient,保证其原生性能及拓展性
+
+技术讨论 QQ 群 ： 待定
+
+# 优点 | Advantages
+
+- **屏蔽语言差异:**开发者只需要会MySQL语法即可使用Es
+
+- **低码:**与直接使用RestHighLevelClient相比,相同的查询平均可以节省2-3倍左右的代码量
+- **零魔法值:**字段名称直接从实体中获取,无需输入字段名称字符串这种魔法值
+- **零额外学习成本:**开发者只要会国内最受欢迎的Mybatis-Plus语法,即可无缝迁移至Easy-Es
+- **降低开发者门槛:** 即便是只了解ES基础的初学者也可以轻松驾驭ES完成绝大多数需求的开发
+- **...**
+
+## 对比 | Compare
 > 需求:查询出文档标题为 "中国功夫"且作者为"老汉"的所有文档
-
-```
+```java
 // 使用Easy-Es仅需3行代码即可完成查询
 LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
 wrapper.eq(Document::getTitle, "中国功夫").eq(Document::getCreator, "老汉");
 List<Document> documents = documentMapper.selectList(wrapper);
-		
 ```
 
-```
-// 传统方式, 直接用RestHighLevelClient进行查询 需要11行代码,还不包含解析代码
+```java
+// 传统方式, 直接用RestHighLevelClient进行查询 需要11行代码,还不包含解析JSON代码
 String indexName = "document";
 SearchRequest searchRequest = new SearchRequest(indexName);
 BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
@@ -54,33 +65,42 @@ try {
     }
 ```
 
-## 快速开始
----
-+ 添加Easy-Es依赖
+## 相关链接 | Links
 
-```
-        <dependency>
-            <groupId>com.github.xpc1024</groupId>
-            <artifactId>easy-es-boot-stater</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-```
-+ 编写Mapper继承父类BaseEsMapper接口
+- [文档](https://www.yuque.com/laohan-14b9d/foyrfa/naw1ie)
+- [功能示例](samples)
+- [展示](ee-use)
 
-```
-public interface DocumentMapper extends BaseEsMapper<Document> {
-}
+# Latest Version: [![Maven Central](https://img.shields.io/maven-central/v/com.baomidou/mybatis-plus.svg)](https://search.maven.org/search?q=g:com.baomidou%20a:mybatis-*)
 
-```
-+ 使用
-> 以下语句将会查询出文档标题为"xxx"的所有文档,相当于MySQL中的:
-select * from document where title = "xxx";
-```
-        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.eq(Document::getTitle,"xxx");
-        List<Document> documents = documentMapper.selectList(wrapper);
+``` xml
+<dependency>
+    <groupId>com.github.xpc1024</groupId>
+    <artifactId>easy-es</artifactId>
+    <version>Latest Version</version>
+</dependency>
 ```
 
-## 协议
----
-Easy-Es采用 [Apache 2.0 license](http://www.apache.org/licenses/LICENSE-2.0)开源协议
+# 其他开源项目 | Other Project
+
+- [健身计划一键生成系统]()
+
+# 期望 | Futures
+
+> 欢迎提出更好的意见，帮助完善 Easy-Es
+
+# 版权 | License
+
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+
+# 捐赠 | Donate
+
+> [捐赠记录,感谢你们的支持！]()
+
+![捐赠 mybatis-plus]()
+
+# 关注我 | About Me
+
+![CSDN博客]()
+
+QQ | 微信:252645816
