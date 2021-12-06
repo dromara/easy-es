@@ -83,7 +83,7 @@ try {
 
 # 其他开源项目 | Other Project
 
-- [健身计划一键生成系统]()
+- [健身计划一键生成系统](https://github.com/xpc1024/plan-all)
 
 # 期望 | Futures
 
@@ -95,12 +95,12 @@ try {
 
 # 捐赠 | Donate
 
-> [捐赠记录,感谢你们的支持！]()
+> [捐赠记录,感谢你们的支持！](https://www.yuque.com/laohan-14b9d/foyrfa/ipxxr2)
 
-![捐赠 Easy-Es]()
+![捐赠 Easy-Es](https://www.yuque.com/laohan-14b9d/foyrfa/wn1iha)
 
 # 关注我 | About Me
 
-![CSDN博客]()
+![CSDN博客](https://blog.csdn.net/lovexiaotaozi?spm=3001.5343)
 
 QQ | 微信:252645816
