@@ -95,7 +95,7 @@ try {
 
 # 捐赠 | Donate
 
-> [捐赠记录,感谢你们的支持！](https://www.yuque.com/laohan-14b9d/foyrfa/ipxxr2)
+[捐赠记录,感谢你们的支持！](https://www.yuque.com/laohan-14b9d/foyrfa/ipxxr2)
 
 [捐赠 Easy-Es](https://www.yuque.com/laohan-14b9d/foyrfa/wn1iha)
 
