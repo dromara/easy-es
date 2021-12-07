@@ -12,12 +12,6 @@ import java.util.List;
 
 /**
  * 更新Lambda表达式
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 更新Lambda表达式 封装更新相关参数
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -36,6 +30,7 @@ public class LambdaEsUpdateWrapper<T> extends AbstractLambdaUpdateWrapper<T, Lam
 
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
+     * @param entity 实体
      */
     public LambdaEsUpdateWrapper(T entity) {
         super.initNeed();

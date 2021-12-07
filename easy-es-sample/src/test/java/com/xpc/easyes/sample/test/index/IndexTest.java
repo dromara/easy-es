@@ -15,12 +15,6 @@ import javax.annotation.Resource;
 
 /**
  * 索引测试
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 索引测试
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

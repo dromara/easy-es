@@ -2,12 +2,6 @@ package com.xpc.easyes.core.enums;
 
 /**
  * 聚合枚举
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 聚合方式
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

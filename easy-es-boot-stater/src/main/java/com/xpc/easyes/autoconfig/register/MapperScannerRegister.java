@@ -17,12 +17,6 @@ import java.util.stream.Collectors;
 
 /**
  * 注册bean
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 将自定义注解指定路径下的接口扫描并注册
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

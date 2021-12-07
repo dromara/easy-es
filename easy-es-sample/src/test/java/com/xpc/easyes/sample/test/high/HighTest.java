@@ -18,12 +18,6 @@ import java.util.Objects;
 
 /**
  * 高阶语法测试
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 高阶语法测试
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

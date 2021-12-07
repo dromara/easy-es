@@ -13,12 +13,6 @@ import java.util.List;
 
 /**
  * es实体字段信息
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 存放es实体字段信息
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -49,7 +43,7 @@ public class EntityFieldInfo {
      */
     private String keyColumn;
     /**
-     * 字段策略【 默认，自判断 null 】
+     * 字段策略 默认，自判断 null
      */
     private final FieldStrategy fieldStrategy;
     /**
@@ -78,6 +72,11 @@ public class EntityFieldInfo {
 
     /**
      * 存在 TableField 注解时, 使用的构造函数
+     *
+     * @param dbConfig   索引配置
+     * @param field      字段
+     * @param column     字段名
+     * @param tableField 字段注解
      */
     public EntityFieldInfo(GlobalConfig.DbConfig dbConfig, Field field,
                            String column, TableField tableField) {
@@ -96,6 +95,9 @@ public class EntityFieldInfo {
 
     /**
      * 不存在 TableField 注解时, 使用的构造函数
+     *
+     * @param dbConfig 索引配置
+     * @param field    字段
      */
     public EntityFieldInfo(GlobalConfig.DbConfig dbConfig, Field field) {
         this.fieldStrategy = dbConfig.getFieldStrategy();

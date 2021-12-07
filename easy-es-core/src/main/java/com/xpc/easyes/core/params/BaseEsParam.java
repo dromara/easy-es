@@ -9,12 +9,6 @@ import java.util.List;
 
 /**
  * 核心 基本参数
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 基本参数都在此维护
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -133,8 +127,7 @@ public class BaseEsParam {
 
     /**
      * 重置查询条件 主要用于处理or查询条件
-     *
-     * @param baseEsParam
+     * @param baseEsParam 基础参数
      */
     public static void setUp(BaseEsParam baseEsParam) {
         // 获取原查询条件

@@ -8,12 +8,6 @@ import java.util.List;
 
 /**
  * 分页参数 来源:https://github.com/pagehelper/Mybatis-PageHelper
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 保持和github最受欢迎的PageHelper插件一样的参数 确保用户使用及切换零额外成本
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -34,9 +28,6 @@ public class PageInfo<T> extends PageSerializable<T> {
     private int size;
 
     /**
-     * 由于startRow和endRow不常用，这里说个具体的用法
-     * 可以在页面中"显示startRow到endRow 共size条数据"
-     * <p>
      * 当前页面第一个元素在数据库中的行号
      */
     private int startRow;
@@ -93,8 +84,7 @@ public class PageInfo<T> extends PageSerializable<T> {
 
     /**
      * 包装Page对象
-     *
-     * @param list
+     * @param list 数据
      */
     public PageInfo(List<T> list) {
         this(list, 8);
@@ -102,9 +92,8 @@ public class PageInfo<T> extends PageSerializable<T> {
 
     /**
      * 包装Page对象
-     *
-     * @param list          page结果
-     * @param navigatePages 页码数量
+     * @param list 数据
+     * @param navigatePages 导航页
      */
     public PageInfo(List<T> list, int navigatePages) {
         super(list);

@@ -29,12 +29,6 @@ import static com.xpc.easyes.core.enums.BaseEsParamTypeEnum.*;
 
 /**
  * 核心 wrpeer处理类
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 核心 wrpeer处理
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -46,8 +40,8 @@ public class WrapperProcessor {
     /**
      * 构建es查询入参
      *
-     * @param wrapper
-     * @return
+     * @param wrapper 条件
+     * @return ES查询参数
      */
     public static SearchSourceBuilder buildSearchSourceBuilder(LambdaEsQueryWrapper<?> wrapper) {
         // 初始化boolQueryBuilder 参数
@@ -65,7 +59,8 @@ public class WrapperProcessor {
     /**
      * 初始化BoolQueryBuilder
      *
-     * @return
+     * @param baseEsParamList 基础参数列表
+     * @return BoolQueryBuilder
      */
     public static BoolQueryBuilder initBoolQueryBuilder(List<BaseEsParam> baseEsParamList) {
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
@@ -120,8 +115,8 @@ public class WrapperProcessor {
     /**
      * 初始化SearchSourceBuilder
      *
-     * @param wrapper
-     * @return
+     * @param wrapper 条件
+     * @return SearchSourceBuilder
      */
     private static SearchSourceBuilder initSearchSourceBuilder(LambdaEsQueryWrapper<?> wrapper) {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -167,8 +162,8 @@ public class WrapperProcessor {
     /**
      * 设置聚合参数
      *
-     * @param aggregationParamList
-     * @param searchSourceBuilder
+     * @param aggregationParamList 聚合参数列表
+     * @param searchSourceBuilder  es searchSourceBuilder
      */
     private static void initAggregations(List<AggregationParam> aggregationParamList, SearchSourceBuilder searchSourceBuilder) {
         aggregationParamList.forEach(aggregationParam -> {
@@ -204,8 +199,8 @@ public class WrapperProcessor {
     /**
      * 添加进参数容器
      *
-     * @param baseEsParam
-     * @param boolQueryBuilder
+     * @param baseEsParam      基础参数
+     * @param boolQueryBuilder es boolQueryBuilder
      */
     private static void addQuery(BaseEsParam baseEsParam, BoolQueryBuilder boolQueryBuilder) {
         baseEsParam.getMustList().forEach(fieldValueModel ->
@@ -245,8 +240,9 @@ public class WrapperProcessor {
     /**
      * 查询字段中是否包含id
      *
-     * @param idField
-     * @return
+     * @param idField 字段
+     * @param wrapper 条件
+     * @return 是否包含的布尔值
      */
     public static boolean includeId(String idField, LambdaEsQueryWrapper<?> wrapper) {
         if (ArrayUtils.isEmpty(wrapper.include) && ArrayUtils.isEmpty(wrapper.exclude)) {

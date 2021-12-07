@@ -33,12 +33,6 @@ import static com.xpc.easyes.core.constants.BaseEsConstants.DEFAULT_SCHEMA;
 
 /**
  * es自动配置
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 配置RestHighLevelClient
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

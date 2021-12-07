@@ -24,12 +24,6 @@ import java.util.List;
 
 /**
  * 对比测试
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 对比直接使用Es官方RestHighLevelClient和使用EasyEs代码量差距
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

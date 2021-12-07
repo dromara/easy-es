@@ -16,12 +16,6 @@ import static com.xpc.easyes.core.constants.BaseEsConstants.*;
 
 /**
  * 基本缓存
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 缓存一些反射信息
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -38,7 +32,8 @@ public class BaseCache {
     /**
      * 初始化缓存
      *
-     * @param mapperInterface
+     * @param mapperInterface mapper接口
+     * @param client          es客户端
      */
     public static void initCache(Class<?> mapperInterface, RestHighLevelClient client) {
         // 初始化baseEsMapper的所有实现类实例
@@ -65,8 +60,8 @@ public class BaseCache {
     /**
      * 获取缓存中对应的BaseEsMapperImpl
      *
-     * @param mapperInterface
-     * @return
+     * @param mapperInterface mapper接口
+     * @return 实现类
      */
     public static BaseEsMapperImpl<?> getBaseEsMapperInstance(Class<?> mapperInterface) {
         return Optional.ofNullable(baseEsMapperInstanceMap.get(mapperInterface))
@@ -76,8 +71,9 @@ public class BaseCache {
     /**
      * 获取缓存中对应的entity的所有字段(字段注解策略生效)
      *
-     * @param entityClass
-     * @return
+     * @param entityClass 实体
+     * @param methodName  方法名
+     * @return 执行方法
      */
     public static Method getEsEntityInvokeMethod(Class<?> entityClass, String methodName) {
         return Optional.ofNullable(baseEsEntityMethodMap.get(entityClass))

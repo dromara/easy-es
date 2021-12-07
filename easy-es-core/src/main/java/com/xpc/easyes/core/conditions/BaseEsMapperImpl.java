@@ -58,12 +58,6 @@ import static com.xpc.easyes.core.conditions.WrapperProcessor.initBoolQueryBuild
 
 /**
  * 核心 所有支持方法接口实现类
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: easy-es所有支持的方法都在此接口实现类中实现
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -480,8 +474,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 查询id列表
      *
-     * @param searchRequest
-     * @return
+     * @param searchRequest 查询参数
+     * @return id列表
      */
     private List<String> selectIdList(SearchRequest searchRequest) {
         try {
@@ -498,8 +492,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 构建创建数据请求参数
      *
-     * @param entity
-     * @return
+     * @param entity 实体
+     * @return es请求参数
      */
     private IndexRequest buildIndexRequest(T entity) {
         IndexRequest indexRequest = new IndexRequest();
@@ -525,9 +519,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 构建更新数据请求参数
      *
-     * @param entity
-     * @param realIdField
-     * @return
+     * @param entity      实体
+     * @param realIdField id实际字段值
+     * @return 更新请求参数
      */
     private UpdateRequest buildUpdateRequest(T entity, String realIdField) {
         UpdateRequest updateRequest = new UpdateRequest();
@@ -552,11 +546,10 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 初始化分页数据
      *
-     * @param wrapper
-     * @param pageNum
-     * @param pageSize
-     * @return
-     * @throws IOException
+     * @param wrapper  条件
+     * @param pageNum  当前页
+     * @param pageSize 每页条数
+     * @return 分页数据
      */
     private PageInfo<T> initPageInfo(LambdaEsQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
         PageInfo<T> pageInfo = new PageInfo<>();
@@ -592,11 +585,11 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 获取查询结果数组
      *
-     * @param wrapper
-     * @param pageNum
-     * @param pageSize
-     * @return
-     * @throws IOException
+     * @param wrapper  条件
+     * @param pageNum  当前页
+     * @param pageSize 每页条数
+     * @return es返回结果体
+     * @throws IOException IO异常
      */
     private SearchHit[] getSearchHitArray(LambdaEsQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) throws IOException {
         wrapper.from((pageNum - 1) * pageSize);
@@ -608,11 +601,12 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                 .orElseThrow(() -> ExceptionUtils.eee("get searchHits exception,the response from es is null"));
     }
 
+
     /**
      * 构建,插入/更新 的JSON对象
      *
-     * @param entity
-     * @return
+     * @param entity 实体
+     * @return json
      */
     private String buildJsonIndexSource(T entity) {
         // 获取所有字段列表
@@ -658,8 +652,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 构建更新文档的json
      *
-     * @param updateWrapper
-     * @return
+     * @param updateWrapper 条件
+     * @return json
      */
     private String buildJsonDoc(LambdaEsUpdateWrapper<T> updateWrapper) {
         List<EsUpdateParam> updateParamList = updateWrapper.updateParamList;
@@ -671,8 +665,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 设置fastjson toJsonString字段
      *
-     * @param clazz
-     * @param fields
+     * @param clazz  类
+     * @param fields 字段列表
      * @return
      */
     private SimplePropertyPreFilter getSimplePropertyPreFilter(Class<?> clazz, Set<String> fields) {
@@ -682,9 +676,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 执行bulk请求,并返回成功个数
      *
-     * @param bulkRequest
-     * @param requestOptions
-     * @return
+     * @param bulkRequest    批量请求参数
+     * @param requestOptions 类型
+     * @return 成功个数
      */
     private int doBulkRequest(BulkRequest bulkRequest, RequestOptions requestOptions) {
         int totalSuccess = 0;
@@ -706,10 +700,10 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 执行bulk创建请求,并返回成功个数,封装id
      *
-     * @param bulkRequest
-     * @param requestOptions
-     * @param entityList
-     * @return
+     * @param bulkRequest    批量请求参数
+     * @param requestOptions 类型
+     * @param entityList     实体列表
+     * @return 成功个数
      */
     private int doBulkRequest(BulkRequest bulkRequest, RequestOptions requestOptions, Collection<T> entityList) {
         int totalSuccess = 0;
@@ -735,8 +729,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 初始化索引mapping
      *
-     * @param indexParamList
-     * @return
+     * @param indexParamList 索引参数列表
+     * @return 索引mapping
      */
     private Map<String, Object> initMapping(List<EsIndexParam> indexParamList) {
         Map<String, Object> mapping = new HashMap<>(1);
@@ -753,8 +747,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 从es获取到的数据中解析出对应类型的数组 默认设置id
      *
-     * @param searchResponse
-     * @return
+     * @param searchResponse es返回的响应体
+     * @return 指定的返回类型数据列表
      */
     private List<T> parseResultList(SearchResponse searchResponse) {
         SearchHit[] searchHits = parseSearchHit(searchResponse);
@@ -772,9 +766,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 从es获取到的数据中解析出对应类型的数组 id根据查询/不查询条件决定是否设置
      *
-     * @param searchResponse
-     * @param wrapper
-     * @return
+     * @param searchResponse es返回的响应体
+     * @param wrapper        条件
+     * @return 指定的返回类型数据列表
      */
     private List<T> parseResultList(SearchResponse searchResponse, LambdaEsQueryWrapper<T> wrapper) {
         SearchHit[] searchHits = parseSearchHit(searchResponse);
@@ -795,8 +789,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 从es获取到的数据中解析出对应的对象 默认设置id
      *
-     * @param searchResponse
-     * @return
+     * @param searchResponse es返回的响应体
+     * @return 指定的返回类型数据
      */
     private T parseResult(SearchResponse searchResponse) {
         SearchHit[] searchHits = parseSearchHit(searchResponse);
@@ -811,9 +805,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 从es获取到的数据中解析出对应的对象 id根据查询/不查询条件决定是否设置
      *
-     * @param searchResponse
-     * @param wrapper
-     * @return
+     * @param searchResponse es返回的响应体
+     * @param wrapper        条件
+     * @return 指定的返回类型数据
      */
     private T parseResult(SearchResponse searchResponse, LambdaEsQueryWrapper<T> wrapper) {
         SearchHit[] searchHits = parseSearchHit(searchResponse);
@@ -831,8 +825,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 从ES返回结果中解析出SearchHit[]
      *
-     * @param searchResponse
-     * @return
+     * @param searchResponse es返回的响应体
+     * @return 响应体中的Hit列表
      */
     private SearchHit[] parseSearchHit(SearchResponse searchResponse) {
         return Optional.ofNullable(searchResponse)
@@ -844,7 +838,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 获取索引名称
      *
-     * @return
+     * @return 索引名称
      */
     private String getIndexName() {
         return EntityInfoHelper.getEntityInfo(entityClass).getIndexName();
@@ -853,7 +847,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 获取id字段名称(注解中的)
      *
-     * @return
+     * @return id字段名称
      */
     private String getIdFieldName() {
         return EntityInfoHelper.getEntityInfo(entityClass).getKeyColumn();
@@ -862,7 +856,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 获取id实际字段名称
      *
-     * @return
+     * @return id实际字段名称
      */
     private String getRealIdFieldName() {
         return EntityInfoHelper.getEntityInfo(entityClass).getKeyProperty();
@@ -871,8 +865,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * 设置id值
      *
-     * @param entity
-     * @param id
+     * @param entity 实体
+     * @param id     主键
      */
     private void setId(T entity, String id) {
         String setMethodName = FieldUtils.generateSetFunctionName(getRealIdFieldName());

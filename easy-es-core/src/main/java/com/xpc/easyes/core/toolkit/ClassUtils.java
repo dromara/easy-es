@@ -7,12 +7,6 @@ import java.util.Objects;
 
 /**
  * 类工具类
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 代理及反射时需要
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

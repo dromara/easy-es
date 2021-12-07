@@ -9,12 +9,6 @@ import java.util.Objects;
 
 /**
  * 核心 处理字段名称工具类
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 核心 处理字段名称时需要
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -25,9 +19,9 @@ public class FieldUtils {
     /**
      * 获取字段名称
      *
-     * @param func
-     * @param <R>
-     * @return
+     * @param func 列函数
+     * @param <R>  泛型
+     * @return 泛型
      */
     public static <R> String getFieldName(R func) {
         if (!(func instanceof SFunction)) {
@@ -50,8 +44,8 @@ public class FieldUtils {
     /**
      * 处理获取字段名称
      *
-     * @param getMethodName
-     * @return
+     * @param getMethodName get方法的名字
+     * @return 字段名称
      */
     public static String resolveFieldName(String getMethodName) {
         if (getMethodName.startsWith(BaseEsConstants.GET_FUNC_PREFIX)) {
@@ -66,8 +60,8 @@ public class FieldUtils {
     /**
      * 获取Get方法名称
      *
-     * @param fieldName
-     * @return
+     * @param fieldName 字段名称
+     * @return Get方法名称
      */
     public static String generateGetFunctionName(String fieldName) {
         return BaseEsConstants.GET_FUNC_PREFIX + firstToUpperCase(fieldName);
@@ -76,8 +70,8 @@ public class FieldUtils {
     /**
      * 获取Set方法名称
      *
-     * @param fieldName
-     * @return
+     * @param fieldName 字段名称
+     * @return et方法名称
      */
     public static String generateSetFunctionName(String fieldName) {
         return BaseEsConstants.SET_FUNC_PREFIX + firstToUpperCase(fieldName);
@@ -86,8 +80,8 @@ public class FieldUtils {
     /**
      * 将首字母小写
      *
-     * @param param
-     * @return
+     * @param param 参数
+     * @return 首字母小写后的结果
      */
     private static String firstToLowerCase(String param) {
         if (Objects.isNull(param) || "".equals(param)) {
@@ -99,8 +93,8 @@ public class FieldUtils {
     /**
      * 将首字母大写
      *
-     * @param param
-     * @return
+     * @param param 参数
+     * @return 首字母大写后的结果
      */
     private static String firstToUpperCase(String param) {
         if (Objects.isNull(param) || "".equals(param)) {

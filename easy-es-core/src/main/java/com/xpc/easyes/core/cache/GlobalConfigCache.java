@@ -7,12 +7,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 全局配置缓存
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 存放配置文件中指定的全局配置信息
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

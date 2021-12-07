@@ -2,12 +2,6 @@ package com.xpc.easyes.core.constants;
 
 /**
  * EasyEs的常量
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 本框架用到的常量都在此维护
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

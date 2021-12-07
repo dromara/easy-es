@@ -14,12 +14,6 @@ import java.util.Objects;
 
 /**
  * 索引Lambda表达式
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 索引Lambda表达式
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -44,6 +38,7 @@ public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaE
 
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
+     * @param entity 实体
      */
     public LambdaEsIndexWrapper(T entity) {
         this.entity = entity;

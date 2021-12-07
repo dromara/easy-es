@@ -5,12 +5,6 @@ import java.lang.reflect.Type;
 
 /**
  * 核心 泛型工具类
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 核心 在父类中获取子类中指定的泛型T时需要
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -18,8 +12,9 @@ public class TypeUtils {
     /**
      * 获取接口上的泛型T
      *
-     * @param o     接口
-     * @param index 泛型索引
+     * @param o     类
+     * @param index 下标
+     * @return 类的类型
      */
     public static Class<?> getInterfaceT(Class o, int index) {
         Type[] types = o.getGenericInterfaces();

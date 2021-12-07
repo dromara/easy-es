@@ -5,12 +5,6 @@ import lombok.Getter;
 
 /**
  * Es支持的数据类型枚举
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: Es处理数据类型, 通常在创建索引时需要
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

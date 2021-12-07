@@ -9,12 +9,6 @@ import java.lang.reflect.Method;
 
 /**
  * 代理类
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 增强扫描到的mapper
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

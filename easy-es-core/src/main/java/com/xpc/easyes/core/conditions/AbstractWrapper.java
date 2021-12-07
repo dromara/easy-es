@@ -31,12 +31,6 @@ import static com.xpc.easyes.core.enums.EsQueryTypeEnum.*;
 
 /**
  * 抽象Lambda表达式父类
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 抽象Lambda表达式父类, 用于完成参数的初步封装
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -287,18 +281,18 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     /**
      * 子类返回一个自己的新对象
      *
-     * @return
+     * @return 泛型
      */
     protected abstract Children instance();
 
     /**
      * 封装查询参数 聚合类
      *
-     * @param condition
-     * @param aggregationTypeEnum
-     * @param returnName
-     * @param column
-     * @return
+     * @param condition           条件
+     * @param aggregationTypeEnum 聚合类型
+     * @param returnName          返回的聚合字段名称
+     * @param column              列
+     * @return 泛型
      */
     private Children doIt(boolean condition, AggregationTypeEnum aggregationTypeEnum, String returnName, R column) {
         if (condition) {
@@ -313,11 +307,11 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     /**
      * 封装查询参数(含AND,OR这种连接操作)
-     *
-     * @param condition
-     * @param func
-     * @param open
-     * @param close
+     * @param condition 条件
+     * @param func 函数
+     * @param open 左括号
+     * @param close 右括号
+     * @return 泛型
      */
     private Children doIt(boolean condition, Function<Children, Children> func, BaseEsParamTypeEnum open, BaseEsParamTypeEnum close) {
         if (condition) {
@@ -334,11 +328,12 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     /**
      * 封装查询参数(普通情况,不带括号)
-     *
-     * @param condition
-     * @param field
-     * @param values
-     * @param boost
+     * @param condition 条件
+     * @param attachTypeEnum 连接类型
+     * @param field 字段
+     * @param values 值列表
+     * @param boost  权重
+     * @return 泛型
      */
     private Children doIt(boolean condition, EsAttachTypeEnum attachTypeEnum, String field, List<Object> values, Float boost) {
         if (condition) {
@@ -361,14 +356,13 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     /**
      * 封装查询参数(普通情况,不带括号)
-     *
-     * @param condition
-     * @param queryTypeEnum
-     * @param attachTypeEnum
-     * @param field
-     * @param val
-     * @param boost
-     * @return
+     * @param condition 条件
+     * @param queryTypeEnum 查询类型
+     * @param attachTypeEnum 连接类型
+     * @param field 字段
+     * @param val 值
+     * @param boost 权重
+     * @return 泛型
      */
     private Children doIt(boolean condition, EsQueryTypeEnum queryTypeEnum, EsAttachTypeEnum attachTypeEnum, String field, Object val, Float boost) {
         if (condition) {
@@ -391,11 +385,11 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     /**
      * 封装查询参数针对is Null / not null 这类无值操作
-     *
-     * @param condition
-     * @param attachTypeEnum
-     * @param field
-     * @param boost
+     * @param condition 条件
+     * @param attachTypeEnum 连接类型
+     * @param field 字段
+     * @param boost 权重
+     * @return 泛型
      */
     private Children doIt(boolean condition, EsAttachTypeEnum attachTypeEnum, String field, Float boost) {
         if (condition) {
@@ -417,14 +411,13 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     /**
      * 仅针对between的情况
-     *
-     * @param condition
-     * @param attachTypeEnum
-     * @param field
-     * @param left
-     * @param right
-     * @param boost
-     * @return
+     * @param condition 条件
+     * @param attachTypeEnum 连接类型
+     * @param field 字段
+     * @param left 左区间
+     * @param right 右区间
+     * @param boost 权重
+     * @return 泛型
      */
     private Children doIt(boolean condition, EsAttachTypeEnum attachTypeEnum, String field, Object left, Object right, Float boost) {
         if (condition) {
@@ -448,10 +441,9 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     /**
      * 设置查询模型类型
-     *
-     * @param baseEsParam
-     * @param model
-     * @param attachTypeEnum
+     * @param baseEsParam 基础参数
+     * @param model 字段&值模型
+     * @param attachTypeEnum 连接类型
      */
     private void setModel(BaseEsParam baseEsParam, BaseEsParam.FieldValueModel model, EsAttachTypeEnum attachTypeEnum) {
         switch (attachTypeEnum) {

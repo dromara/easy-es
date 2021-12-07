@@ -13,12 +13,6 @@ import java.util.Set;
 
 /**
  * 扫描指定路径下的所有接口
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 实际上是扫描所有Mapper并将其注册为bean
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

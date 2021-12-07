@@ -2,12 +2,6 @@ package com.xpc.easyes.autoconfig.constants;
 
 /**
  * 属性key常量
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 存放基础配置中的key
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

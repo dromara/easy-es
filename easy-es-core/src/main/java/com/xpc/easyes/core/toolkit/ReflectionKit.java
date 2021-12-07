@@ -13,12 +13,6 @@ import static java.util.stream.Collectors.toMap;
 
 /**
  * 反射工具类
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 处理反射时需要
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -27,11 +21,9 @@ public class ReflectionKit {
     private static final Map<Class, List<Field>> classFieldCache = new ConcurrentHashMap<>();
 
     /**
-     * <p>
      * 获取该类的所有属性列表
-     * </p>
-     *
-     * @param clazz 反射类
+     * @param clazz 类
+     * @return 所有属性列表
      */
     public static List<Field> getFieldList(Class<?> clazz) {
         if (Objects.isNull(clazz)) {

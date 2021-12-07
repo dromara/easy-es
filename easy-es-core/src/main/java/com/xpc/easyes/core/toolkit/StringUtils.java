@@ -2,12 +2,6 @@ package com.xpc.easyes.core.toolkit;
 
 /**
  * 字符串工具类
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 框架处理字符串时需要
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

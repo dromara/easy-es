@@ -8,12 +8,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * 框架开发过程中的一些测试 请忽略
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 忽略
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

@@ -10,12 +10,6 @@ import java.util.stream.Collectors;
 
 /**
  * 实体类信息
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 实体类信息
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -60,8 +54,8 @@ public class EntityInfo {
     /**
      * 获取需要进行查询的字段列表
      *
-     * @param predicate 过滤条件
-     * @return sql 片段
+     * @param predicate 预言
+     * @return 查询字段列表
      */
     public List<String> chooseSelect(Predicate<EntityFieldInfo> predicate) {
         return fieldList.stream()
@@ -71,27 +65,10 @@ public class EntityInfo {
     }
 
     /**
-     * 获取需要进行查询的字段列表
+     * 获取id字段名
      *
-     * @return sql 片段
+     * @return id字段名
      */
-    public List<String> chooseSelect() {
-        return fieldList.stream()
-                .map(EntityFieldInfo::getColumn)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 获取不需要进行查询的字段列表
-     *
-     * @return
-     */
-    public List<String> notChooseSelect() {
-        return fieldList.stream()
-                .map(EntityFieldInfo::getIgnoreColumn)
-                .collect(Collectors.toList());
-    }
-
     public String getId() {
         return keyColumn;
     }

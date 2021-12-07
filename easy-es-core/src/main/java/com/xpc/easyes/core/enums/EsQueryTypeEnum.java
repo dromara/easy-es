@@ -5,19 +5,13 @@ import lombok.Getter;
 
 /**
  * 查询类型枚举
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 查询类型处理需要
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 @AllArgsConstructor
 public enum EsQueryTypeEnum {
     /**
-     * 精确值匹配 相当于MySQL =
+     * 精确值匹配 相当于MySQL 等于
      */
     TERM_QUERY(1),
     /**
@@ -29,7 +23,7 @@ public enum EsQueryTypeEnum {
      */
     MATCH_QUERY(3),
     /**
-     * 范围查询 相当于mysql > < >= <=
+     * 范围查询
      */
     RANGE_QUERY(4),
     /**

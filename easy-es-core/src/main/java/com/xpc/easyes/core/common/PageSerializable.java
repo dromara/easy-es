@@ -8,12 +8,6 @@ import java.util.List;
 
 /**
  * 分页参数 来源:https://github.com/pagehelper/Mybatis-PageHelper
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 保持和github最受欢迎的PageHelper插件一样的参数 确保用户使用及切换零额外成本
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

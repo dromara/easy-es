@@ -5,12 +5,6 @@ import lombok.Getter;
 
 /**
  * 参数类型
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 参数类型 框架内部逻辑需要
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

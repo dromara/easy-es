@@ -12,12 +12,6 @@ import java.util.List;
 
 /**
  * 演示实际使用
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: demo
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

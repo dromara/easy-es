@@ -18,12 +18,6 @@ import static java.util.stream.Collectors.toList;
 
 /**
  * 实体字段信息工具类
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 处理实体字段信息时需要
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -43,12 +37,10 @@ public class EntityInfoHelper {
     private static final String DEFAULT_ES_ID_NAME = "_id";
 
     /**
-     * <p>
      * 获取实体映射表信息
-     * </p>
      *
-     * @param clazz 反射实体类
-     * @return 数据库表反射信息
+     * @param clazz 类
+     * @return 实体字段信息
      */
     public static EntityInfo getEntityInfo(Class<?> clazz) {
         if (clazz == null) {
@@ -74,23 +66,20 @@ public class EntityInfoHelper {
     }
 
     /**
-     * <p>
      * 获取所有实体映射表信息
-     * </p>
      *
-     * @return 数据库表反射信息集合
+     * @return 所有实体映射表信息
      */
     public static List<EntityInfo> getTableInfos() {
         return new ArrayList<>(ENTITY_INFO_CACHE.values());
     }
 
     /**
-     * <p>
-     * 实体类反射获取表信息【初始化】
-     * </p>
+     * 实体类反射获取表信息 初始化
      *
-     * @param clazz 反射实体类
-     * @return 数据库表反射信息
+     * @param globalConfig 全局配置
+     * @param clazz        类
+     * @return 实体信息
      */
     public synchronized static EntityInfo initTableInfo(GlobalConfig globalConfig, Class<?> clazz) {
         EntityInfo entityInfo = ENTITY_INFO_CACHE.get(clazz);
@@ -113,13 +102,11 @@ public class EntityInfoHelper {
 
 
     /**
-     * <p>
      * 初始化 表主键,表字段
-     * </p>
      *
-     * @param clazz        实体类
+     * @param clazz        类
      * @param globalConfig 全局配置
-     * @param entityInfo   数据库表反射信息
+     * @param entityInfo   实体信息
      */
     public static void initTableFields(Class<?> clazz, GlobalConfig globalConfig, EntityInfo entityInfo) {
         /* 数据库全局配置 */
@@ -162,13 +149,12 @@ public class EntityInfoHelper {
 
 
     /**
-     * <p>
      * 字段属性初始化
-     * </p>
      *
-     * @param dbConfig  数据库全局配置
+     * @param dbConfig  索引配置
      * @param fieldList 字段列表
-     * @return true 继续下一个属性判断，返回 continue;
+     * @param field     字段
+     * @return
      */
     private static boolean initTableFieldWithAnnotation(GlobalConfig.DbConfig dbConfig,
                                                         List<EntityFieldInfo> fieldList, Field field) {
@@ -189,15 +175,13 @@ public class EntityInfoHelper {
 
 
     /**
-     * <p>
      * 主键属性初始化
-     * </p>
      *
-     * @param dbConfig   全局配置信息
-     * @param entityInfo 表信息
+     * @param dbConfig   索引配置
+     * @param entityInfo 实体信息
      * @param field      字段
-     * @param clazz      实体类
-     * @return true 继续下一个属性判断，返回 continue;
+     * @param clazz      类
+     * @return 布尔值
      */
     private static boolean initTableIdWithAnnotation(GlobalConfig.DbConfig dbConfig, EntityInfo entityInfo,
                                                      Field field, Class<?> clazz) {
@@ -229,14 +213,13 @@ public class EntityInfoHelper {
 
 
     /**
-     * <p>
      * 主键属性初始化
-     * </p>
      *
-     * @param entityInfo 表信息
+     * @param dbConfig   索引配置
+     * @param entityInfo 实体信息
      * @param field      字段
-     * @param clazz      实体类
-     * @return true 继续下一个属性判断，返回 continue;
+     * @param clazz      类
+     * @return 布尔值
      */
     private static boolean initTableIdWithoutAnnotation(GlobalConfig.DbConfig dbConfig, EntityInfo entityInfo,
                                                         Field field, Class<?> clazz) {
@@ -258,12 +241,10 @@ public class EntityInfoHelper {
     }
 
     /**
-     * <p>
      * 判断主键注解是否存在
-     * </p>
      *
      * @param list 字段列表
-     * @return true 为存在 @TableId 注解;
+     * @return 布尔值
      */
     public static boolean isExistTableId(List<Field> list) {
         for (Field field : list) {
@@ -277,12 +258,10 @@ public class EntityInfoHelper {
 
 
     /**
-     * <p>
      * 获取该类的所有属性列表
-     * </p>
      *
-     * @param clazz 反射类
-     * @return 属性集合
+     * @param clazz 类
+     * @return 字段列表
      */
     public static List<Field> getAllFields(Class<?> clazz) {
         List<Field> fieldList = ReflectionKit.getFieldList(ClassUtils.getUserClass(clazz));
@@ -300,9 +279,9 @@ public class EntityInfoHelper {
     /**
      * 初始化表(索引)名称
      *
-     * @param clazz
-     * @param globalConfig
-     * @param entityInfo
+     * @param clazz        类
+     * @param globalConfig 全局配置
+     * @param entityInfo   实体信息
      */
     private static void initTableName(Class<?> clazz, GlobalConfig globalConfig, EntityInfo entityInfo) {
         /* 数据库全局配置 */

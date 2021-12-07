@@ -19,12 +19,6 @@ import java.util.stream.Collectors;
 
 /**
  * 查询Lambda表达式
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 查询Lambda表达式 封装查询相关参数
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -59,6 +53,7 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
 
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
+     * @param entity 实体
      */
     public LambdaEsQueryWrapper(T entity) {
         super.initNeed();

@@ -8,12 +8,6 @@ import java.lang.annotation.*;
 
 /**
  * 全局Mapper扫描注解
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 扫描所有指定Mapper自定义注解
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/

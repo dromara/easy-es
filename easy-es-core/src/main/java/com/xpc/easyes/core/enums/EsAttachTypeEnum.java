@@ -5,12 +5,6 @@ import lombok.Getter;
 
 /**
  * Es的连接类型枚举
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: es语法转换需要
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -29,23 +23,23 @@ public enum EsAttachTypeEnum {
      */
     SHOULD(3),
     /**
-     * 否,相当于MySQL中的!=
+     * 否,相当于MySQL中的不等于
      */
     MUST_NOT(4),
     /**
-     * 大于 相当于Mysql中的 >
+     * 大于 相当于Mysql中的 大于
      */
     GT(5),
     /**
-     * 大于等于 相当于Mysql中的 >=
+     * 大于等于 相当于Mysql中的 大于等于
      */
     GE(6),
     /**
-     * 小于 相当于Mysql中的 <
+     * 小于 相当于Mysql中的 小于
      */
     LT(7),
     /**
-     * 小于等于 相当于Mysql中的 <=
+     * 小于等于 相当于Mysql中的 小于等于
      */
     LE(8),
     /**

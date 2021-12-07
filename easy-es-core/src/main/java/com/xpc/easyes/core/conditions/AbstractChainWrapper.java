@@ -10,12 +10,6 @@ import java.util.function.Function;
 
 /**
  * 链式
- *
- * @ProjectName: easy-es
- * @Package: com.xpc.easyes.core.config
- * @Description: 处理链式调用
- * @Author: xpc
- * @Version: 1.0
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
