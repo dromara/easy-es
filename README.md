@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://search.maven.org/search?q=g:com.baomidou%20a:mybatis-*">
-    <img alt="maven" src="https://img.shields.io/maven-central/v/com.baomidou/mybatis-plus.svg?style=flat-square">
+  <a href="https://search.maven.org/search?q=g:io.github.xpc1024%20a:easy-*">
+    <img alt="maven" src="https://img.shields.io/github/v/release/xpc1024/easy-es?include_prereleases&logo=xpc&style=plastic">
   </a>
 
   <a href="https://www.apache.org/licenses/LICENSE-2.0">
@@ -64,14 +64,14 @@ try {
             e.printStackTrace();
     }
 ```
-
+>以上只是简单查询演示,实际查询场景越复杂,效果就越好,平均可节省3-5倍代码量
 ## 相关链接 | Links
 
 - [文档](https://www.yuque.com/laohan-14b9d/foyrfa/naw1ie)
 - [功能示例](samples)
 - [展示](ee-use)
 
-# Latest Version: [![Maven Central](https://img.shields.io/maven-central/v/com.baomidou/mybatis-plus.svg)](https://search.maven.org/search?q=g:com.baomidou%20a:mybatis-*)
+# Latest Version: [![Maven Central](https://img.shields.io/github/v/release/xpc1024/easy-es?include_prereleases&logo=xpc&style=plastic)](https://search.maven.org/search?q=g:io.github.xpc1024%20a:easy-*)
 
 ``` xml
 <dependency>
