@@ -3,9 +3,10 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>easy-es</artifactId>
+        <artifactId>easy-es-parent</artifactId>
         <groupId>io.github.xpc1024</groupId>
-        <version>0.9.0</version>
+        <version>0.9.1</version>
+        <relativePath>../easy-es-parent</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -20,7 +21,7 @@
         <dependency>
             <groupId>io.github.xpc1024</groupId>
             <artifactId>easy-es-core</artifactId>
-            <version>0.9.0</version>
+            <version>0.9.1</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -2,14 +2,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>easy-es</artifactId>
-        <groupId>io.github.xpc1024</groupId>
-        <version>0.9.0</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>easy-es-sample</artifactId>
+
+    <parent>
+        <artifactId>easy-es</artifactId>
+        <groupId>io.github.xpc1024</groupId>
+        <version>0.9.1</version>
+    </parent>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -20,7 +21,7 @@
         <dependency>
             <groupId>io.github.xpc1024</groupId>
             <artifactId>easy-es-boot-stater</artifactId>
-            <version>0.9.0</version>
+            <version>0.9.1</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
