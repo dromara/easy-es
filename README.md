@@ -69,6 +69,7 @@ try {
 
 - [文档](https://www.yuque.com/laohan-14b9d/foyrfa/naw1ie)
 - [功能示例](samples)
+- [Springboot集成Demo](https://www.yuque.com/laohan-14b9d/foyrfa/pbo22k)
 - [展示](ee-use)
 
 # Latest Version: [![Maven Central](https://img.shields.io/github/v/release/xpc1024/easy-es?include_prereleases&logo=xpc&style=plastic)](https://search.maven.org/search?q=g:io.github.xpc1024%20a:easy-*)
