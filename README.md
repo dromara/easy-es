@@ -53,7 +53,7 @@ List<Document> documents = documentMapper.selectList(wrapper);
 ```
 
 ```java
-// Query directly with RestHighLevelClient requires 11 lines of code, not including parsing JSON code
+// Query with RestHighLevelClient requires 11 lines of code, not including parsing JSON code
 String indexName = "document";
 SearchRequest searchRequest = new SearchRequest(indexName);
 BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
