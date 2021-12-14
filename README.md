@@ -22,7 +22,7 @@
 
 Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,简化`CRUD`操作,可以更好的帮助开发者减轻开发负担
 
-底层采用Es官方提供的RestHighLevelClient,保证其原生性能及拓展性
+底层采用Es官方提供的RestHighLevelClient,保证其原生性能及拓展性.
 
 技术讨论 QQ 群 ：247637156
 
@@ -64,7 +64,9 @@ try {
             e.printStackTrace();
     }
 ```
->以上只是简单查询演示,实际查询场景越复杂,效果就越好,平均可节省3-5倍代码量
+>以上只是简单查询演示,实际使用场景越复杂,效果就越好,平均可节省3-5倍代码量
+
+>上述功能仅供演示,仅为Easy-Es支持功能的冰山一角
 ## 相关链接 | Links
 
 - [文档](https://www.yuque.com/laohan-14b9d/foyrfa/naw1ie)
