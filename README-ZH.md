@@ -78,7 +78,7 @@ try {
 ``` xml
 <dependency>
     <groupId>com.github.xpc1024</groupId>
-    <artifactId>easy-es</artifactId>
+    <artifactId>easy-es-boot-stater</artifactId>
     <version>Latest Version</version>
 </dependency>
 ```
