@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/xpc1024/easy-es">
+  <a href="https://www.yuque.com/laohan-14b9d/foyrfa/naw1ie">
    <img alt="East-Es-Logo" src="https://iknow.hs.net/6361ec1d-edca-4358-98c1-e7a309e15a39.png">
   </a>
 </p>
@@ -70,8 +70,8 @@ try {
 ## 相关链接 | Links
 
 - [文档](https://www.yuque.com/laohan-14b9d/foyrfa/naw1ie)
-- [功能示例](samples)
-- [展示](ee-use)
+- [功能示例](https://github.com/xpc1024/easy-es/tree/main/easy-es-sample)
+- [Springboot集成Demo](https://www.yuque.com/laohan-14b9d/foyrfa/pbo22k)
 
 # Latest Version: [![Maven Central](https://img.shields.io/github/v/release/xpc1024/easy-es?include_prereleases&logo=xpc&style=plastic)](https://search.maven.org/search?q=g:io.github.xpc1024%20a:easy-*)
 
