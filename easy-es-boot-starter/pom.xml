@@ -5,12 +5,12 @@
     <parent>
         <artifactId>easy-es-parent</artifactId>
         <groupId>io.github.xpc1024</groupId>
-        <version>0.9.2</version>
+        <version>0.9.3</version>
         <relativePath>../easy-es-parent</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>easy-es-boot-stater</artifactId>
+    <artifactId>easy-es-boot-starter</artifactId>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -21,7 +21,7 @@
         <dependency>
             <groupId>io.github.xpc1024</groupId>
             <artifactId>easy-es-core</artifactId>
-            <version>0.9.2</version>
+            <version>0.9.3</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -75,12 +75,17 @@ try {
 
 # Latest Version: [![Maven Central](https://img.shields.io/github/v/release/xpc1024/easy-es?include_prereleases&logo=xpc&style=plastic)](https://search.maven.org/search?q=g:io.github.xpc1024%20a:easy-*)
 
+**Maven:**
 ``` xml
 <dependency>
     <groupId>com.github.xpc1024</groupId>
-    <artifactId>easy-es-boot-stater</artifactId>
+    <artifactId>easy-es-boot-starter</artifactId>
     <version>Latest Version</version>
 </dependency>
+```
+**Gradle:**
+```groovy
+compile group: 'com.github.xpc1024', name: 'easy-es-boot-starter', version: 'Latest Version'
 ```
 
 # 其他开源项目 | Other Project

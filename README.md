@@ -81,13 +81,13 @@ try {
       ```xml
       <dependency>
         <groupId>com.github.xpc1024</groupId>
-        <artifactId>easy-es-boot-stater</artifactId>
+        <artifactId>easy-es-boot-starter</artifactId>
         <version>Latest Version</version>
       </dependency>
       ```
     - Gradle
       ```groovy
-      compile group: 'com.github.xpc1024', name: 'easy-es-boot-stater', version: 'Latest Version'
+      compile group: 'com.github.xpc1024', name: 'easy-es-boot-starter', version: 'Latest Version'
       ```
 -   Add mapper file extends BaseEsMapper interface
 
