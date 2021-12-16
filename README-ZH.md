@@ -69,6 +69,7 @@ try {
 
 ## 相关链接 | Links
 
+- [Switch To English](https://github.com/xpc1024/easy-es/blob/main/README.md)
 - [文档](https://www.yuque.com/laohan-14b9d/foyrfa/naw1ie)
 - [功能示例](https://github.com/xpc1024/easy-es/tree/main/easy-es-sample)
 - [Springboot集成Demo](https://www.yuque.com/laohan-14b9d/foyrfa/pbo22k)

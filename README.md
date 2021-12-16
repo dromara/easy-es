@@ -150,6 +150,11 @@ try {
 |- |highLight |
 | ... | ... |
 
+---
+
+## Donate
+[Donate Easy-Es](https://www.yuque.com/laohan-14b9d/tald79/oqpgto)
+
 
 ## License
 
