@@ -42,7 +42,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
     public Set<BeanDefinitionHolder> doScan(String... basePackages) {
         Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
         if (beanDefinitions.isEmpty()) {
-            logger.warn("No MyBatis mapper was found in '" + Arrays.toString(basePackages) + "' package. Please check your configuration.");
+            logger.warn("No Easy-Es mapper was found in '" + Arrays.toString(basePackages) + "' package. Please check your configuration.");
         } else {
             processBeanDefinitions(beanDefinitions);
         }
