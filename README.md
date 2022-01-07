@@ -92,7 +92,7 @@ try {
 -   Add mapper file extends BaseEsMapper interface
 
     ```java
-    public interface DocumentMapper extends BaseMapper<User> {
+    public interface DocumentMapper extends BaseMapper<Document> {
     }
     ```
 
