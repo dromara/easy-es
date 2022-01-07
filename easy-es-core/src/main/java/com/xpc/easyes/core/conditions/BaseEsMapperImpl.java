@@ -564,16 +564,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         } catch (IOException e) {
             throw ExceptionUtils.eee("page select exception:%s", e);
         }
-        List<T> list = Arrays.stream(searchHits)
-                .map(hit -> {
-                    T entity = JSON.parseObject(hit.getSourceAsString(), entityClass);
-                    boolean includeId = WrapperProcessor.includeId(getRealIdFieldName(), wrapper);
-                    if (includeId) {
-                        setId(entity, hit.getId());
-                    }
-                    return entity;
-                }).collect(Collectors.toList());
 
+        List<T> list = hitsToArray(searchHits, wrapper);
         pageInfo.setList(list);
         pageInfo.setSize(list.size());
         pageInfo.setTotal(total);
@@ -775,12 +767,23 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         if (ArrayUtils.isEmpty(searchHits)) {
             return new ArrayList<>(0);
         }
+        return hitsToArray(searchHits, wrapper);
+    }
+
+    /**
+     * 将es返回结果集解析为数组
+     *
+     * @param searchHits es返回结果集
+     * @param wrapper    条件
+     * @return
+     */
+    private List<T> hitsToArray(SearchHit[] searchHits, LambdaEsQueryWrapper<T> wrapper) {
         return Arrays.stream(searchHits)
                 .map(hit -> {
                     T entity = JSON.parseObject(hit.getSourceAsString(), entityClass);
                     boolean includeId = WrapperProcessor.includeId(getRealIdFieldName(), wrapper);
                     if (includeId) {
-                        setId(entity, searchHits[0].getId());
+                        setId(entity, hit.getId());
                     }
                     return entity;
                 }).collect(Collectors.toList());

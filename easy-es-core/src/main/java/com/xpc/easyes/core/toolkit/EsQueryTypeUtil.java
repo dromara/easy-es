@@ -105,8 +105,9 @@ public class EsQueryTypeUtil {
 
     /**
      * 设置连接类型 must,filter,should,must not 对应mysql中的and,and,or,!= 丶 not like...
-     * @param boolQueryBuilder 参数连接器
-     * @param attachType 连接类型
+     *
+     * @param boolQueryBuilder  参数连接器
+     * @param attachType        连接类型
      * @param matchQueryBuilder 匹配参数
      */
     private static void setQueryBuilder(BoolQueryBuilder boolQueryBuilder, Integer attachType, QueryBuilder matchQueryBuilder) {

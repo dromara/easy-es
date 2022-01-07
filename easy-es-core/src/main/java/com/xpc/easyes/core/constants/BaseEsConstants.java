@@ -86,4 +86,8 @@ public interface BaseEsConstants {
      * es默认schema
      */
     String DEFAULT_SCHEMA = "http";
+    /**
+     * 默认返回数
+     */
+    Integer DEFAULT_SIZE = 10000;
 }

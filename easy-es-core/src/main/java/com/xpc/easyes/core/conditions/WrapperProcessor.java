@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import static com.xpc.easyes.core.constants.BaseEsConstants.DEFAULT_SIZE;
 import static com.xpc.easyes.core.enums.BaseEsParamTypeEnum.*;
 
 /**
@@ -149,7 +150,7 @@ public class WrapperProcessor {
 
         // 设置查询起止参数
         Optional.ofNullable(wrapper.from).ifPresent(searchSourceBuilder::from);
-        Optional.ofNullable(wrapper.size).ifPresent(searchSourceBuilder::size);
+        Optional.ofNullable(wrapper.size).map(searchSourceBuilder::size).orElse(searchSourceBuilder.size(DEFAULT_SIZE));
 
         // 设置聚合参数
         if (!CollectionUtils.isEmpty(wrapper.aggregationParamList)) {
@@ -224,9 +225,9 @@ public class WrapperProcessor {
         baseEsParam.getNotBetweenList().forEach(fieldValueModel ->
                 EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.NOT_BETWEEN.getType(), fieldValueModel.getField(), fieldValueModel.getLeftValue(), fieldValueModel.getRightValue(), fieldValueModel.getBoost()));
         baseEsParam.getInList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.IN.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), fieldValueModel.getValues(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.IN.getType(), fieldValueModel.getField(), fieldValueModel.getValues(), fieldValueModel.getBoost()));
         baseEsParam.getNotInList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.NOT_IN.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), fieldValueModel.getValues(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.NOT_IN.getType(), fieldValueModel.getField(), fieldValueModel.getValues(), fieldValueModel.getBoost()));
         baseEsParam.getIsNullList().forEach(fieldValueModel ->
                 EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.NOT_EXISTS.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), Optional.empty(), fieldValueModel.getBoost()));
         baseEsParam.getNotNullList().forEach(fieldValueModel ->
