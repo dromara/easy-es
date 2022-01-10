@@ -43,6 +43,7 @@ import static com.xpc.easyes.core.constants.BaseEsConstants.DEFAULT_SCHEMA;
 public class EsAutoConfiguration implements InitializingBean, EnvironmentAware, PropertyKeyConstants {
     @Autowired
     private EsConfigProperties esConfigProperties;
+
     private Environment environment;
 
     @Override
@@ -73,20 +74,44 @@ public class EsAutoConfiguration implements InitializingBean, EnvironmentAware, 
         // 构建连接对象
         RestClientBuilder builder = RestClient.builder(httpHost);
 
-        // 设置账号密码之类的
-        String username = environment.getProperty(USERNAME);
-        String password = environment.getProperty(PASSWORD);
-        if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
-            final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-            // 设置账号密码
-            credentialsProvider.setCredentials(AuthScope.ANY,
-                    new UsernamePasswordCredentials(esConfigProperties.getUsername(), esConfigProperties.getPassword()));
+        // 设置账号密码最大连接数之类的
+        String username = esConfigProperties.getUsername();
+        String password = esConfigProperties.getPassword();
+        Integer maxConnTotal = esConfigProperties.getMaxConnTotal();
+        Integer maxConnPerRoute = esConfigProperties.getMaxConnPerRoute();
+        boolean needSetHttpClient = (StringUtils.isNotEmpty(username) && StringUtils.isNotEmpty(password))
+                || (Objects.nonNull(maxConnTotal) || Objects.nonNull(maxConnPerRoute));
+        if (needSetHttpClient) {
             builder.setHttpClientConfigCallback(httpClientBuilder -> {
-                httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                Optional.ofNullable(maxConnTotal).ifPresent(httpClientBuilder::setMaxConnTotal);
+                Optional.ofNullable(maxConnPerRoute).ifPresent(httpClientBuilder::setMaxConnPerRoute);
+                if (StringUtils.isNotEmpty(username) && StringUtils.isNotEmpty(password)) {
+                    final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                    // 设置账号密码
+                    credentialsProvider.setCredentials(AuthScope.ANY,
+                            new UsernamePasswordCredentials(esConfigProperties.getUsername(), esConfigProperties.getPassword()));
+                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                }
                 return httpClientBuilder;
             });
         }
-        //TODO 其它设置,比如超时时间 异步之类的 后续优化
+
+        // 设置超时时间之类的
+        Integer connectTimeOut = esConfigProperties.getConnectTimeout();
+        Integer socketTimeOut = esConfigProperties.getSocketTimeout();
+        Integer requestTimeOut = esConfigProperties.getRequestTimeout();
+        Integer connectionRequestTimeOut = esConfigProperties.getConnectionRequestTimeout();
+        boolean needSetRequestConfig = Objects.nonNull(connectTimeOut) || Objects.nonNull(requestTimeOut)
+                || Objects.nonNull(connectionRequestTimeOut);
+        if (needSetRequestConfig) {
+            builder.setRequestConfigCallback(requestConfigBuilder -> {
+                Optional.ofNullable(connectTimeOut).ifPresent(requestConfigBuilder::setConnectTimeout);
+                Optional.ofNullable(socketTimeOut).ifPresent(requestConfigBuilder::setSocketTimeout);
+                Optional.ofNullable(connectionRequestTimeOut)
+                        .ifPresent(requestConfigBuilder::setConnectionRequestTimeout);
+                return requestConfigBuilder;
+            });
+        }
 
         return new RestHighLevelClient(builder);
     }

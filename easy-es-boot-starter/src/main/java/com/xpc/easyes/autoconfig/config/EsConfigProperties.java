@@ -27,4 +27,28 @@ public class EsConfigProperties {
      * 密码 可缺省
      */
     private String password;
+    /**
+     * 最大连接数
+     */
+    private Integer maxConnTotal;
+    /**
+     * 最大连接路有数
+     */
+    private Integer maxConnPerRoute;
+    /**
+     * 连接超时时间
+     */
+    private Integer connectTimeout;
+    /**
+     * Socket 连接超时时间
+     */
+    private Integer socketTimeout;
+    /**
+     * 请求超时时间
+     */
+    private Integer requestTimeout;
+    /**
+     * 连接请求超时时间
+     */
+    private Integer connectionRequestTimeout;
 }

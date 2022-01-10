@@ -289,16 +289,28 @@ public class EntityInfoHelper {
         TableName table = clazz.getAnnotation(TableName.class);
         String tableName = clazz.getSimpleName().toLowerCase(Locale.ROOT);
         String tablePrefix = dbConfig.getTablePrefix();
-        String indexName = StringUtils.isEmpty(tablePrefix) ? tableName : tablePrefix + tableName;
 
+        boolean tablePrefixEffect = true;
+        String indexName;
         if (Objects.isNull(table)) {
-            entityInfo.setIndexName(indexName);
+            // 无注解, 直接使用类名
+            indexName = tableName;
         } else {
-            if (StringUtils.isEmpty(table.value())) {
-                entityInfo.setIndexName(indexName);
+            // 有注解,看注解中是否有指定
+            if (StringUtils.isNotBlank(table.value())) {
+                indexName = table.value();
+                if (StringUtils.isNotBlank(tablePrefix) && !table.keepGlobalPrefix()) {
+                    tablePrefixEffect = false;
+                }
             } else {
-                entityInfo.setIndexName(table.value());
+                indexName = tableName;
             }
         }
+
+        String targetIndexName = indexName;
+        if (StringUtils.isNotBlank(tablePrefix) && tablePrefixEffect) {
+            targetIndexName = tablePrefix + targetIndexName;
+        }
+        entityInfo.setIndexName(targetIndexName);
     }
 }
