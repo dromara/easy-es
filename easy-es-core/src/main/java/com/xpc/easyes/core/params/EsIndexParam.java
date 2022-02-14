@@ -1,5 +1,6 @@
 package com.xpc.easyes.core.params;
 
+import com.xpc.easyes.core.enums.Analyzer;
 import lombok.Data;
 
 /**
@@ -17,4 +18,12 @@ public class EsIndexParam {
      * 字段类型
      */
     private String fieldType;
+    /**
+     * 分词器
+     */
+    private Analyzer analyzer;
+    /**
+     * 查询分词器
+     */
+    private Analyzer searchAnalyzer;
 }

@@ -79,6 +79,14 @@ public interface BaseEsConstants {
      */
     String TYPE = "type";
     /**
+     * 分词器
+     */
+    String ANALYZER = "analyzer";
+    /**
+     * 查询分词器
+     */
+    String SEARCH_ANALYZER = "search_analyzer";
+    /**
      * 通配符
      */
     String WILDCARD_SIGN = "*";

@@ -2,6 +2,7 @@ package com.xpc.easyes.core.conditions;
 
 import com.xpc.easyes.core.conditions.interfaces.Index;
 import com.xpc.easyes.core.conditions.interfaces.SFunction;
+import com.xpc.easyes.core.enums.Analyzer;
 import com.xpc.easyes.core.enums.FieldType;
 import com.xpc.easyes.core.params.EsIndexParam;
 import com.xpc.easyes.core.toolkit.FieldUtils;
@@ -10,6 +11,7 @@ import org.elasticsearch.action.search.SearchRequest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -19,14 +21,37 @@ import java.util.Objects;
  **/
 @SuppressWarnings("serial")
 public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaEsIndexWrapper<T>, SFunction<T, ?>> {
-
+    /**
+     * 索引名称
+     */
     protected String indexName;
+    /**
+     * 别名
+     */
     protected String aliasName;
+    /**
+     * 分片数
+     */
     protected Integer shardsNum;
+    /**
+     * 副本数
+     */
     protected Integer replicasNum;
-
+    /**
+     * 用户手动指定的mapping信息,优先级最高
+     */
+    protected Map<String, Object> mapping;
+    /**
+     * 索引相关参数列表
+     */
     List<EsIndexParam> esIndexParamList;
+    /**
+     * 对应实体
+     */
     private final T entity;
+    /**
+     * 此包装类本身
+     */
     protected final LambdaEsIndexWrapper<T> typedThis = this;
 
     /**
@@ -38,6 +63,7 @@ public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaE
 
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
+     *
      * @param entity 实体
      */
     public LambdaEsIndexWrapper(T entity) {
@@ -72,11 +98,19 @@ public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaE
     }
 
     @Override
-    public LambdaEsIndexWrapper<T> mapping(SFunction<T, ?> column, FieldType fieldType) {
+    public LambdaEsIndexWrapper<T> mapping(Map<String, Object> mapping) {
+        this.mapping = mapping;
+        return null;
+    }
+
+    @Override
+    public LambdaEsIndexWrapper<T> mapping(SFunction<T, ?> column, FieldType fieldType, Analyzer analyzer, Analyzer searchAnalyzer) {
         String fieldName = FieldUtils.getFieldName(column);
         EsIndexParam esIndexParam = new EsIndexParam();
         esIndexParam.setFieldName(fieldName);
         esIndexParam.setFieldType(fieldType.getType());
+        esIndexParam.setAnalyzer(analyzer);
+        esIndexParam.setSearchAnalyzer(searchAnalyzer);
         esIndexParamList.add(esIndexParam);
         return typedThis;
     }

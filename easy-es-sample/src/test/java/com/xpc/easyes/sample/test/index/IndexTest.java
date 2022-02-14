@@ -1,6 +1,7 @@
 package com.xpc.easyes.sample.test.index;
 
 import com.xpc.easyes.core.conditions.LambdaEsIndexWrapper;
+import com.xpc.easyes.core.enums.Analyzer;
 import com.xpc.easyes.core.enums.FieldType;
 import com.xpc.easyes.sample.entity.Document;
 import com.xpc.easyes.sample.mapper.DocumentMapper;
@@ -35,7 +36,7 @@ public class IndexTest {
 
         // 此处将文章标题映射为keyword类型(不支持分词),文档内容映射为text类型(支持分词查询)
         wrapper.mapping(Document::getTitle, FieldType.KEYWORD)
-                .mapping(Document::getContent, FieldType.TEXT);
+                .mapping(Document::getContent, FieldType.TEXT, Analyzer.IK_SMART, Analyzer.IK_MAX_WORD);
 
         // 设置分片及副本信息,可缺省
         wrapper.settings(3, 2);
