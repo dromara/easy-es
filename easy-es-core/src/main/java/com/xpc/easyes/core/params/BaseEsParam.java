@@ -2,6 +2,7 @@ package com.xpc.easyes.core.params;
 
 import lombok.Builder;
 import lombok.Data;
+import org.elasticsearch.common.geo.GeoPoint;
 
 import java.util.ArrayList;
 import java.util.Collections;

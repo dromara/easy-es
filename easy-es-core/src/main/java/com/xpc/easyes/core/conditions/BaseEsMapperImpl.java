@@ -750,7 +750,6 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         indexParamList.forEach(indexParam -> {
             Map<String, Object> info = new HashMap<>();
             info.put(BaseEsConstants.TYPE, indexParam.getFieldType());
-
             // 设置分词器
             if (FieldType.TEXT.getType().equals(indexParam.getFieldType())) {
                 Optional.ofNullable(indexParam.getAnalyzer())
@@ -759,8 +758,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                 Optional.ofNullable(indexParam.getSearchAnalyzer())
                         .ifPresent(searchAnalyzer ->
                                 info.put(BaseEsConstants.SEARCH_ANALYZER, indexParam.getSearchAnalyzer().toString().toLowerCase()));
-                properties.put(indexParam.getFieldName(), info);
             }
+            properties.put(indexParam.getFieldName(), info);
         });
         mapping.put(BaseEsConstants.PROPERTIES, properties);
         return mapping;

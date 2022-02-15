@@ -4,10 +4,12 @@ import com.xpc.easyes.core.enums.BaseEsParamTypeEnum;
 import com.xpc.easyes.core.enums.EsAttachTypeEnum;
 import com.xpc.easyes.core.params.AggregationParam;
 import com.xpc.easyes.core.params.BaseEsParam;
+import com.xpc.easyes.core.params.GeoParam;
 import com.xpc.easyes.core.toolkit.ArrayUtils;
 import com.xpc.easyes.core.toolkit.CollectionUtils;
 import com.xpc.easyes.core.toolkit.EsQueryTypeUtil;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.GeoBoundingBoxQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
@@ -51,11 +53,14 @@ public class WrapperProcessor {
         // 初始化searchSourceBuilder 参数
         SearchSourceBuilder searchSourceBuilder = initSearchSourceBuilder(wrapper);
 
+        // 初始化geoBoundingBox
+        GeoBoundingBoxQueryBuilder geoBoundingBoxQueryBuilder = initGeoBoundingBoxQueryBuilder(wrapper.geoParam);
+
         // 设置参数
+        Optional.ofNullable(geoBoundingBoxQueryBuilder).ifPresent(boolQueryBuilder::filter);
         searchSourceBuilder.query(boolQueryBuilder);
         return searchSourceBuilder;
     }
-
 
     /**
      * 初始化BoolQueryBuilder
@@ -196,6 +201,27 @@ public class WrapperProcessor {
         });
     }
 
+
+    /**
+     * 初始化GeoBoundingBoxQueryBuilder
+     *
+     * @param geoParam 参数
+     * @return GeoBoundingBoxQueryBuilder
+     */
+    private static GeoBoundingBoxQueryBuilder initGeoBoundingBoxQueryBuilder(GeoParam geoParam) {
+        if (Objects.isNull(geoParam)) {
+            return null;
+        }
+        GeoBoundingBoxQueryBuilder builder = QueryBuilders.geoBoundingBoxQuery(geoParam.getField());
+        Optional.ofNullable(geoParam.getBoost()).ifPresent(builder::boost);
+
+        // 经纬度来源 可能是GeoPoint,也可能是字符串或哈希
+        Optional.ofNullable(geoParam.getTopLeft())
+                .ifPresent(topLeft -> builder.setCorners(geoParam.getTopLeft(), geoParam.getBottomRight()));
+        Optional.ofNullable(geoParam.getTopLeftStr()).
+                ifPresent(topLeftStr -> builder.setCorners(geoParam.getTopLeftStr(), geoParam.getBottomRightStr()));
+        return builder;
+    }
 
     /**
      * 添加进参数容器
