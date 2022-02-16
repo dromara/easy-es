@@ -3,6 +3,11 @@ package com.xpc.easyes.core.params;
 import lombok.Builder;
 import lombok.Data;
 import org.elasticsearch.common.geo.GeoPoint;
+import org.elasticsearch.common.geo.ShapeRelation;
+import org.elasticsearch.common.unit.DistanceUnit;
+import org.elasticsearch.geometry.Geometry;
+
+import java.util.List;
 
 /**
  * Geo相关参数
@@ -21,17 +26,41 @@ public class GeoParam {
      */
     private GeoPoint topLeft;
     /**
-     * geoBoundingBox 左上点坐标,字符串形式
-     */
-    private String topLeftStr;
-    /**
      * geoBoundingBox 右下点坐标
      */
     private GeoPoint bottomRight;
     /**
-     * geoBoundingBox 右下点坐标,字符串形式
+     * 中心点坐标
      */
-    private String bottomRightStr;
+    private GeoPoint centralGeoPoint;
+    /**
+     * 距离 双精度类型
+     */
+    private Double distance;
+    /**
+     * 距离 单位
+     */
+    private DistanceUnit distanceUnit;
+    /**
+     * 距离 字符串类型
+     */
+    private String distanceStr;
+    /**
+     * 不规则坐标点列表
+     */
+    private List<GeoPoint> geoPoints;
+    /**
+     * 已被索引形状的索引id
+     */
+    private String indexedShapeId;
+    /**
+     * 图形
+     */
+    private Geometry geometry;
+    /**
+     * 图形关系
+     */
+    private ShapeRelation shapeRelation;
     /**
      * 权重值
      */

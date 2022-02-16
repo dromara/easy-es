@@ -8,9 +8,8 @@ import com.xpc.easyes.core.params.GeoParam;
 import com.xpc.easyes.core.toolkit.ArrayUtils;
 import com.xpc.easyes.core.toolkit.CollectionUtils;
 import com.xpc.easyes.core.toolkit.EsQueryTypeUtil;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.GeoBoundingBoxQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
+import lombok.SneakyThrows;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.aggregations.metrics.AvgAggregationBuilder;
@@ -53,11 +52,17 @@ public class WrapperProcessor {
         // 初始化searchSourceBuilder 参数
         SearchSourceBuilder searchSourceBuilder = initSearchSourceBuilder(wrapper);
 
-        // 初始化geoBoundingBox
+        // 初始化geo相关: BoundingBox,geoDistance,geoPolygon,geoShape
         GeoBoundingBoxQueryBuilder geoBoundingBoxQueryBuilder = initGeoBoundingBoxQueryBuilder(wrapper.geoParam);
+        GeoDistanceQueryBuilder geoDistanceQueryBuilder = initGeoDistanceQueryBuilder(wrapper.geoParam);
+        GeoPolygonQueryBuilder geoPolygonQueryBuilder = initGeoPolygonQueryBuilder(wrapper.geoParam);
+        GeoShapeQueryBuilder geoShapeQueryBuilder = initGeoShapeQueryBuilder(wrapper.geoParam);
 
         // 设置参数
         Optional.ofNullable(geoBoundingBoxQueryBuilder).ifPresent(boolQueryBuilder::filter);
+        Optional.ofNullable(geoDistanceQueryBuilder).ifPresent(boolQueryBuilder::filter);
+        Optional.ofNullable(geoPolygonQueryBuilder).ifPresent(boolQueryBuilder::filter);
+        Optional.ofNullable(geoShapeQueryBuilder).ifPresent(boolQueryBuilder::filter);
         searchSourceBuilder.query(boolQueryBuilder);
         return searchSourceBuilder;
     }
@@ -205,21 +210,83 @@ public class WrapperProcessor {
     /**
      * 初始化GeoBoundingBoxQueryBuilder
      *
-     * @param geoParam 参数
+     * @param geoParam Geo相关参数
      * @return GeoBoundingBoxQueryBuilder
      */
     private static GeoBoundingBoxQueryBuilder initGeoBoundingBoxQueryBuilder(GeoParam geoParam) {
-        if (Objects.isNull(geoParam)) {
+        // 参数校验
+        boolean invalidParam = Objects.isNull(geoParam)
+                || (Objects.isNull(geoParam.getTopLeft()) || Objects.isNull(geoParam.getBottomRight()));
+        if (invalidParam) {
             return null;
         }
+
         GeoBoundingBoxQueryBuilder builder = QueryBuilders.geoBoundingBoxQuery(geoParam.getField());
         Optional.ofNullable(geoParam.getBoost()).ifPresent(builder::boost);
+        builder.setCorners(geoParam.getTopLeft(), geoParam.getBottomRight());
+        return builder;
+    }
 
-        // 经纬度来源 可能是GeoPoint,也可能是字符串或哈希
-        Optional.ofNullable(geoParam.getTopLeft())
-                .ifPresent(topLeft -> builder.setCorners(geoParam.getTopLeft(), geoParam.getBottomRight()));
-        Optional.ofNullable(geoParam.getTopLeftStr()).
-                ifPresent(topLeftStr -> builder.setCorners(geoParam.getTopLeftStr(), geoParam.getBottomRightStr()));
+    /**
+     * 初始化GeoDistanceQueryBuilder
+     *
+     * @param geoParam Geo相关参数
+     * @return GeoDistanceQueryBuilder
+     */
+    private static GeoDistanceQueryBuilder initGeoDistanceQueryBuilder(GeoParam geoParam) {
+        // 参数校验
+        boolean invalidParam = Objects.isNull(geoParam)
+                || (Objects.isNull(geoParam.getDistanceStr()) && Objects.isNull(geoParam.getDistance()));
+        if (invalidParam) {
+            return null;
+        }
+
+        GeoDistanceQueryBuilder builder = QueryBuilders.geoDistanceQuery(geoParam.getField());
+        Optional.ofNullable(geoParam.getBoost()).ifPresent(builder::boost);
+        // 距离来源: 双精度类型+单位或字符串类型
+        Optional.ofNullable(geoParam.getDistanceStr()).ifPresent(builder::distance);
+        Optional.ofNullable(geoParam.getDistance())
+                .ifPresent(distance -> builder.distance(distance, geoParam.getDistanceUnit()));
+        Optional.ofNullable(geoParam.getCentralGeoPoint()).ifPresent(builder::point);
+        return builder;
+    }
+
+    /**
+     * 初始化 GeoPolygonQueryBuilder
+     *
+     * @param geoParam Geo相关参数
+     * @return GeoPolygonQueryBuilder
+     */
+    private static GeoPolygonQueryBuilder initGeoPolygonQueryBuilder(GeoParam geoParam) {
+        // 参数校验
+        boolean invalidParam = Objects.isNull(geoParam) || CollectionUtils.isEmpty(geoParam.getGeoPoints());
+        if (invalidParam) {
+            return null;
+        }
+
+        GeoPolygonQueryBuilder builder = QueryBuilders.geoPolygonQuery(geoParam.getField(), geoParam.getGeoPoints());
+        Optional.ofNullable(geoParam.getBoost()).ifPresent(builder::boost);
+        return builder;
+    }
+
+    /**
+     * 初始化 GeoShapeQueryBuilder
+     *
+     * @param geoParam Geo相关参数
+     * @return GeoShapeQueryBuilder
+     */
+    @SneakyThrows
+    private static GeoShapeQueryBuilder initGeoShapeQueryBuilder(GeoParam geoParam) {
+        // 参数校验
+        boolean invalidParam = Objects.isNull(geoParam)
+                || (Objects.isNull(geoParam.getIndexedShapeId()) && Objects.isNull(geoParam.getGeometry()));
+        if (invalidParam) {
+            return null;
+        }
+
+        GeoShapeQueryBuilder builder = QueryBuilders.geoShapeQuery(geoParam.getField(), geoParam.getGeometry());
+        Optional.ofNullable(geoParam.getShapeRelation()).ifPresent(builder::relation);
+        Optional.ofNullable(geoParam.getBoost()).ifPresent(builder::boost);
         return builder;
     }
 

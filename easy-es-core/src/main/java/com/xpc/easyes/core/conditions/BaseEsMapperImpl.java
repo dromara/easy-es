@@ -133,14 +133,14 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
         // 更新mapping
         PutMappingRequest putMappingRequest = new PutMappingRequest(wrapper.indexName);
-        if (Objects.isNull(wrapper.mapping)){
-            if (CollectionUtils.isEmpty(wrapper.esIndexParamList)){
+        if (Objects.isNull(wrapper.mapping)) {
+            if (CollectionUtils.isEmpty(wrapper.esIndexParamList)) {
                 // 空参数列表,则不更新
                 return Boolean.FALSE;
             }
             Map<String, Object> mapping = initMapping(wrapper.esIndexParamList);
             putMappingRequest.source(mapping);
-        }else {
+        } else {
             // 用户自行指定的mapping信息
             putMappingRequest.source(wrapper.mapping);
         }

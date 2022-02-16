@@ -3,6 +3,7 @@ package com.xpc.easyes.sample.test.insert;
 import com.xpc.easyes.sample.entity.Document;
 import com.xpc.easyes.sample.mapper.DocumentMapper;
 import com.xpc.easyes.sample.test.TestEasyEsApplication;
+import org.elasticsearch.geometry.Point;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,6 +31,9 @@ public class InsertTest {
         Document document = new Document();
         document.setTitle("老汉");
         document.setContent("推*技术过硬");
+        document.setLocation("40.171975,116.587105");
+        Point point = new Point(13.400544, 52.530286);
+        document.setGeoLocation(point.toString());
         int successCount = documentMapper.insert(document);
         Assert.assertEquals(successCount, 1);
     }
@@ -37,7 +41,6 @@ public class InsertTest {
     @Test
     public void testInsertBatch() {
         List<Document> documentList = new ArrayList<>();
-
         Document document = new Document();
         document.setTitle("老王");
         document.setContent("推*技术过硬");

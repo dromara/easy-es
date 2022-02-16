@@ -2,9 +2,7 @@ package com.xpc.easyes.sample.entity;
 
 import com.xpc.easyes.core.anno.TableField;
 import com.xpc.easyes.core.anno.TableId;
-import com.xpc.easyes.core.anno.TableName;
 import com.xpc.easyes.core.enums.FieldStrategy;
-import com.xpc.easyes.core.enums.IdType;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -48,4 +46,8 @@ public class Document {
      * 地理位置经纬度坐标 例如: "40.13933715136454,116.63441990026217"
      */
     private String location;
+    /**
+     * 图形
+     */
+    private String geoLocation;
 }
