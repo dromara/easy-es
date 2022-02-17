@@ -29,7 +29,7 @@
         <lombok.version>1.18.12</lombok.version>
         <es-rest-high-level-client.version>7.10.1</es-rest-high-level-client.version>
         <es.version>7.10.1</es.version>
-        <fastjson.version>1.2.60</fastjson.version>
+        <fastjson.version>1.2.79</fastjson.version>
         <codec.version>1.6</codec.version>
         <spring-boot.version>2.5.4</spring-boot.version>
     </properties>

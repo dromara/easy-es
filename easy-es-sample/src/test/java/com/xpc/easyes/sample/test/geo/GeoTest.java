@@ -7,7 +7,7 @@ import com.xpc.easyes.sample.test.TestEasyEsApplication;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.geo.ShapeRelation;
 import org.elasticsearch.common.unit.DistanceUnit;
-import org.elasticsearch.geometry.Rectangle;
+import org.elasticsearch.geometry.Circle;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,10 +36,7 @@ public class GeoTest {
         GeoPoint leftTop = new GeoPoint(41.187328D, 115.498353D);
         // 右下点坐标
         GeoPoint bottomRight = new GeoPoint(39.084509D, 117.610461D);
-        wrapper.eq(Document::getTitle, "老汉");
         wrapper.geoBoundingBox(Document::getLocation, leftTop, bottomRight);
-        String source = documentMapper.getSource(wrapper);
-        System.out.println(source);
         List<Document> documents = documentMapper.selectList(wrapper);
         documents.forEach(System.out::println);
     }
@@ -95,11 +92,10 @@ public class GeoTest {
     public void testGeoShape() {
         // 注意,这里查询的是图形,所以图形的字段索引类型必须为geoShape,不能为geoPoint,故这里用geoLocation字段而非location字段
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-//        wrapper.eq(Document::getTitle, "老汉");
-        // 这里以矩形为例演示,其它图形请读者自行演示,篇幅原因不一一演示了
-        Rectangle rectangle = new Rectangle(13, 14, 53, 52);
-        // shapeRelation支持多种,如果不传则默认为within,即在给定矩形之内
-        wrapper.geoShape(Document::getGeoLocation, rectangle, ShapeRelation.WITHIN);
+        // 这里以矩形为例演示,其中x,y为圆心坐标,r为半径. 其它图形请读者自行演示,篇幅原因不一一演示了
+        Circle circle = new Circle(13, 14, 100);
+        // shapeRelation支持多种,如果不传则默认为within
+        wrapper.geoShape(Document::getGeoLocation, circle, ShapeRelation.INTERSECTS);
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);
     }
