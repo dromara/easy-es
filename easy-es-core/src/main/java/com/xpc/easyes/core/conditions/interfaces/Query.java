@@ -64,10 +64,10 @@ public interface Query<Children, T, R> extends Serializable {
     /**
      * 兼容MySQL语法 作用同size
      *
-     * @param m 查询条数
+     * @param n 查询条数
      * @return 泛型
      */
-    Children limit(Integer m);
+    Children limit(Integer n);
 
     /**
      * 兼容MySQL语法 作用同from+size
