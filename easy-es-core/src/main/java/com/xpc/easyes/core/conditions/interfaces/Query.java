@@ -57,9 +57,24 @@ public interface Query<Children, T, R> extends Serializable {
      * 总共查询多少条数据
      *
      * @param size 查询多少条
-     * @return 条数
+     * @return 泛型
      */
     Children size(Integer size);
 
+    /**
+     * 兼容MySQL语法 作用同size
+     *
+     * @param m 查询条数
+     * @return 泛型
+     */
+    Children limit(Integer m);
 
+    /**
+     * 兼容MySQL语法 作用同from+size
+     *
+     * @param m offset偏移量,从第几条开始取,作用同from
+     * @param n 查询条数,作用同size
+     * @return
+     */
+    Children limit(Integer m, Integer n);
 }

@@ -8,8 +8,8 @@ import com.xpc.easyes.core.params.BaseEsParam;
 import com.xpc.easyes.core.params.HighLightParam;
 import com.xpc.easyes.core.params.SortParam;
 import com.xpc.easyes.core.toolkit.ArrayUtils;
-import com.xpc.easyes.core.toolkit.FieldUtils;
 import com.xpc.easyes.core.toolkit.EntityInfoHelper;
+import com.xpc.easyes.core.toolkit.FieldUtils;
 import org.elasticsearch.action.search.SearchRequest;
 
 import java.util.Arrays;
@@ -53,6 +53,7 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
 
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
+     *
      * @param entity 实体
      */
     public LambdaEsQueryWrapper(T entity) {
@@ -122,6 +123,19 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
     @Override
     public LambdaEsQueryWrapper<T> size(Integer size) {
         this.size = size;
+        return typedThis;
+    }
+
+    @Override
+    public LambdaEsQueryWrapper<T> limit(Integer m) {
+        this.size = m;
+        return typedThis;
+    }
+
+    @Override
+    public LambdaEsQueryWrapper<T> limit(Integer m, Integer n) {
+        this.from = m;
+        this.size = n;
         return typedThis;
     }
 
