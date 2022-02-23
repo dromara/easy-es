@@ -24,7 +24,7 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,简化`CRUD
 
 底层采用Es官方提供的RestHighLevelClient,保证其原生性能及拓展性.
 
-技术讨论 QQ 群 ：247637156
+技术讨论 QQ 群 ：247637156 微信群请先添加作者微信,由作者拉入 (亦可咨询健身问题,作者是健身教练)
 
 # 优点 | Advantages
 
