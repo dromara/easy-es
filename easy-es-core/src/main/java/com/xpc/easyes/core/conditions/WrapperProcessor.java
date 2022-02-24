@@ -8,6 +8,7 @@ import com.xpc.easyes.core.params.GeoParam;
 import com.xpc.easyes.core.toolkit.ArrayUtils;
 import com.xpc.easyes.core.toolkit.CollectionUtils;
 import com.xpc.easyes.core.toolkit.EsQueryTypeUtil;
+import com.xpc.easyes.core.toolkit.MyOptional;
 import lombok.SneakyThrows;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -160,7 +161,7 @@ public class WrapperProcessor {
 
         // 设置查询起止参数
         Optional.ofNullable(wrapper.from).ifPresent(searchSourceBuilder::from);
-        Optional.ofNullable(wrapper.size).map(searchSourceBuilder::size).orElse(searchSourceBuilder.size(DEFAULT_SIZE));
+        MyOptional.ofNullable(wrapper.size).ifPresent(searchSourceBuilder::size, DEFAULT_SIZE);
 
         // 设置聚合参数
         if (!CollectionUtils.isEmpty(wrapper.aggregationParamList)) {
