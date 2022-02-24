@@ -116,6 +116,12 @@ try {
   
 > This showcase is just a small part of Easy-Es features. If you want to learn more, please refer to the [documentation](https://www.yuque.com/laohan-14b9d/tald79/qf7ns2).
 
+## SUPPORT
+
+In the early stage of project promotion, I hope everyone can give a little bit of three links: ⭐Star, 👀Watch, fork📌, support the spirit of open source, let more people see 
+and use this project, thank you very much!
+
+
 ## Syntax comparison with MySQL
 |  MySQL   | Easy-Es  |
 |  ----  | ----  |
