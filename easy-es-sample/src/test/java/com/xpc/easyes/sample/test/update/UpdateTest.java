@@ -34,7 +34,7 @@ public class UpdateTest {
     public void testUpdate() {
         // 测试更新 更新有两种情况 分别演示如下:
         // case1: 已知id, 根据id更新 (为了演示方便,此id是从上一步查询中复制过来的,实际业务可以自行查询)
-        String id = "krkvN30BUP1SGucenZQ9";
+        String id = "kVBoKn8BfM8ulPKAHdcq";
         String title1 = "隔壁老王";
         Document document1 = new Document();
         document1.setId(id);
@@ -57,13 +57,13 @@ public class UpdateTest {
         List<Document> documentList = new ArrayList<>();
 
         Document document = new Document();
-        document.setId("VCkMUX0BUP1SGucePGhx");
+        document.setId("jFBlKn8BfM8ulPKA_dfs");
         document.setTitle("老王ba");
         document.setContent("推*技术过硬???");
         document.setCreator("老王ba");
 
         Document document1 = new Document();
-        document1.setId("UykMUX0BUP1SGucePGhx");
+        document1.setId("jVBmKn8BfM8ulPKAT9fA");
         document1.setTitle("老李ba");
         document1.setContent("推*技术过硬???");
         document1.setCreator("老汉ba");

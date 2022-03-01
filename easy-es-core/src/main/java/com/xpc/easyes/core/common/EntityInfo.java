@@ -4,6 +4,7 @@ import com.xpc.easyes.core.enums.IdType;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -16,7 +17,6 @@ import java.util.stream.Collectors;
 @Data
 @Accessors(chain = true)
 public class EntityInfo {
-
     /**
      * 表主键ID 类型
      */
@@ -29,6 +29,10 @@ public class EntityInfo {
      * 表映射结果集
      */
     private String resultMap;
+    /**
+     * 主键字段
+     */
+    private Field keyField;
     /**
      * 表主键ID 属性名
      */

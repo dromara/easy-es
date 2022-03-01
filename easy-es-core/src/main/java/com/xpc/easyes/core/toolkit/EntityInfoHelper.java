@@ -13,7 +13,6 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.xpc.easyes.core.constants.BaseEsConstants.SEMICOLON;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -50,7 +49,7 @@ public class EntityInfoHelper {
         if (null != entityInfo) {
             return entityInfo;
         }
-        //尝试获取父类缓存
+        // 尝试获取父类缓存
         Class currentClass = clazz;
         while (null == entityInfo && Object.class != currentClass) {
             currentClass = currentClass.getSuperclass();
@@ -87,14 +86,14 @@ public class EntityInfoHelper {
             return entityInfo;
         }
 
-        /* 没有获取到缓存信息,则初始化 */
+        // 没有获取到缓存信息,则初始化
         entityInfo = new EntityInfo();
-        /* 初始化表名相关 */
+        // 初始化表名(索引名)相关
         initTableName(clazz, globalConfig, entityInfo);
-        /* 初始化字段相关 */
+        // 初始化字段相关
         initTableFields(clazz, globalConfig, entityInfo);
 
-        /* 放入缓存 */
+        // 放入缓存
         ENTITY_INFO_CACHE.put(clazz, entityInfo);
 
         return entityInfo;
@@ -109,7 +108,7 @@ public class EntityInfoHelper {
      * @param entityInfo   实体信息
      */
     public static void initTableFields(Class<?> clazz, GlobalConfig globalConfig, EntityInfo entityInfo) {
-        /* 数据库全局配置 */
+        // 数据库全局配置
         GlobalConfig.DbConfig dbConfig = globalConfig.getDbConfig();
         List<Field> list = getAllFields(clazz);
         // 标记是否读取到主键
@@ -119,9 +118,7 @@ public class EntityInfoHelper {
 
         List<EntityFieldInfo> fieldList = new ArrayList<>();
         for (Field field : list) {
-            /*
-             * 主键ID 初始化
-             */
+            // 主键ID 初始化
             if (!isReadPK) {
                 if (existTableId) {
                     isReadPK = initTableIdWithAnnotation(dbConfig, entityInfo, field, clazz);
@@ -133,16 +130,16 @@ public class EntityInfoHelper {
                 }
             }
 
-            /* 有 @TableField 注解的字段初始化 */
+            // 有 @TableField 注解的字段初始化
             if (initTableFieldWithAnnotation(dbConfig, fieldList, field)) {
                 continue;
             }
 
-            /* 无 @TableField 注解的字段初始化 */
+            // 无 @TableField 注解的字段初始化
             fieldList.add(new EntityFieldInfo(dbConfig, field));
         }
 
-        /* 字段列表 */
+        // 字段列表
         entityInfo.setFieldList(fieldList);
 
     }
@@ -158,17 +155,14 @@ public class EntityInfoHelper {
      */
     private static boolean initTableFieldWithAnnotation(GlobalConfig.DbConfig dbConfig,
                                                         List<EntityFieldInfo> fieldList, Field field) {
-        /* 获取注解属性，自定义字段 */
+        // 获取注解属性，自定义字段
         TableField tableField = field.getAnnotation(TableField.class);
         if (null == tableField) {
             return false;
         }
-        String columnName = field.getName();
-        String[] columns = columnName.split(SEMICOLON);
-        for (int i = 0; i < columns.length; i++) {
-            if (tableField.exist()) {
-                fieldList.add(new EntityFieldInfo(dbConfig, field, columns[i], tableField));
-            }
+
+        if (tableField.exist()) {
+            fieldList.add(new EntityFieldInfo(dbConfig, field, field.getName(), tableField));
         }
         return true;
     }
@@ -188,7 +182,7 @@ public class EntityInfoHelper {
         TableId tableId = field.getAnnotation(TableId.class);
         if (tableId != null) {
             if (StringUtils.isEmpty(entityInfo.getKeyColumn())) {
-                /* 主键策略（ 注解 > 全局 ） */
+                // 主键策略（ 注解 > 全局 ）
                 // 设置 Sequence 其他策略无效
                 if (IdType.NONE == tableId.type()) {
                     entityInfo.setIdType(dbConfig.getIdType());
@@ -196,10 +190,12 @@ public class EntityInfoHelper {
                     entityInfo.setIdType(tableId.type());
                 }
 
-                /* 字段 */
+                // 字段
                 String column = tableId.value();
+                field.setAccessible(Boolean.TRUE);
                 entityInfo.setClazz(field.getDeclaringClass())
                         .setKeyColumn(column)
+                        .setKeyField(field)
                         .setKeyProperty(field.getName());
                 return true;
             } else {
@@ -226,9 +222,11 @@ public class EntityInfoHelper {
         String column = field.getName();
         if (DEFAULT_ID_NAME.equalsIgnoreCase(column) || DEFAULT_ES_ID_NAME.equals(column)) {
             if (StringUtils.isEmpty(entityInfo.getKeyColumn())) {
+                field.setAccessible(Boolean.TRUE);
                 entityInfo.setIdType(dbConfig.getIdType())
                         .setKeyColumn(DEFAULT_ES_ID_NAME)
                         .setKeyProperty(field.getName())
+                        .setKeyField(field)
                         .setClazz(field.getDeclaringClass());
                 return true;
             } else {
@@ -268,7 +266,7 @@ public class EntityInfoHelper {
         if (CollectionUtils.isNotEmpty(fieldList)) {
             return fieldList.stream()
                     .filter(i -> {
-                        /* 过滤注解非表字段属性 */
+                        // 过滤注解非表字段属性
                         TableField tableField = i.getAnnotation(TableField.class);
                         return (tableField == null || tableField.exist());
                     }).collect(toList());
@@ -284,7 +282,7 @@ public class EntityInfoHelper {
      * @param entityInfo   实体信息
      */
     private static void initTableName(Class<?> clazz, GlobalConfig globalConfig, EntityInfo entityInfo) {
-        /* 数据库全局配置 */
+        // 数据库全局配置
         GlobalConfig.DbConfig dbConfig = globalConfig.getDbConfig();
         TableName table = clazz.getAnnotation(TableName.class);
         String tableName = clazz.getSimpleName().toLowerCase(Locale.ROOT);

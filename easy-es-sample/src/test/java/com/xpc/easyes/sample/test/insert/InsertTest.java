@@ -69,4 +69,22 @@ public class InsertTest {
         // id可以直接从被插入的数据中取出
         documentList.forEach(System.out::println);
     }
+
+    @Test
+    public void testInsertWithCustomizeId() {
+        // 测试用户自行指定id新增,测试前必须先把注解@TableId中的type指定为IdType.CUSTOMIZE 或在配置文件yml中指定
+        String id = "muscle";
+        Document document = new Document();
+        document.setId(id);
+        document.setTitle("测试用户自定义id");
+        document.setContent("测试用户自己指定id,如果es中已存在该id就更新该数据,不存在时才新增");
+        int successCount = documentMapper.insert(document);
+        System.out.println(successCount);
+
+        // id保持不变,只改内容,会自动更新此id对应的数据 此方法是Insert,所以成功条目数返回为0
+        document.setTitle("我被更新了1");
+        documentMapper.insert(document);
+        Document document1 = documentMapper.selectById(id);
+        System.out.println("更新后的数据:" + document1);
+    }
 }

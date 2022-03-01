@@ -9,22 +9,18 @@ public enum IdType {
     /**
      * es自动生成
      */
-    AUTO(0),
+    AUTO,
     /**
      * 该类型为未设置主键类型
      */
-    NONE(1),
+    NONE,
     /**
      * 全局唯一ID (UUID)
      */
-    UUID(2);
-
+    UUID,
     /**
-     * 类型
+     * 用户自定义,由用户传入
      */
-    private final int key;
+    CUSTOMIZE;
 
-    IdType(int key) {
-        this.key = key;
-    }
 }

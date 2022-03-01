@@ -36,7 +36,6 @@ public class IndexTest {
 
         // 此处将文章标题映射为keyword类型(不支持分词),文档内容映射为text类型(支持分词查询)
         wrapper.mapping(Document::getTitle, FieldType.KEYWORD)
-                .mapping(Document::getContent,FieldType.TEXT)
                 .mapping(Document::getLocation,FieldType.GEO_POINT)
                 .mapping(Document::getGeoLocation,FieldType.GEO_SHAPE)
                 .mapping(Document::getContent, FieldType.TEXT,Analyzer.IK_SMART,Analyzer.IK_SMART);
