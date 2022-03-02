@@ -19,6 +19,7 @@
     <properties>
         <junit.version>4.13.2</junit.version>
         <spring-boot.version>2.5.4</spring-boot.version>
+        <commons-lang3>3.9</commons-lang3>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -26,6 +27,12 @@
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3}</version>
             </dependency>
 
             <dependency>

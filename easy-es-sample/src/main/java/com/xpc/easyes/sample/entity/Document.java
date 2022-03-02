@@ -1,9 +1,7 @@
 package com.xpc.easyes.sample.entity;
 
 import com.xpc.easyes.core.anno.TableField;
-import com.xpc.easyes.core.anno.TableId;
 import com.xpc.easyes.core.enums.FieldStrategy;
-import com.xpc.easyes.core.enums.IdType;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -18,9 +16,7 @@ public class Document {
     /**
      * es中的唯一id
      */
-    @TableId(type = IdType.CUSTOMIZE)
     private String id;
-
     /**
      * 文档标题
      */
