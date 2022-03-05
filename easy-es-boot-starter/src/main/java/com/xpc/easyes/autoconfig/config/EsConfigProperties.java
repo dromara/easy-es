@@ -51,4 +51,8 @@ public class EsConfigProperties {
      * 连接请求超时时间
      */
     private Integer connectionRequestTimeout;
+    /**
+     * 是否启用 es 请求日志打印功能
+     */
+    private boolean enableLog = true;
 }

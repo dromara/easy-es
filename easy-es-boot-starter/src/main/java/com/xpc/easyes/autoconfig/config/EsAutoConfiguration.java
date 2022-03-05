@@ -8,6 +8,8 @@ import com.xpc.easyes.core.enums.IdType;
 import com.xpc.easyes.core.toolkit.ExceptionUtils;
 import com.xpc.easyes.core.toolkit.StringUtils;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
@@ -79,8 +81,10 @@ public class EsAutoConfiguration implements InitializingBean, EnvironmentAware, 
         String password = esConfigProperties.getPassword();
         Integer maxConnTotal = esConfigProperties.getMaxConnTotal();
         Integer maxConnPerRoute = esConfigProperties.getMaxConnPerRoute();
+        boolean enableLog = esConfigProperties.isEnableLog();
         boolean needSetHttpClient = (StringUtils.isNotEmpty(username) && StringUtils.isNotEmpty(password))
-                || (Objects.nonNull(maxConnTotal) || Objects.nonNull(maxConnPerRoute));
+                || (Objects.nonNull(maxConnTotal) || Objects.nonNull(maxConnPerRoute))
+                || enableLog;
         if (needSetHttpClient) {
             builder.setHttpClientConfigCallback(httpClientBuilder -> {
                 Optional.ofNullable(maxConnTotal).ifPresent(httpClientBuilder::setMaxConnTotal);
@@ -92,6 +96,9 @@ public class EsAutoConfiguration implements InitializingBean, EnvironmentAware, 
                             new UsernamePasswordCredentials(esConfigProperties.getUsername(), esConfigProperties.getPassword()));
                     httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
                 }
+                HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+                httpClientBuilder.addInterceptorLast((HttpRequestInterceptor) interceptor);
+                httpClientBuilder.addInterceptorLast((HttpResponseInterceptor) interceptor);
                 return httpClientBuilder;
             });
         }
