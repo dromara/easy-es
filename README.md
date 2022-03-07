@@ -36,7 +36,7 @@ Easy-Es is a powerfully enhanced toolkit of RestHighLevelClient for simplify dev
 -   Powerful and flexible where condition wrapper
 -   Lambda-style API
 -   Automatic paging operation
--   Support high-level syntax such as highlighting and weighting
+-   Support high-level syntax such as highlighting and weighting and Geo etc
 -   ...
 
 ## Compare
