@@ -16,7 +16,9 @@ import java.io.IOException;
  */
 @Slf4j
 public class HttpLoggingInterceptor implements HttpResponseInterceptor, HttpRequestInterceptor {
-
+    /**
+     * 请求拦截处理，打印 dsl 语句与入参
+     */
     @Override
     public void process(HttpRequest request, HttpContext context) throws IOException {
 
@@ -37,6 +39,9 @@ public class HttpLoggingInterceptor implements HttpResponseInterceptor, HttpRequ
         }
     }
 
+    /**
+     * 返回拦截处理逻辑，打印 es 返回状态码
+     */
     @Override
     public void process(HttpResponse response, HttpContext context) {
         log.info("Received raw response: {}", response.getStatusLine().getStatusCode());

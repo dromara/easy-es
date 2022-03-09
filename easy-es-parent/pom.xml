@@ -32,6 +32,7 @@
         <fastjson.version>1.2.79</fastjson.version>
         <codec.version>1.6</codec.version>
         <spring-boot.version>2.5.4</spring-boot.version>
+        <sl4j.version>1.7.32</sl4j.version>
     </properties>
 
     <dependencyManagement>
@@ -59,6 +60,11 @@
                 <version>${spring-boot.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-configuration-processor</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>fastjson</artifactId>
                 <version>${fastjson.version}</version>
@@ -67,6 +73,11 @@
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
                 <version>${codec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${sl4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

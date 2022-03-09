@@ -96,9 +96,12 @@ public class EsAutoConfiguration implements InitializingBean, EnvironmentAware, 
                             new UsernamePasswordCredentials(esConfigProperties.getUsername(), esConfigProperties.getPassword()));
                     httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
                 }
-                HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
-                httpClientBuilder.addInterceptorLast((HttpRequestInterceptor) interceptor);
-                httpClientBuilder.addInterceptorLast((HttpResponseInterceptor) interceptor);
+                // 根据配置添加打印 es 请求日志打印拦截器
+                if (enableLog){
+                    HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+                    httpClientBuilder.addInterceptorLast((HttpRequestInterceptor) interceptor);
+                    httpClientBuilder.addInterceptorLast((HttpResponseInterceptor) interceptor);
+                }
                 return httpClientBuilder;
             });
         }
