@@ -73,6 +73,10 @@ try {
 > * 以上只是简单查询演示,实际使用场景越复杂,效果就越好,平均可节省3-5倍代码量
 > * 上述功能仅供演示,仅为Easy-Es支持功能的冰山一角
 
+## 官网地址
+
+https://easy-es.cn/#/zh-cn/
+
 ## 相关链接 | Links
 
 - [Switch To English](https://github.com/xpc1024/easy-es/blob/main/README.md)
