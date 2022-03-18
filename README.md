@@ -24,7 +24,7 @@ Easy-Es is a powerfully enhanced toolkit of RestHighLevelClient for simplify dev
 
 ## Official website
 
-https://easy-es.cn
+https://easy-es.cn/#/en/
 
 ## Links
 - [中文版](https://github.com/xpc1024/easy-es/blob/main/README-ZH.md)
@@ -162,7 +162,7 @@ and use this project, thank you very much!
 ---
 
 ## Donate
-[Donate Easy-Es](https://www.yuque.com/laohan-14b9d/tald79/oqpgto)
+[Donate Easy-Es](https://easy-es.cn/#/en/donate)
 
 
 ## License
