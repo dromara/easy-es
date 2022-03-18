@@ -75,14 +75,14 @@ try {
 
 ## 官网地址
 
-https://easy-es.cn/#/zh-cn/
+https://easy-es.cn/
 
 ## 相关链接 | Links
 
 - [Switch To English](https://github.com/xpc1024/easy-es/blob/main/README.md)
 - [文档](https://www.yuque.com/laohan-14b9d/foyrfa/naw1ie)
 - [功能示例](https://github.com/xpc1024/easy-es/tree/main/easy-es-sample)
-- [Springboot集成Demo](https://easy-es.cn/#/zh-cn/demo)
+- [Springboot集成Demo](https://easy-es.cn/#/demo)
 
 # Latest Version: [![Maven Central](https://img.shields.io/github/v/release/xpc1024/easy-es?include_prereleases&logo=xpc&style=plastic)](https://search.maven.org/search?q=g:io.github.xpc1024%20a:easy-*)
 
@@ -113,9 +113,9 @@ compile group: 'io.github.xpc1024', name: 'easy-es-boot-starter', version: 'Late
 
 # 捐赠 | Donate
 
-[捐赠记录,感谢你们的支持！](https://www.yuque.com/laohan-14b9d/foyrfa/ipxxr2)
+[捐赠记录,感谢你们的支持！](https://easy-es.cn/#/donate-log)
 
-[捐赠 Easy-Es](https://www.yuque.com/laohan-14b9d/foyrfa/wn1iha)
+[捐赠 Easy-Es](https://easy-es.cn/#/donate)
 
 # 关注我 | About Me
 
