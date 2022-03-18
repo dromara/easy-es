@@ -30,7 +30,7 @@ https://easy-es.cn/#/en/
 - [中文版](https://github.com/xpc1024/easy-es/blob/main/README-ZH.md)
 - [Documentation](https://www.yuque.com/laohan-14b9d/tald79/qf7ns2)
 - [Samples](https://github.com/xpc1024/easy-es/tree/main/easy-es-sample)
-- [Demo in Springboot](https://github.com/xpc1024/easy-es-springboot-demo-en)
+- [Demo in Springboot](https://easy-es.cn/#/en/demo)
 
 ## Features
 
