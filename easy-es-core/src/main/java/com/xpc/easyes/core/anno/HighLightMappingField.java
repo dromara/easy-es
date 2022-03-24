@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  **/
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface TableHighlightField {
+public @interface HighLightMappingField {
     /**
      * 高亮字段对应源数据库表字段
      *

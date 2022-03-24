@@ -1,7 +1,7 @@
 package com.xpc.easyes.sample.entity;
 
 import com.xpc.easyes.core.anno.TableField;
-import com.xpc.easyes.core.anno.TableHighlightField;
+import com.xpc.easyes.core.anno.HighLightMappingField;
 import com.xpc.easyes.core.enums.FieldStrategy;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -52,6 +52,6 @@ public class Document {
     private String geoLocation;
 
 
-    @TableHighlightField("content")
+    @HighLightMappingField("content")
     private String highlightContent;
 }
