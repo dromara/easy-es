@@ -8,8 +8,7 @@ import java.lang.annotation.Target;
 
 /**
  * 高亮字段注解
- * <p>
- * Copyright © 2021 xpc1024 All Rights Reserved
+ * @author yang
  **/
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
