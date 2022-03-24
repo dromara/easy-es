@@ -1,5 +1,6 @@
 package com.xpc.easyes.core.toolkit;
 
+import com.xpc.easyes.core.anno.TableHighlightField;
 import com.xpc.easyes.core.anno.TableField;
 import com.xpc.easyes.core.anno.TableId;
 import com.xpc.easyes.core.anno.TableName;
@@ -131,7 +132,7 @@ public class EntityInfoHelper {
             }
 
             // 有 @TableField 注解的字段初始化
-            if (initTableFieldWithAnnotation(dbConfig, fieldList, field)) {
+            if (initTableFieldWithAnnotation(dbConfig, fieldList, field,entityInfo)) {
                 continue;
             }
 
@@ -154,7 +155,20 @@ public class EntityInfoHelper {
      * @return
      */
     private static boolean initTableFieldWithAnnotation(GlobalConfig.DbConfig dbConfig,
-                                                        List<EntityFieldInfo> fieldList, Field field) {
+                                                        List<EntityFieldInfo> fieldList, Field field, EntityInfo entityInfo) {
+
+        // 获取HighlightField 注解属性，自定义字段
+        TableHighlightField tableHighlightField = field.getAnnotation(TableHighlightField.class);
+        if (tableHighlightField != null) {
+            Map<String,String> highlightFieldMap = entityInfo.getHighlightFieldMap();
+            if(highlightFieldMap == null){
+                highlightFieldMap = new HashMap<>();
+            }
+            highlightFieldMap.put(tableHighlightField.value(),field.getName());
+            entityInfo.setHighlightFieldMap(highlightFieldMap);
+            return true;
+        }
+
         // 获取注解属性，自定义字段
         TableField tableField = field.getAnnotation(TableField.class);
         if (null == tableField) {
@@ -164,6 +178,7 @@ public class EntityInfoHelper {
         if (tableField.exist()) {
             fieldList.add(new EntityFieldInfo(dbConfig, field, field.getName(), tableField));
         }
+
         return true;
     }
 

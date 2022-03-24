@@ -6,6 +6,7 @@ import lombok.experimental.Accessors;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -53,6 +54,8 @@ public class EntityInfo {
      * 是否有id注解
      */
     private Boolean hasIdAnnotation;
+
+    private Map<String,String> highlightFieldMap;
 
 
     /**

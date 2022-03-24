@@ -47,6 +47,7 @@ import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -799,6 +800,13 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         return Arrays.stream(searchHits)
                 .map(hit -> {
                     T entity = JSON.parseObject(hit.getSourceAsString(), entityClass);
+                    if (!CollectionUtils.isEmpty(wrapper.highLightParamList)) {
+                        Map<String, String> highlightFieldMap = getHighlightFieldMap();
+                        Map<String, HighlightField> highlightFields = hit.getHighlightFields();
+                        highlightFields.forEach((key,value)->{
+                            setHighlightValue(entity,highlightFieldMap.get(key),Arrays.stream(value.getFragments()).findFirst().get().string());
+                        });
+                    }
                     boolean includeId = WrapperProcessor.includeId(getRealIdFieldName(), wrapper);
                     if (includeId) {
                         setId(entity, hit.getId());
@@ -882,6 +890,14 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private String getRealIdFieldName() {
         return EntityInfoHelper.getEntityInfo(entityClass).getKeyProperty();
     }
+    /**
+     * 获取id实际字段名称
+     *
+     * @return id实际字段名称
+     */
+    private Map<String,String> getHighlightFieldMap() {
+        return EntityInfoHelper.getEntityInfo(entityClass).getHighlightFieldMap();
+    }
 
     /**
      * 设置id值
@@ -894,6 +910,22 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         Method invokeMethod = BaseCache.getEsEntityInvokeMethod(entityClass, setMethodName);
         try {
             invokeMethod.invoke(entity, id);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 设置高亮字段的值
+     * @param entity
+     * @param highlightField
+     * @param value
+     */
+    private void setHighlightValue(T entity, String highlightField,String value) {
+        String setMethodName = FieldUtils.generateSetFunctionName(highlightField);
+        Method invokeMethod = BaseCache.getEsEntityInvokeMethod(entityClass, setMethodName);
+        try {
+            invokeMethod.invoke(entity, value);
         } catch (Exception e) {
             e.printStackTrace();
         }
