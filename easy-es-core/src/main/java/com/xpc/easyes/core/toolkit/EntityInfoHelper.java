@@ -118,6 +118,7 @@ public class EntityInfoHelper {
         boolean existTableId = isExistTableId(list);
 
         List<EntityFieldInfo> fieldList = new ArrayList<>();
+        Map<String,String> highlightFieldMap = entityInfo.getHighlightFieldMap();
         for (Field field : list) {
             // 主键ID 初始化
             if (!isReadPK) {
@@ -131,8 +132,8 @@ public class EntityInfoHelper {
                 }
             }
 
-            // 有 @TableField 注解的字段初始化
-            if (initTableFieldWithAnnotation(dbConfig, fieldList, field,entityInfo)) {
+            // 有 @TableField 和 @HighLightMappingField 注解的字段初始化
+            if (initTableFieldWithAnnotation(dbConfig, fieldList, field,highlightFieldMap)) {
                 continue;
             }
 
@@ -141,7 +142,8 @@ public class EntityInfoHelper {
         }
 
         // 字段列表
-        entityInfo.setFieldList(fieldList);
+        entityInfo.setFieldList(fieldList)
+                .setHighlightFieldMap(highlightFieldMap);
 
     }
 
@@ -155,17 +157,12 @@ public class EntityInfoHelper {
      * @return
      */
     private static boolean initTableFieldWithAnnotation(GlobalConfig.DbConfig dbConfig,
-                                                        List<EntityFieldInfo> fieldList, Field field, EntityInfo entityInfo) {
+                                                        List<EntityFieldInfo> fieldList, Field field, Map<String,String> highlightFieldMap) {
 
         // 获取HighlightField 注解属性，自定义字段
         HighLightMappingField highLightMappingField = field.getAnnotation(HighLightMappingField.class);
         if (highLightMappingField != null) {
-            Map<String,String> highlightFieldMap = entityInfo.getHighlightFieldMap();
-            if(highlightFieldMap == null){
-                highlightFieldMap = new HashMap<>();
-            }
             highlightFieldMap.put(highLightMappingField.value(),field.getName());
-            entityInfo.setHighlightFieldMap(highlightFieldMap);
             return true;
         }
 
