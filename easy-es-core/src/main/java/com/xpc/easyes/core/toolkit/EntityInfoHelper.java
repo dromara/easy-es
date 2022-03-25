@@ -118,7 +118,7 @@ public class EntityInfoHelper {
         boolean existTableId = isExistTableId(list);
 
         List<EntityFieldInfo> fieldList = new ArrayList<>();
-        Map<String,String> highlightFieldMap = entityInfo.getHighlightFieldMap();
+        Map<String,String> highlightFieldMap = new HashMap<>();
         for (Field field : list) {
             // 主键ID 初始化
             if (!isReadPK) {
