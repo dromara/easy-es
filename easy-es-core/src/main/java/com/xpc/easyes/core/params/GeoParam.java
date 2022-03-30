@@ -18,6 +18,10 @@ import java.util.List;
 @Builder
 public class GeoParam {
     /**
+     * 是否在此区域内
+     */
+    private boolean isIn;
+    /**
      * 字段名
      */
     private String field;

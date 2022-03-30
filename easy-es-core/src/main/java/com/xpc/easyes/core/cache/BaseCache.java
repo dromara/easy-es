@@ -41,6 +41,7 @@ public class BaseCache {
         baseEsMapper.setClient(client);
         Class<?> entityClass = TypeUtils.getInterfaceT(mapperInterface, 0);
         baseEsMapper.setEntityClass(entityClass);
+        baseEsMapper.setGlobalConfig(GlobalConfigCache.getGlobalConfig());
         baseEsMapperInstanceMap.put(mapperInterface, baseEsMapper);
 
         // 初始化entity中所有字段(注解策略生效)

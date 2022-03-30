@@ -4,8 +4,8 @@ easy-es:
   schema: http
   username: elastic
   password: WG7WVmuNMtM4GwNYkyWH
-#  global-config:
-#    banner: false
+  global-config:
+    print-dsl: true
 #    db-config:
 #      table-prefix: daily_
 #      id-type: AUTO

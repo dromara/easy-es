@@ -6,7 +6,7 @@
 
     <groupId>io.github.xpc1024</groupId>
     <artifactId>easy-es-parent</artifactId>
-    <version>0.9.6</version>
+    <version>0.9.7</version>
 
     <name>easy-es-parent</name>
     <description>easy use for elastic search</description>
@@ -22,6 +22,7 @@
     <modules>
         <module>../easy-es-core</module>
         <module>../easy-es-boot-starter</module>
+        <module>../easy-es-extension</module>
     </modules>
 
     <properties>

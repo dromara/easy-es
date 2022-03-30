@@ -1,8 +1,10 @@
 package com.xpc.easyes.sample.entity;
 
+import com.xpc.easyes.core.anno.HighLightMappingField;
 import com.xpc.easyes.core.anno.TableField;
 import com.xpc.easyes.core.enums.FieldStrategy;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +14,7 @@ import java.time.LocalDateTime;
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 @Data
+@Accessors(chain = true)
 public class Document {
     /**
      * es中的唯一id
@@ -47,4 +50,10 @@ public class Document {
      * 图形
      */
     private String geoLocation;
+
+    /**
+     * 高亮返回值被映射的字段
+     */
+    @HighLightMappingField("content")
+    private String highlightContent;
 }

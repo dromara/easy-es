@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target(value = {ElementType.FIELD,ElementType.ANNOTATION_TYPE})
 public @interface TableField {
     /**
      * 是否为数据库表字段 默认 true 存在，false 不存在

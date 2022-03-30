@@ -5,7 +5,9 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -21,6 +23,10 @@ public class EntityInfo {
      * 表主键ID 类型
      */
     private IdType idType = IdType.NONE;
+    /**
+     * id数据类型 如Long.class String.class
+     */
+    private Class<?> idClass;
     /**
      * 索引名称
      */
@@ -54,6 +60,10 @@ public class EntityInfo {
      */
     private Boolean hasIdAnnotation;
 
+    /**
+     * 表字段->高亮返回结果 键值对
+     */
+    private final Map<String, String> highlightFieldMap = new HashMap<>();
 
     /**
      * 获取需要进行查询的字段列表

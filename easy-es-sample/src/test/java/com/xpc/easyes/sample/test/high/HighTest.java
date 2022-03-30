@@ -1,17 +1,23 @@
 package com.xpc.easyes.sample.test.high;
 
+import com.alibaba.fastjson.JSON;
+import com.xpc.easyes.core.common.OrderByParam;
 import com.xpc.easyes.core.common.PageInfo;
 import com.xpc.easyes.core.conditions.LambdaEsQueryWrapper;
 import com.xpc.easyes.sample.entity.Document;
 import com.xpc.easyes.sample.mapper.DocumentMapper;
 import com.xpc.easyes.sample.test.TestEasyEsApplication;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.search.sort.ScriptSortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
@@ -56,7 +62,7 @@ public class HighTest {
     }
 
     @Test
-    public void testSort() {
+    public void testOrderBy() {
         // 测试排序 为了测试排序,我们在Document对象中新增了创建时间字段,更新了索引,并新增了两条数据
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.likeRight(Document::getContent, "推");
@@ -127,6 +133,39 @@ public class HighTest {
         wrapper.match(Document::getContent,"技术");
         PageInfo<Document> documentPageInfo = documentMapper.pageQuery(wrapper, 1, 10);
         System.out.println(documentPageInfo);
+    }
+
+    @Test
+    public void testSortByScore(){
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.match(Document::getContent,"技术");
+        wrapper.sortByScore(SortOrder.ASC);
+        List<Document> documents = documentMapper.selectList(wrapper);
+        System.out.println(documents);
+    }
+
+    @Test
+    public void testOrderByParams(){
+        // 此处假设此参数由前端通过xxQuery类传入,排序根据标题降序,根据内容升序
+        String jsonParam = "[{\"order\":\"title\",\"sort\":\"DESC\"},{\"order\":\"creator\",\"sort\":\"ASC\"}]";
+        List<OrderByParam> orderByParams = JSON.parseArray(jsonParam, OrderByParam.class);
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.match(Document::getContent,"技术")
+                .orderBy(orderByParams);
+        List<Document> documents = documentMapper.selectList(wrapper);
+        System.out.println(documents);
+    }
+
+    @Test
+    public void testSort(){
+        // 测试复杂排序,SortBuilder的子类非常多,这里仅演示一种, 比如有用户提出需要随机获取数据
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.match(Document::getContent,"技术");
+        Script script = new Script("Math.random()");
+        ScriptSortBuilder scriptSortBuilder = new ScriptSortBuilder(script, ScriptSortBuilder.ScriptSortType.NUMBER);
+        wrapper.sort(scriptSortBuilder);
+        List<Document> documents = documentMapper.selectList(wrapper);
+        System.out.println(documents);
     }
 
 }

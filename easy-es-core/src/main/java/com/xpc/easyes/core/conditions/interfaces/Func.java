@@ -1,12 +1,13 @@
 package com.xpc.easyes.core.conditions.interfaces;
 
+import com.xpc.easyes.core.common.OrderByParam;
 import com.xpc.easyes.core.constants.BaseEsConstants;
 import com.xpc.easyes.core.toolkit.FieldUtils;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Optional;
+import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 
@@ -94,6 +95,27 @@ public interface Func<Children, R> extends Serializable {
      */
     Children orderBy(boolean condition, boolean isAsc, R... columns);
 
+
+    default Children orderBy(OrderByParam orderByParam) {
+        return orderBy(true, orderByParam);
+    }
+
+    default Children orderBy(boolean condition, OrderByParam orderByParam) {
+        return orderBy(condition, Collections.singletonList(orderByParam));
+    }
+
+    default Children orderBy(List<OrderByParam> orderByParams) {
+        return orderBy(true, orderByParams);
+    }
+
+    /**
+     * 排序 适用于排序字段和规则从前端通过字符串传入的场景
+     *
+     * @param condition     条件
+     * @param orderByParams 排序字段及规则参数列表
+     * @return 泛型
+     */
+    Children orderBy(boolean condition, List<OrderByParam> orderByParams);
 
     default Children in(R column, Collection<?> coll) {
         return in(true, column, coll);
@@ -289,4 +311,53 @@ public interface Func<Children, R> extends Serializable {
      */
     Children sum(boolean condition, String returnName, R column);
 
+
+    default Children sort(SortBuilder<?> sortBuilder) {
+        return sort(true, sortBuilder);
+    }
+
+    default Children sort(boolean condition, SortBuilder<?> sortBuilder){
+        return sort(condition, Collections.singletonList(sortBuilder));
+    }
+
+    /**
+     * 用户自定义排序
+     *
+     * @param condition   条件
+     * @param sortBuilders 排序规则列表
+     * @return 泛型
+     */
+    Children sort(boolean condition, List<SortBuilder<?>> sortBuilders);
+
+    /**
+     * 根据得分_score排序 默认为降序 得分高得在前
+     *
+     * @return 泛型
+     */
+    default Children sortByScore() {
+        return sortByScore(true, SortOrder.DESC);
+    }
+
+    /**
+     * 根据得分_score排序 默认为降序 得分高得在前
+     *
+     * @param condition 条件
+     * @return 泛型
+     */
+    default Children sortByScore(boolean condition) {
+        return sortByScore(condition, SortOrder.DESC);
+    }
+
+    default Children sortByScore(SortOrder sortOrder) {
+        return sortByScore(true, sortOrder);
+    }
+
+    /**
+     * 根据得分_score排序
+     *
+     * @param condition 条件
+     * @param sortOrder 升序/降序
+     * @return 泛型
+     */
+    Children sortByScore(boolean condition, SortOrder sortOrder);
 }

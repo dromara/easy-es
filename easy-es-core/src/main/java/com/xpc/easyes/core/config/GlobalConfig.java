@@ -12,6 +12,10 @@ import lombok.Data;
 @Data
 public class GlobalConfig {
     /**
+     * 是否开启本框架执行的DSL语句控制台打印 默认开启,生产环境建议关闭
+     */
+    private boolean printDsl = true;
+    /**
      * 数据库配置
      */
     private DbConfig dbConfig;

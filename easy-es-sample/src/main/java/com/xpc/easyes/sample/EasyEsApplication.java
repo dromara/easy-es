@@ -15,4 +15,6 @@ public class EasyEsApplication {
     public static void main(String[] args) {
         SpringApplication.run(EasyEsApplication.class, args);
     }
+
+
 }

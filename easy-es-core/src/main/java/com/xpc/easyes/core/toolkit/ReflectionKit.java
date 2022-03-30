@@ -1,5 +1,6 @@
 package com.xpc.easyes.core.toolkit;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -76,5 +77,18 @@ public class ReflectionKit {
         Class<?> fieldType = field.getType();
         // fix #176
         return StringUtils.concatCapitalize(boolean.class.equals(fieldType) ? "is" : "get", str);
+    }
+
+    public static  <T> T getVal(String val, Class<T> type) {
+        // 把val转换成type类型返回
+        T value = null;
+        try {
+            Constructor<T> constructor = type.getConstructor(String.class);
+            constructor.setAccessible(true);
+            value = constructor.newInstance(val);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return value;
     }
 }

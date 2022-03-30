@@ -31,6 +31,7 @@ public class InsertTest {
         Document document = new Document();
         document.setTitle("老汉");
         document.setContent("推*技术过硬");
+        document.setCreator("老汉");
         document.setLocation("40.171975,116.587105");
         Point point = new Point(13.400544, 52.530286);
         document.setGeoLocation(point.toString());

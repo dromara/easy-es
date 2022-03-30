@@ -1,5 +1,6 @@
 package com.xpc.easyes.core.conditions;
 
+import com.xpc.easyes.core.common.OrderByParam;
 import com.xpc.easyes.core.conditions.interfaces.*;
 import com.xpc.easyes.core.enums.AggregationTypeEnum;
 import com.xpc.easyes.core.enums.BaseEsParamTypeEnum;
@@ -14,6 +15,8 @@ import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.geo.ShapeRelation;
 import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.geometry.Geometry;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,6 +60,18 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * geo相关参数
      */
     protected GeoParam geoParam;
+    /**
+     * 用户自定义的排序规则
+     */
+    protected List<SortBuilder<?>> sortBuilders;
+    /**
+     * 得分排序规则
+     */
+    protected SortOrder sortOrder;
+    /**
+     * 排序参数列表
+     */
+    protected List<OrderByParam> orderByParams;
     /**
      * 实体对象
      */
@@ -217,6 +232,14 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
+    public Children orderBy(boolean condition, List<OrderByParam> orderByParams) {
+        if (CollectionUtils.isNotEmpty(orderByParams)) {
+            this.orderByParams = orderByParams;
+        }
+        return typedThis;
+    }
+
+    @Override
     public Children in(boolean condition, R column, Collection<?> coll, Float boost) {
         if (CollectionUtils.isEmpty(coll)) {
             return typedThis;
@@ -281,32 +304,82 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children geoBoundingBox(boolean condition, R column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), topLeft, bottomRight, boost);
+        return doIt(condition, FieldUtils.getFieldName(column), topLeft, bottomRight, boost, true);
+    }
+
+    @Override
+    public Children notInGeoBoundingBox(boolean condition, R column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
+        return doIt(condition, FieldUtils.getFieldName(column), topLeft, bottomRight, boost, false);
     }
 
     @Override
     public Children geoDistance(boolean condition, R column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), distance, distanceUnit, centralGeoPoint, boost);
+        return doIt(condition, FieldUtils.getFieldName(column), distance, distanceUnit, centralGeoPoint, boost, true);
+    }
+
+    @Override
+    public Children notInGeoDistance(boolean condition, R column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
+        return doIt(condition, FieldUtils.getFieldName(column), distance, distanceUnit, centralGeoPoint, boost, false);
     }
 
     @Override
     public Children geoDistance(boolean condition, R column, String distance, GeoPoint centralGeoPoint, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), distance, centralGeoPoint, boost);
+        return doIt(condition, FieldUtils.getFieldName(column), distance, centralGeoPoint, boost, true);
+    }
+
+    @Override
+    public Children notInGeoDistance(boolean condition, R column, String distance, GeoPoint centralGeoPoint, Float boost) {
+        return doIt(condition, FieldUtils.getFieldName(column), distance, centralGeoPoint, boost, false);
     }
 
     @Override
     public Children geoPolygon(boolean condition, R column, List<GeoPoint> geoPoints, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), geoPoints, boost);
+        return doIt(condition, FieldUtils.getFieldName(column), geoPoints, boost, true);
+    }
+
+    @Override
+    public Children notInGeoPolygon(boolean condition, R column, Collection<GeoPoint> geoPoints, Float boost) {
+        List<GeoPoint> geoPointList = new ArrayList<>(geoPoints);
+        return doIt(condition, FieldUtils.getFieldName(column), geoPointList, boost, false);
     }
 
     @Override
     public Children geoShape(boolean condition, R column, String indexedShapeId, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), indexedShapeId, boost);
+        return doIt(condition, FieldUtils.getFieldName(column), indexedShapeId, boost, true);
+    }
+
+    @Override
+    public Children notInGeoShape(boolean condition, R column, String indexedShapeId, Float boost) {
+        return doIt(condition, FieldUtils.getFieldName(column), indexedShapeId, boost, false);
     }
 
     @Override
     public Children geoShape(boolean condition, R column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), geometry, shapeRelation, boost);
+        return doIt(condition, FieldUtils.getFieldName(column), geometry, shapeRelation, boost, true);
+    }
+
+    @Override
+    public Children notInGeoShape(boolean condition, R column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
+        return doIt(condition, FieldUtils.getFieldName(column), geometry, shapeRelation, boost, false);
+    }
+
+    @Override
+    public Children sort(boolean condition, List<SortBuilder<?>> sortBuilders) {
+        if (CollectionUtils.isEmpty(sortBuilders)) {
+            return typedThis;
+        }
+        if (condition) {
+            this.sortBuilders = sortBuilders;
+        }
+        return typedThis;
+    }
+
+    @Override
+    public Children sortByScore(boolean condition, SortOrder sortOrder) {
+        if (condition) {
+            this.sortOrder = sortOrder;
+        }
+        return typedThis;
     }
 
     /**
@@ -485,13 +558,14 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * @param boost       权重值
      * @return 泛型
      */
-    private Children doIt(boolean condition, String field, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
+    private Children doIt(boolean condition, String field, GeoPoint topLeft, GeoPoint bottomRight, Float boost, boolean isIn) {
         if (condition) {
             this.geoParam = GeoParam.builder()
                     .field(field)
                     .topLeft(topLeft)
                     .bottomRight(bottomRight)
                     .boost(boost)
+                    .isIn(isIn)
                     .build();
         }
         return typedThis;
@@ -508,7 +582,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * @param boost           权重
      * @return 泛型
      */
-    private Children doIt(boolean condition, String fieldName, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
+    private Children doIt(boolean condition, String fieldName, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost, boolean isIn) {
         if (condition) {
             this.geoParam = GeoParam.builder()
                     .field(fieldName)
@@ -516,6 +590,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
                     .distance(distance)
                     .distanceUnit(distanceUnit)
                     .centralGeoPoint(centralGeoPoint)
+                    .isIn(isIn)
                     .build();
         }
         return typedThis;
@@ -531,13 +606,14 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * @param boost           权重值
      * @return 泛型
      */
-    private Children doIt(boolean condition, String fieldName, String distance, GeoPoint centralGeoPoint, Float boost) {
+    private Children doIt(boolean condition, String fieldName, String distance, GeoPoint centralGeoPoint, Float boost, boolean isIn) {
         if (condition) {
             this.geoParam = GeoParam.builder()
                     .field(fieldName)
                     .boost(boost)
                     .distanceStr(distance)
                     .centralGeoPoint(centralGeoPoint)
+                    .isIn(isIn)
                     .build();
         }
         return typedThis;
@@ -552,12 +628,13 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * @param boost     权重值
      * @return 泛型
      */
-    private Children doIt(boolean condition, String fieldName, List<GeoPoint> geoPoints, Float boost) {
+    private Children doIt(boolean condition, String fieldName, List<GeoPoint> geoPoints, Float boost, boolean isIn) {
         if (condition) {
             this.geoParam = GeoParam.builder()
                     .field(fieldName)
                     .boost(boost)
                     .geoPoints(geoPoints)
+                    .isIn(isIn)
                     .build();
         }
         return typedThis;
@@ -572,12 +649,13 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * @param boost          权重值
      * @return 泛型
      */
-    private Children doIt(boolean condition, String fieldName, String indexedShapeId, Float boost) {
+    private Children doIt(boolean condition, String fieldName, String indexedShapeId, Float boost, boolean isIn) {
         if (condition) {
             this.geoParam = GeoParam.builder()
                     .field(fieldName)
                     .boost(boost)
                     .indexedShapeId(indexedShapeId)
+                    .isIn(isIn)
                     .build();
         }
         return typedThis;
@@ -592,13 +670,14 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * @param boost     权重值
      * @return 泛型
      */
-    private Children doIt(boolean condition, String fieldName, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
+    private Children doIt(boolean condition, String fieldName, Geometry geometry, ShapeRelation shapeRelation, Float boost, boolean isIn) {
         if (condition) {
             this.geoParam = GeoParam.builder()
                     .field(fieldName)
                     .boost(boost)
                     .geometry(geometry)
                     .shapeRelation(shapeRelation)
+                    .isIn(isIn)
                     .build();
         }
         return typedThis;

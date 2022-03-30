@@ -9,6 +9,7 @@ import com.xpc.easyes.core.common.EntityFieldInfo;
 import com.xpc.easyes.core.common.EntityInfo;
 import com.xpc.easyes.core.common.PageInfo;
 import com.xpc.easyes.core.conditions.interfaces.BaseEsMapper;
+import com.xpc.easyes.core.config.GlobalConfig;
 import com.xpc.easyes.core.constants.BaseEsConstants;
 import com.xpc.easyes.core.enums.FieldStrategy;
 import com.xpc.easyes.core.enums.FieldType;
@@ -40,6 +41,7 @@ import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -47,6 +49,7 @@ import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -57,6 +60,7 @@ import java.util.stream.Collectors;
 
 import static com.xpc.easyes.core.conditions.WrapperProcessor.buildSearchSourceBuilder;
 import static com.xpc.easyes.core.conditions.WrapperProcessor.initBoolQueryBuilder;
+import static com.xpc.easyes.core.constants.BaseEsConstants.*;
 
 /**
  * 核心 所有支持方法接口实现类
@@ -74,6 +78,12 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     @Setter
     private Class<T> entityClass;
+
+    /**
+     * 全局配置
+     */
+    @Setter
+    private GlobalConfig globalConfig;
 
     @Override
     public Boolean existsIndex(String indexName) {
@@ -174,12 +184,14 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         SearchRequest searchRequest = new SearchRequest(getIndexName());
         SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
         searchRequest.source(searchSourceBuilder);
+        printDSL(wrapper);
         // 执行查询
         return client.search(searchRequest, RequestOptions.DEFAULT);
     }
 
     @Override
     public SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions) throws IOException {
+        printDSL(searchRequest);
         return client.search(searchRequest, requestOptions);
     }
 
@@ -241,6 +253,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         countRequest.query(boolQueryBuilder);
         CountResponse count;
         try {
+            printCountDSL(wrapper);
             count = client.count(countRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
             throw ExceptionUtils.eee("selectCount exception", e);
@@ -258,7 +271,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
             if (Objects.equals(indexResponse.status(), RestStatus.CREATED)) {
                 setId(entity, indexResponse.getId());
-                return BaseEsConstants.ONE;
+                return ONE;
             } else if (Objects.equals(indexResponse.status(), RestStatus.OK)) {
                 // 该id已存在,数据被更新的情况
                 return BaseEsConstants.ZERO;
@@ -266,7 +279,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                 throw ExceptionUtils.eee("insert failed, result:%s entity:%s", indexResponse.getResult(), entity);
             }
         } catch (IOException e) {
-            throw ExceptionUtils.eee("insert exception:%s entity:%s", e, entity);
+            throw ExceptionUtils.eee("insert entity:%s exception", e, entity);
         }
     }
 
@@ -297,7 +310,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         try {
             DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
             if (Objects.equals(deleteResponse.status(), RestStatus.OK)) {
-                return BaseEsConstants.ONE;
+                return ONE;
             }
         } catch (IOException e) {
             throw ExceptionUtils.eee("deleteById exception:%s, id:%s", e, id);
@@ -360,7 +373,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         try {
             UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
             if (Objects.equals(updateResponse.status(), RestStatus.OK)) {
-                return BaseEsConstants.ONE;
+                return ONE;
             }
         } catch (IOException e) {
             throw ExceptionUtils.eee("updateById exception,entity:%s", e, entity);
@@ -434,6 +447,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         searchSourceBuilder.query(QueryBuilders.termQuery(getIdFieldName(), id));
         searchRequest.source(searchSourceBuilder);
         try {
+            printDSL(searchRequest);
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
             return parseResult(searchResponse);
         } catch (Exception e) {
@@ -452,6 +466,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         sourceBuilder.query(QueryBuilders.termsQuery(getIdFieldName(), stringIdList));
         searchRequest.source(sourceBuilder);
         try {
+            printDSL(searchRequest);
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
             return parseResultList(searchResponse);
         } catch (IOException e) {
@@ -462,18 +477,18 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     @Override
     public T selectOne(LambdaEsQueryWrapper<T> wrapper) {
         long count = this.selectCount(wrapper);
-        if (count > BaseEsConstants.ONE) {
-            throw ExceptionUtils.eee("fond more than one result: %d", count);
+        if (count > ONE && wrapper.size > ONE) {
+            throw ExceptionUtils.eee("fond more than one result: %d , please use limit function to limit 1", count);
         }
         SearchRequest searchRequest = new SearchRequest(getIndexName());
         SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
         searchRequest.source(searchSourceBuilder);
         try {
+            printDSL(wrapper);
             SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
             return parseResult(response, wrapper);
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException();
+            throw ExceptionUtils.eee("selectOne IOException", e);
         }
     }
 
@@ -483,6 +498,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
         searchRequest.source(searchSourceBuilder);
         try {
+            printDSL(wrapper);
             SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
             return parseResultList(response, wrapper);
         } catch (Exception e) {
@@ -563,7 +579,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private PageInfo<T> initPageInfo(LambdaEsQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
         PageInfo<T> pageInfo = new PageInfo<>();
         long total = this.selectCount(wrapper);
-        if (total <= 0) {
+        if (total <= ZERO) {
             return pageInfo;
         }
 
@@ -799,6 +815,14 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         return Arrays.stream(searchHits)
                 .map(hit -> {
                     T entity = JSON.parseObject(hit.getSourceAsString(), entityClass);
+                    if (!CollectionUtils.isEmpty(wrapper.highLightParamList)) {
+                        Map<String, String> highlightFieldMap = getHighlightFieldMap();
+                        Map<String, HighlightField> highlightFields = hit.getHighlightFields();
+                        highlightFields.forEach((key, value) -> {
+                            String highLightValue = Arrays.stream(value.getFragments()).findFirst().map(Text::string).orElse(EMPTY_STR);
+                            setHighlightValue(entity, highlightFieldMap.get(key), highLightValue);
+                        });
+                    }
                     boolean includeId = WrapperProcessor.includeId(getRealIdFieldName(), wrapper);
                     if (includeId) {
                         setId(entity, hit.getId());
@@ -884,6 +908,15 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     }
 
     /**
+     * 获取表字段->高亮返回结果 键值对
+     *
+     * @return 表字段->高亮返回结果 map
+     */
+    private Map<String, String> getHighlightFieldMap() {
+        return EntityInfoHelper.getEntityInfo(entityClass).getHighlightFieldMap();
+    }
+
+    /**
      * 设置id值
      *
      * @param entity 实体
@@ -892,8 +925,31 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private void setId(T entity, String id) {
         String setMethodName = FieldUtils.generateSetFunctionName(getRealIdFieldName());
         Method invokeMethod = BaseCache.getEsEntityInvokeMethod(entityClass, setMethodName);
+
+        // 将es返回的String类型id还原为字段实际的id类型,比如Long,否则反射会报错
+        Class<?> idClass = EntityInfoHelper.getEntityInfo(entityClass).getIdClass();
+        Object val = ReflectionKit.getVal(id, idClass);
+
         try {
-            invokeMethod.invoke(entity, id);
+            invokeMethod.invoke(entity, val);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * 设置高亮字段的值
+     *
+     * @param entity         实体类
+     * @param highlightField 高亮返回字段
+     * @param value          高亮结果值
+     */
+    private void setHighlightValue(T entity, String highlightField, String value) {
+        String setMethodName = FieldUtils.generateSetFunctionName(highlightField);
+        Method invokeMethod = BaseCache.getEsEntityInvokeMethod(entityClass, setMethodName);
+        try {
+            invokeMethod.invoke(entity, value);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -919,4 +975,39 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             throw ExceptionUtils.eee("get id value exception", e);
         }
     }
+
+    /**
+     * 根据全局配置决定是否控制台打印DSL语句
+     *
+     * @param wrapper
+     */
+    private void printDSL(LambdaEsQueryWrapper<T> wrapper) {
+        if (globalConfig.isPrintDsl()) {
+            System.out.println(DSL_PREFIX + getSource(wrapper));
+        }
+    }
+
+    /**
+     * 根据全局配置决定是否控制台打印CountDSL语句
+     *
+     * @param wrapper 查询参数包装类
+     */
+    private void printCountDSL(LambdaEsQueryWrapper<T> wrapper) {
+        if (globalConfig.isPrintDsl()) {
+            System.out.println(COUNT_DSL_PREFIX + getSource(wrapper));
+        }
+    }
+
+    /**
+     * 根据全局配置决定是否控制台打印DSL语句
+     *
+     * @param searchRequest es查询请求参数
+     */
+    private void printDSL(SearchRequest searchRequest) {
+        if (globalConfig.isPrintDsl() && Objects.nonNull(searchRequest)) {
+            Optional.ofNullable(searchRequest.source())
+                    .ifPresent(source -> System.out.println(DSL_PREFIX + source));
+        }
+    }
+
 }

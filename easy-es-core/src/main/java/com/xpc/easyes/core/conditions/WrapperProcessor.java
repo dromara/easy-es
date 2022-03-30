@@ -28,6 +28,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.xpc.easyes.core.constants.BaseEsConstants.DEFAULT_SIZE;
+import static com.xpc.easyes.core.constants.BaseEsConstants.SCORE_FIELD;
 import static com.xpc.easyes.core.enums.BaseEsParamTypeEnum.*;
 
 /**
@@ -53,17 +54,10 @@ public class WrapperProcessor {
         // 初始化searchSourceBuilder 参数
         SearchSourceBuilder searchSourceBuilder = initSearchSourceBuilder(wrapper);
 
-        // 初始化geo相关: BoundingBox,geoDistance,geoPolygon,geoShape
-        GeoBoundingBoxQueryBuilder geoBoundingBoxQueryBuilder = initGeoBoundingBoxQueryBuilder(wrapper.geoParam);
-        GeoDistanceQueryBuilder geoDistanceQueryBuilder = initGeoDistanceQueryBuilder(wrapper.geoParam);
-        GeoPolygonQueryBuilder geoPolygonQueryBuilder = initGeoPolygonQueryBuilder(wrapper.geoParam);
-        GeoShapeQueryBuilder geoShapeQueryBuilder = initGeoShapeQueryBuilder(wrapper.geoParam);
+        // 初始化geo相关参数
+        Optional.ofNullable(wrapper.geoParam).ifPresent(geoParam -> setGeoQuery(geoParam, boolQueryBuilder));
 
-        // 设置参数
-        Optional.ofNullable(geoBoundingBoxQueryBuilder).ifPresent(boolQueryBuilder::filter);
-        Optional.ofNullable(geoDistanceQueryBuilder).ifPresent(boolQueryBuilder::filter);
-        Optional.ofNullable(geoPolygonQueryBuilder).ifPresent(boolQueryBuilder::filter);
-        Optional.ofNullable(geoShapeQueryBuilder).ifPresent(boolQueryBuilder::filter);
+        // 设置boolQuery参数
         searchSourceBuilder.query(boolQueryBuilder);
         return searchSourceBuilder;
     }
@@ -143,16 +137,8 @@ public class WrapperProcessor {
             });
         }
 
-        // 设置排序字段
-        if (!CollectionUtils.isEmpty(wrapper.sortParamList)) {
-            wrapper.sortParamList.forEach(sortParam -> {
-                SortOrder sortOrder = sortParam.getIsAsc() ? SortOrder.ASC : SortOrder.DESC;
-                sortParam.getFields().forEach(field -> {
-                    FieldSortBuilder fieldSortBuilder = new FieldSortBuilder(field).order(sortOrder);
-                    searchSourceBuilder.sort(fieldSortBuilder);
-                });
-            });
-        }
+        // 设置用户指定的各种排序规则
+        setSort(wrapper, searchSourceBuilder);
 
         // 设置查询或不查询字段
         if (ArrayUtils.isNotEmpty(wrapper.include) || ArrayUtils.isNotEmpty(wrapper.exclude)) {
@@ -168,7 +154,48 @@ public class WrapperProcessor {
             initAggregations(wrapper.aggregationParamList, searchSourceBuilder);
         }
 
+        // 查询超过一万条, trackTotalHists自动开启
+        if (searchSourceBuilder.size() > DEFAULT_SIZE) {
+            searchSourceBuilder.trackTotalHits(true);
+        }
+
         return searchSourceBuilder;
+    }
+
+    private static void setSort(LambdaEsQueryWrapper<?> wrapper, SearchSourceBuilder searchSourceBuilder) {
+        // 设置排序字段
+        if (CollectionUtils.isNotEmpty(wrapper.sortParamList)) {
+            wrapper.sortParamList.forEach(sortParam -> {
+                SortOrder sortOrder = sortParam.getIsAsc() ? SortOrder.ASC : SortOrder.DESC;
+                sortParam.getFields().forEach(field -> {
+                    FieldSortBuilder fieldSortBuilder = new FieldSortBuilder(field).order(sortOrder);
+                    searchSourceBuilder.sort(fieldSortBuilder);
+                });
+            });
+        }
+
+        // 设置以String形式指定的排序字段及规则
+        if (CollectionUtils.isNotEmpty(wrapper.orderByParams)) {
+            wrapper.orderByParams.forEach(orderByParam -> {
+                FieldSortBuilder fieldSortBuilder = new FieldSortBuilder(orderByParam.getOrder());
+                if (SortOrder.ASC.toString().equalsIgnoreCase(orderByParam.getSort())) {
+                    fieldSortBuilder.order(SortOrder.ASC);
+                }
+                if (SortOrder.DESC.toString().equalsIgnoreCase(orderByParam.getSort())) {
+                    fieldSortBuilder.order(SortOrder.DESC);
+                }
+                searchSourceBuilder.sort(fieldSortBuilder);
+            });
+        }
+
+        // 设置用户自定义的sorts
+        if (CollectionUtils.isNotEmpty(wrapper.sortBuilders)) {
+            wrapper.sortBuilders.forEach(searchSourceBuilder::sort);
+        }
+
+        // 设置得分排序规则
+        Optional.ofNullable(wrapper.sortOrder)
+                .ifPresent(sortOrder -> searchSourceBuilder.sort(SCORE_FIELD, sortOrder));
     }
 
     /**
@@ -290,6 +317,46 @@ public class WrapperProcessor {
         Optional.ofNullable(geoParam.getBoost()).ifPresent(builder::boost);
         return builder;
     }
+
+
+    /**
+     * 设置Geo相关查询参数 geoBoundingBox, geoDistance, geoPolygon, geoShape
+     *
+     * @param geoParam         geo参数
+     * @param boolQueryBuilder boolQuery参数建造者
+     */
+    private static void setGeoQuery(GeoParam geoParam, BoolQueryBuilder boolQueryBuilder) {
+        GeoBoundingBoxQueryBuilder geoBoundingBox = initGeoBoundingBoxQueryBuilder(geoParam);
+        doGeoSet(geoParam.isIn(), geoBoundingBox, boolQueryBuilder);
+
+        GeoDistanceQueryBuilder geoDistance = initGeoDistanceQueryBuilder(geoParam);
+        doGeoSet(geoParam.isIn(), geoDistance, boolQueryBuilder);
+
+        GeoPolygonQueryBuilder geoPolygon = initGeoPolygonQueryBuilder(geoParam);
+        doGeoSet(geoParam.isIn(), geoPolygon, boolQueryBuilder);
+
+        GeoShapeQueryBuilder geoShape = initGeoShapeQueryBuilder(geoParam);
+        doGeoSet(geoParam.isIn(), geoShape, boolQueryBuilder);
+    }
+
+    /**
+     * 根据查询是否在指定范围内设置geo查询过滤条件
+     *
+     * @param isIn
+     * @param queryBuilder
+     * @param boolQueryBuilder
+     */
+    private static void doGeoSet(Boolean isIn, QueryBuilder queryBuilder, BoolQueryBuilder boolQueryBuilder) {
+        Optional.ofNullable(queryBuilder)
+                .ifPresent(present -> {
+                    if (isIn) {
+                        boolQueryBuilder.filter(present);
+                    } else {
+                        boolQueryBuilder.mustNot(present);
+                    }
+                });
+    }
+
 
     /**
      * 添加进参数容器

@@ -25,7 +25,7 @@ public interface PropertyKeyConstants {
     /**
      * 框架banner是否展示
      */
-    String BANNER = "easy-es.global-config.db-config.banner";
+    String PRINT_DSL = "easy-es.global-config.print-dsl";
     /**
      * es索引前缀
      */

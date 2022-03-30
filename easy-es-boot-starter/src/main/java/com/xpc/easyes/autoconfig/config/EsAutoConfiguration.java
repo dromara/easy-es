@@ -119,6 +119,8 @@ public class EsAutoConfiguration implements InitializingBean, EnvironmentAware, 
     @Override
     public void afterPropertiesSet() throws Exception {
         GlobalConfig globalConfig = new GlobalConfig();
+        Optional.ofNullable(environment.getProperty(PRINT_DSL))
+                .ifPresent(p -> globalConfig.setPrintDsl(Boolean.parseBoolean(p)));
         GlobalConfig.DbConfig dbConfig = new GlobalConfig.DbConfig();
         Optional.ofNullable(environment.getProperty(TABLE_PREFIX)).ifPresent(dbConfig::setTablePrefix);
         Optional.ofNullable(environment.getProperty(ID_TYPE))

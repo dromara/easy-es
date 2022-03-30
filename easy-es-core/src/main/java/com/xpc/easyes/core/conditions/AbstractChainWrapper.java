@@ -1,11 +1,16 @@
 package com.xpc.easyes.core.conditions;
 
-import com.xpc.easyes.core.conditions.interfaces.Compare;
-import com.xpc.easyes.core.conditions.interfaces.Func;
-import com.xpc.easyes.core.conditions.interfaces.Join;
-import com.xpc.easyes.core.conditions.interfaces.Nested;
+import com.xpc.easyes.core.common.OrderByParam;
+import com.xpc.easyes.core.conditions.interfaces.*;
+import org.elasticsearch.common.geo.GeoPoint;
+import org.elasticsearch.common.geo.ShapeRelation;
+import org.elasticsearch.common.unit.DistanceUnit;
+import org.elasticsearch.geometry.Geometry;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -15,7 +20,8 @@ import java.util.function.Function;
  **/
 @SuppressWarnings({"serial", "unchecked"})
 public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainWrapper<T, R, Children, Param>, Param>
-        extends Wrapper<T> implements Compare<Children, R>, Join<Children>, Func<Children, R>, Nested<Param, Children> {
+        extends Wrapper<T> implements Compare<Children, R>, Join<Children>, Func<Children, R>, Nested<Param, Children>,
+        Geo<Children, R> {
 
     protected final Children typedThis = (Children) this;
     /**
@@ -160,6 +166,12 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
+    public Children orderBy(boolean condition, List<OrderByParam> orderByParams) {
+        getWrapper().orderBy(condition, orderByParams);
+        return typedThis;
+    }
+
+    @Override
     public Children groupBy(boolean condition, R... columns) {
         getWrapper().groupBy(condition, columns);
         return typedThis;
@@ -287,6 +299,90 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     @Override
     public Children likeRight(R column, Object val, Float boost) {
         getWrapper().likeRight(column, val, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children sort(boolean condition, SortBuilder<?> sortBuilder) {
+        getWrapper().sort(condition, sortBuilder);
+        return typedThis;
+    }
+
+    @Override
+    public Children sortByScore(boolean condition, SortOrder sortOrder) {
+        getWrapper().sortByScore(condition, sortOrder);
+        return typedThis;
+    }
+
+    @Override
+    public Children geoBoundingBox(boolean condition, R column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
+        getWrapper().geoBoundingBox(condition, column, topLeft, bottomRight, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notInGeoBoundingBox(boolean condition, R column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
+        getWrapper().notInGeoBoundingBox(condition, column, topLeft, bottomRight, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children geoDistance(boolean condition, R column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
+        getWrapper().geoDistance(condition, column, distance, distanceUnit, centralGeoPoint, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notInGeoDistance(boolean condition, R column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
+        getWrapper().notInGeoDistance(condition, column, distance, distanceUnit, centralGeoPoint, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children geoDistance(boolean condition, R column, String distance, GeoPoint centralGeoPoint, Float boost) {
+        getWrapper().geoDistance(condition, column, distance, centralGeoPoint, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notInGeoDistance(boolean condition, R column, String distance, GeoPoint centralGeoPoint, Float boost) {
+        getWrapper().notInGeoDistance(condition, column, distance, centralGeoPoint, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children geoPolygon(boolean condition, R column, List<GeoPoint> geoPoints, Float boost) {
+        getWrapper().geoPolygon(condition, column, geoPoints, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notInGeoPolygon(boolean condition, R column, Collection<GeoPoint> geoPoints, Float boost) {
+        getWrapper().notInGeoPolygon(condition, column, geoPoints, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children geoShape(boolean condition, R column, String indexedShapeId, Float boost) {
+        getWrapper().geoShape(condition, column, indexedShapeId, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notInGeoShape(boolean condition, R column, String indexedShapeId, Float boost) {
+        getWrapper().notInGeoShape(condition, column, indexedShapeId, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children geoShape(boolean condition, R column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
+        getWrapper().geoShape(condition, column, geometry, shapeRelation, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notInGeoShape(boolean condition, R column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
+        getWrapper().notInGeoShape(condition, column, geometry, shapeRelation, boost);
         return typedThis;
     }
 }

@@ -1,5 +1,6 @@
 package com.xpc.easyes.core.toolkit;
 
+import com.xpc.easyes.core.anno.HighLightMappingField;
 import com.xpc.easyes.core.anno.TableField;
 import com.xpc.easyes.core.anno.TableId;
 import com.xpc.easyes.core.anno.TableName;
@@ -130,18 +131,17 @@ public class EntityInfoHelper {
                 }
             }
 
-            // 有 @TableField 注解的字段初始化
-            if (initTableFieldWithAnnotation(dbConfig, fieldList, field)) {
+            // 有 @TableField 等已知自定义注解的字段初始化
+            if (initTableFieldWithAnnotation(dbConfig, fieldList, field,entityInfo)) {
                 continue;
             }
 
-            // 无 @TableField 注解的字段初始化
+            // 无 @TableField 等已知自定义注解的字段初始化
             fieldList.add(new EntityFieldInfo(dbConfig, field));
         }
 
         // 字段列表
         entityInfo.setFieldList(fieldList);
-
     }
 
 
@@ -154,17 +154,26 @@ public class EntityInfoHelper {
      * @return
      */
     private static boolean initTableFieldWithAnnotation(GlobalConfig.DbConfig dbConfig,
-                                                        List<EntityFieldInfo> fieldList, Field field) {
-        // 获取注解属性，自定义字段
+                                                        List<EntityFieldInfo> fieldList, Field field, EntityInfo entityInfo) {
+        boolean hasAnnotation = false;
+
+        // 获取已知自定义注解
+        HighLightMappingField highLightMappingField = field.getAnnotation(HighLightMappingField.class);
         TableField tableField = field.getAnnotation(TableField.class);
-        if (null == tableField) {
-            return false;
+
+        if (Objects.nonNull(tableField) && tableField.exist()) {
+            // 存在字段处理
+            fieldList.add(new EntityFieldInfo(dbConfig, field, field.getName(), tableField));
+            hasAnnotation = true;
         }
 
-        if (tableField.exist()) {
-            fieldList.add(new EntityFieldInfo(dbConfig, field, field.getName(), tableField));
+        if (Objects.nonNull(highLightMappingField) && StringUtils.isNotBlank(highLightMappingField.value())) {
+            // 高亮映射字段处理
+            entityInfo.getHighlightFieldMap().putIfAbsent(highLightMappingField.value(),field.getName());
+            hasAnnotation = true;
         }
-        return true;
+
+        return hasAnnotation;
     }
 
 
@@ -189,13 +198,13 @@ public class EntityInfoHelper {
                 } else {
                     entityInfo.setIdType(tableId.type());
                 }
-
                 // 字段
                 String column = tableId.value();
                 field.setAccessible(Boolean.TRUE);
                 entityInfo.setClazz(field.getDeclaringClass())
                         .setKeyColumn(column)
                         .setKeyField(field)
+                        .setIdClass(field.getType())
                         .setKeyProperty(field.getName());
                 return true;
             } else {
@@ -227,6 +236,7 @@ public class EntityInfoHelper {
                         .setKeyColumn(DEFAULT_ES_ID_NAME)
                         .setKeyProperty(field.getName())
                         .setKeyField(field)
+                        .setIdClass(field.getType())
                         .setClazz(field.getDeclaringClass());
                 return true;
             } else {
