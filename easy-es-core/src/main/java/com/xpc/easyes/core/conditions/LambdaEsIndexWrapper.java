@@ -100,18 +100,19 @@ public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaE
     @Override
     public LambdaEsIndexWrapper<T> mapping(Map<String, Object> mapping) {
         this.mapping = mapping;
-        return null;
+        return typedThis;
     }
 
     @Override
     public LambdaEsIndexWrapper<T> mapping(SFunction<T, ?> column, FieldType fieldType, Analyzer analyzer, Analyzer searchAnalyzer) {
         String fieldName = FieldUtils.getFieldName(column);
-        EsIndexParam esIndexParam = new EsIndexParam();
-        esIndexParam.setFieldName(fieldName);
-        esIndexParam.setFieldType(fieldType.getType());
-        esIndexParam.setAnalyzer(analyzer);
-        esIndexParam.setSearchAnalyzer(searchAnalyzer);
-        esIndexParamList.add(esIndexParam);
+        addEsIndexParam(fieldName, fieldType, analyzer, analyzer);
+        return typedThis;
+    }
+
+    @Override
+    public LambdaEsIndexWrapper<T> mapping(String column, FieldType fieldType, Analyzer analyzer, Analyzer searchAnalyzer) {
+        addEsIndexParam(column, fieldType, analyzer, analyzer);
         return typedThis;
     }
 
@@ -125,5 +126,14 @@ public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaE
         }
         this.aliasName = aliasName;
         return typedThis;
+    }
+
+    private void addEsIndexParam(String fieldName, FieldType fieldType, Analyzer analyzer, Analyzer searchAnalyzer) {
+        EsIndexParam esIndexParam = new EsIndexParam();
+        esIndexParam.setFieldName(fieldName);
+        esIndexParam.setFieldType(fieldType.getType());
+        esIndexParam.setAnalyzer(analyzer);
+        esIndexParam.setSearchAnalyzer(searchAnalyzer);
+        esIndexParamList.add(esIndexParam);
     }
 }

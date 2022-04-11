@@ -72,6 +72,40 @@ public interface Index<Children, R> extends Serializable {
     Children mapping(R column, FieldType fieldType, Analyzer analyzer, Analyzer searchAnalyzer);
 
     /**
+     * 设置mapping信息
+     *
+     * @param column    列名
+     * @param fieldType es中的类型
+     * @return 泛型
+     */
+    default Children mapping(String column, FieldType fieldType) {
+        return mapping(column, fieldType, null);
+    }
+
+    /**
+     * 设置mapping信息
+     *
+     * @param column    列名
+     * @param fieldType es中的类型
+     * @param analyzer  分词器类型
+     * @return 泛型
+     */
+    default Children mapping(String column, FieldType fieldType, Analyzer analyzer) {
+        return mapping(column, fieldType, analyzer, null);
+    }
+
+    /**
+     * 设置mapping信息
+     *
+     * @param column         列名
+     * @param fieldType      es中的类型
+     * @param analyzer       分词器类型
+     * @param searchAnalyzer 查询分词器类型
+     * @return 泛型
+     */
+    Children mapping(String column, FieldType fieldType, Analyzer analyzer, Analyzer searchAnalyzer);
+
+    /**
      * 设置创建别名信息
      *
      * @param aliasName 别名

@@ -1,5 +1,8 @@
 package com.xpc.easyes.core.common;
 
+import com.alibaba.fastjson.PropertyNamingStrategy;
+import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
+import com.alibaba.fastjson.serializer.SerializeFilter;
 import com.xpc.easyes.core.enums.IdType;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -8,6 +11,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -61,9 +65,27 @@ public class EntityInfo {
     private Boolean hasIdAnnotation;
 
     /**
-     * 表字段->高亮返回结果 键值对
+     * fastjson字段名称过滤器
+     */
+    private SerializeFilter serializeFilter;
+
+    private PropertyNamingStrategy propertyNamingStrategy;
+
+    private ExtraProcessor extraProcessor;
+
+    /**
+     * 实体字段->高亮返回结果 键值对
      */
     private final Map<String, String> highlightFieldMap = new HashMap<>();
+    /**
+     * 实体字段->es实际字段映射
+     */
+    private final Map<String, String> mappingColumnMap = new HashMap<>();
+    /**
+     * es实际字段映射->实体字段 (仅包含被重命名字段)
+     */
+    private final Map<String, String> columnMappingMap = new HashMap<>();
+
 
     /**
      * 获取需要进行查询的字段列表
@@ -85,5 +107,16 @@ public class EntityInfo {
      */
     public String getId() {
         return keyColumn;
+    }
+
+    /**
+     * 获取实体字段映射es中的字段名
+     *
+     * @param column 字段名
+     * @return es中的字段名
+     */
+    public String getMappingColumn(String column) {
+        return Optional.ofNullable(mappingColumnMap.get(column))
+                .orElse(column);
     }
 }

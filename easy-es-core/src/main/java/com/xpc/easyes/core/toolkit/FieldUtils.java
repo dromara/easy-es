@@ -96,7 +96,7 @@ public class FieldUtils {
      * @param param 参数
      * @return 首字母大写后的结果
      */
-    private static String firstToUpperCase(String param) {
+    public static String firstToUpperCase(String param) {
         if (Objects.isNull(param) || "".equals(param)) {
             return "";
         }

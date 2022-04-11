@@ -1,5 +1,6 @@
 package com.xpc.easyes.core.common;
 
+import com.alibaba.fastjson.serializer.NameFilter;
 import com.xpc.easyes.core.anno.TableField;
 import com.xpc.easyes.core.config.GlobalConfig;
 import com.xpc.easyes.core.enums.FieldStrategy;
@@ -23,9 +24,13 @@ public class EntityFieldInfo {
      */
     private String ignoreColumn;
     /**
-     * 字段名
+     * 实体类字段名
      */
     private String column;
+    /**
+     * es中的字段名
+     */
+    private String mappingColumn;
     /**
      * 表名称
      */
@@ -68,30 +73,26 @@ public class EntityFieldInfo {
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     private String sqlSelect;
-
+    private NameFilter nameFilter;
 
     /**
      * 存在 TableField 注解时, 使用的构造函数
      *
      * @param dbConfig   索引配置
      * @param field      字段
-     * @param column     字段名
      * @param tableField 字段注解
      */
-    public EntityFieldInfo(GlobalConfig.DbConfig dbConfig, Field field,
-                           String column, TableField tableField) {
+    public EntityFieldInfo(GlobalConfig.DbConfig dbConfig, Field field, TableField tableField) {
         this.clazz = field.getDeclaringClass();
-        this.column = column;
-        /*
-         * 优先使用单个字段注解，否则使用全局配置
-         */
+        this.column = field.getName();
+
+        // 优先使用单个字段注解，否则使用全局配置
         if (tableField.strategy() == FieldStrategy.DEFAULT) {
             this.fieldStrategy = dbConfig.getFieldStrategy();
         } else {
             this.fieldStrategy = tableField.strategy();
         }
     }
-
 
     /**
      * 不存在 TableField 注解时, 使用的构造函数
@@ -104,4 +105,5 @@ public class EntityFieldInfo {
         this.clazz = field.getDeclaringClass();
         this.column = field.getName();
     }
+
 }

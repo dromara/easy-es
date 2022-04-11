@@ -109,6 +109,6 @@ public interface BaseEsConstants {
     /**
      * count DSL语句前缀
      */
-    String COUNT_DSL_PREFIX = "===> Execute Count DSL By Easy-Es: ";
+    String COUNT_DSL_PREFIX = "===> Execute Count DSL By Easy-Es(Note that size does not affect the total count): ";
 
 }

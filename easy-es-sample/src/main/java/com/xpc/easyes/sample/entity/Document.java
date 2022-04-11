@@ -50,10 +50,15 @@ public class Document {
      * 图形
      */
     private String geoLocation;
+    /**
+     * 自定义字段
+     */
+    @TableField(value = "wu-la")
+    private String customField;
 
     /**
      * 高亮返回值被映射的字段
      */
-    @HighLightMappingField("content")
+    @HighLightMappingField("customField")
     private String highlightContent;
 }

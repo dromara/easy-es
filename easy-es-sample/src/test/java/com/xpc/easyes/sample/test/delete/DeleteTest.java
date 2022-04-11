@@ -30,7 +30,7 @@ public class DeleteTest {
         // 测试删除数据 删除有两种情况:根据id删或根据条件删
         // 鉴于根据id删过于简单,这里仅演示根据条件删,以老李的名义删,让老李心理平衡些
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        String title = "隔壁老李";
+        String title = "小伙子";
         wrapper.eq(Document::getTitle, title);
         int successCount = documentMapper.delete(wrapper);
         System.out.println(successCount);
@@ -43,7 +43,7 @@ public class DeleteTest {
 //        System.out.println(successCount);
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.isNotNull(Document::getTitle)
-                .and(w -> w.eq(Document::getCreator, "老汉").or().eq(Document::getCreator, "老王"));
+                .and(w -> w.match(Document::getCustomField, "乌拉").or().eq(Document::getCustomField, "魔鬼"));
         int successCount = documentMapper.delete(wrapper);
         System.out.println(successCount);
     }

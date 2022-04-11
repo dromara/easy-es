@@ -17,7 +17,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
@@ -79,7 +78,7 @@ public class HighTest {
         // 测试聚合
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.likeRight(Document::getContent, "推");
-        wrapper.groupBy(Document::getCreator);
+        wrapper.groupBy(Document::getTitle);
         SearchResponse response = documentMapper.search(wrapper);
         System.out.println(response);
     }
@@ -109,20 +108,22 @@ public class HighTest {
     }
 
     @Test
-    public void testHighlight() throws IOException {
+    public void testHighlight(){
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        String keyword = "过硬";
-        wrapper.match(Document::getContent, keyword);
-        wrapper.highLight(Document::getContent);
-        SearchResponse response = documentMapper.search(wrapper);
-        System.out.println(response);
+        String keyword = "乌拉";
+        wrapper.match(Document::getCustomField, keyword);
+
+        // 0.9.7+ 版本可通过自定义注解@HighLightMappingField实现高亮字段与实体类字段绑定
+        wrapper.highLight(Document::getCustomField);
+        List<Document> documents = documentMapper.selectList(wrapper);
+        System.out.println(documents);
     }
 
     @Test
     public void testPageQuery() {
-        String creator = "老汉";
+        String customField = "乌拉";
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.eq(Document::getCreator, creator);
+        wrapper.match(Document::getCustomField, customField);
         PageInfo<Document> documentPageInfo = documentMapper.pageQuery(wrapper);
         System.out.println(documentPageInfo);
     }
@@ -130,8 +131,8 @@ public class HighTest {
     @Test
     public void testPageQueryWithPageParams(){
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.match(Document::getContent,"技术");
-        PageInfo<Document> documentPageInfo = documentMapper.pageQuery(wrapper, 1, 10);
+        wrapper.match(Document::getCustomField, "乌拉");
+        PageInfo<Document> documentPageInfo = documentMapper.pageQuery(wrapper, 1, 5);
         System.out.println(documentPageInfo);
     }
 
@@ -158,7 +159,7 @@ public class HighTest {
 
     @Test
     public void testSort(){
-        // 测试复杂排序,SortBuilder的子类非常多,这里仅演示一种, 比如有用户提出需要随机获取数据
+        // 测试复杂排序,SortBuilder的子类非常多,这里仅演示一种, 比如有用户提出需要随机获取数据 0.9.7+
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getContent,"技术");
         Script script = new Script("Math.random()");

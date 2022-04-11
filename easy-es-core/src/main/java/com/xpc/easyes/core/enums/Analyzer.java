@@ -18,5 +18,6 @@ public enum Analyzer {
     LANGUAGE,
     SNOWBALL,
     IK_SMART,
-    IK_MAX_WORD;
+    IK_MAX_WORD,
+    PINYIN,
 }

@@ -31,6 +31,10 @@ public interface PropertyKeyConstants {
      */
     String TABLE_PREFIX = "easy-es.global-config.db-config.table-prefix";
     /**
+     * 下划线转驼峰
+     */
+    String MAP_UNDERSCORE_TO_CAMEL_CASE = "easy-es.global-config.db-config.map-underscore-to-camel-case";
+    /**
      * es id类型
      */
     String ID_TYPE = "easy-es.global-config.db-config.id-type";

@@ -38,7 +38,7 @@ public class GeoTest {
         GeoPoint bottomRight = new GeoPoint(39.084509D, 117.610461D);
         wrapper.geoBoundingBox(Document::getLocation, leftTop, bottomRight);
         // 查不在此长方形内的所有点
-        // wrapper.notInGeoBoundingBox(Document::getLocation, leftTop, bottomRight);
+//         wrapper.notInGeoBoundingBox(Document::getLocation, leftTop, bottomRight);
         List<Document> documents = documentMapper.selectList(wrapper);
         documents.forEach(System.out::println);
     }

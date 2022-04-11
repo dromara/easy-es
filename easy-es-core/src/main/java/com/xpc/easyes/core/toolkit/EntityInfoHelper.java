@@ -1,9 +1,12 @@
 package com.xpc.easyes.core.toolkit;
 
+import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
+import com.alibaba.fastjson.serializer.NameFilter;
 import com.xpc.easyes.core.anno.HighLightMappingField;
 import com.xpc.easyes.core.anno.TableField;
 import com.xpc.easyes.core.anno.TableId;
 import com.xpc.easyes.core.anno.TableName;
+import com.xpc.easyes.core.cache.BaseCache;
 import com.xpc.easyes.core.cache.GlobalConfigCache;
 import com.xpc.easyes.core.common.EntityFieldInfo;
 import com.xpc.easyes.core.common.EntityInfo;
@@ -26,7 +29,6 @@ public class EntityInfoHelper {
      * 储存反射类表信息
      */
     private static final Map<Class<?>, EntityInfo> ENTITY_INFO_CACHE = new ConcurrentHashMap<>();
-
     /**
      * 默认主键名称
      */
@@ -96,7 +98,6 @@ public class EntityInfoHelper {
 
         // 放入缓存
         ENTITY_INFO_CACHE.put(clazz, entityInfo);
-
         return entityInfo;
     }
 
@@ -132,25 +133,70 @@ public class EntityInfoHelper {
             }
 
             // 有 @TableField 等已知自定义注解的字段初始化
-            if (initTableFieldWithAnnotation(dbConfig, fieldList, field,entityInfo)) {
+            if (initTableFieldWithAnnotation(dbConfig, fieldList, field, entityInfo)) {
                 continue;
             }
 
             // 无 @TableField 等已知自定义注解的字段初始化
-            fieldList.add(new EntityFieldInfo(dbConfig, field));
+            initTableFieldWithoutAnnotation(dbConfig, fieldList, field, entityInfo);
         }
 
         // 字段列表
         entityInfo.setFieldList(fieldList);
+
+        // 添加fastjson NameFilter
+        addNameFilter(entityInfo);
+
+        // 添加fastjson ExtraProcessor
+        addExtraProcessor(entityInfo);
     }
 
+    /**
+     * 预添加fastjson解析object时对非实体类字段的处理(比如自定义字段名,下划线等)
+     *
+     * @param entityInfo 实体信息
+     */
+    private static void addExtraProcessor(EntityInfo entityInfo) {
+        Map<String, String> columnMappingMap = entityInfo.getColumnMappingMap();
+        ExtraProcessor extraProcessor = (object, key, value) ->
+                Optional.ofNullable(columnMappingMap.get(key))
+                        .flatMap(realMethodName -> Optional.ofNullable(BaseCache.setterMethod(entityInfo.getClazz(), realMethodName)))
+                        .ifPresent(method -> {
+                            try {
+                                method.invoke(object, value);
+                            } catch (Throwable e) {
+                                e.printStackTrace();
+                            }
+                        });
+        entityInfo.setExtraProcessor(extraProcessor);
+    }
+
+    /**
+     * 添加fastjson字段过滤器
+     *
+     * @param entityInfo 实体信息
+     */
+    private static void addNameFilter(EntityInfo entityInfo) {
+        Map<String, String> mappingColumnMap = entityInfo.getMappingColumnMap();
+        if (!mappingColumnMap.isEmpty()) {
+            NameFilter nameFilter = (object, name, value) -> {
+                String mappingColumn = mappingColumnMap.get(name);
+                if (Objects.equals(mappingColumn, name)) {
+                    return name;
+                }
+                return mappingColumn;
+            };
+            entityInfo.setSerializeFilter(nameFilter);
+        }
+    }
 
     /**
      * 字段属性初始化
      *
-     * @param dbConfig  索引配置
-     * @param fieldList 字段列表
-     * @param field     字段
+     * @param dbConfig   索引配置
+     * @param fieldList  字段列表
+     * @param field      字段
+     * @param entityInfo 实体信息
      * @return
      */
     private static boolean initTableFieldWithAnnotation(GlobalConfig.DbConfig dbConfig,
@@ -163,17 +209,53 @@ public class EntityInfoHelper {
 
         if (Objects.nonNull(tableField) && tableField.exist()) {
             // 存在字段处理
-            fieldList.add(new EntityFieldInfo(dbConfig, field, field.getName(), tableField));
+            EntityFieldInfo entityFieldInfo = new EntityFieldInfo(dbConfig, field, tableField);
+
+            // 自定义字段名及驼峰下划线转换
+            String mappingColumn;
+            if (!StringUtils.isBlank(tableField.value().trim())) {
+                // 自定义注解指定的名称优先级最高
+                entityInfo.getMappingColumnMap().putIfAbsent(field.getName(), tableField.value());
+                entityInfo.getColumnMappingMap().putIfAbsent(tableField.value(), field.getName());
+                mappingColumn = tableField.value();
+            } else {
+                // 下划线驼峰
+                mappingColumn = initMappingColumnMapAndGet(dbConfig, entityInfo, field);
+            }
+            entityFieldInfo.setMappingColumn(mappingColumn);
+            fieldList.add(entityFieldInfo);
             hasAnnotation = true;
         }
 
         if (Objects.nonNull(highLightMappingField) && StringUtils.isNotBlank(highLightMappingField.value())) {
             // 高亮映射字段处理
-            entityInfo.getHighlightFieldMap().putIfAbsent(highLightMappingField.value(),field.getName());
+            String customField = entityInfo.getMappingColumnMap().get(highLightMappingField.value());
+            String realHighLightField = Objects.isNull(customField) ? highLightMappingField.value() : customField;
+            if (dbConfig.isMapUnderscoreToCamelCase()) {
+                realHighLightField = StringUtils.camelToUnderline(realHighLightField);
+            }
+            entityInfo.getHighlightFieldMap().putIfAbsent(realHighLightField, field.getName());
             hasAnnotation = true;
         }
 
         return hasAnnotation;
+    }
+
+    /**
+     * 字段属性初始化
+     *
+     * @param dbConfig   索引配置
+     * @param fieldList  字段列表
+     * @param field      字段
+     * @param entityInfo 实体信息
+     */
+    private static void initTableFieldWithoutAnnotation(GlobalConfig.DbConfig dbConfig,
+                                                        List<EntityFieldInfo> fieldList, Field field, EntityInfo entityInfo) {
+        EntityFieldInfo entityFieldInfo = new EntityFieldInfo(dbConfig, field);
+        entityFieldInfo.setMappingColumn(field.getName());
+        fieldList.add(entityFieldInfo);
+        // 初始化
+        initMappingColumnMapAndGet(dbConfig, entityInfo, field);
     }
 
 
@@ -320,5 +402,24 @@ public class EntityInfoHelper {
             targetIndexName = tablePrefix + targetIndexName;
         }
         entityInfo.setIndexName(targetIndexName);
+    }
+
+    /**
+     * 初始化实体类字段与es字段映射关系Map
+     *
+     * @param dbConfig   配置信息
+     * @param entityInfo 实体信息
+     * @param field      字段
+     * @return mappingColumn es中的字段名
+     */
+    private static String initMappingColumnMapAndGet(GlobalConfig.DbConfig dbConfig, EntityInfo entityInfo, Field field) {
+        // 自定义字段名及驼峰下划线转换
+        String mappingColumn = field.getName();
+        if (dbConfig.isMapUnderscoreToCamelCase()) {
+            // 下划线转驼峰
+            mappingColumn = StringUtils.camelToUnderline(field.getName());
+        }
+        entityInfo.getMappingColumnMap().putIfAbsent(field.getName(), mappingColumn);
+        return mappingColumn;
     }
 }

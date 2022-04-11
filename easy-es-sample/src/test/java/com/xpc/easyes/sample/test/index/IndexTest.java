@@ -13,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 索引测试
@@ -36,10 +38,12 @@ public class IndexTest {
 
         // 此处将文章标题映射为keyword类型(不支持分词),文档内容映射为text类型(支持分词查询)
         wrapper.mapping(Document::getTitle, FieldType.KEYWORD)
-                .mapping(Document::getCreator,FieldType.KEYWORD)
-                .mapping(Document::getLocation,FieldType.GEO_POINT)
-                .mapping(Document::getGeoLocation,FieldType.GEO_SHAPE)
-                .mapping(Document::getContent, FieldType.TEXT,Analyzer.IK_SMART,Analyzer.IK_SMART);
+                .mapping(Document::getLocation, FieldType.GEO_POINT)
+                .mapping(Document::getGeoLocation, FieldType.GEO_SHAPE)
+                .mapping(Document::getContent, FieldType.TEXT, Analyzer.IK_SMART, Analyzer.IK_SMART);
+
+        // 0.9.8+版本,增加对符串字段名称的支持,Document实体中须在对应字段上加上@Tablefield(value="wu-la")用于映射此字段值
+        wrapper.mapping("wu-la", FieldType.TEXT, Analyzer.IK_MAX_WORD, Analyzer.IK_MAX_WORD);
 
         // 设置分片及副本信息,可缺省
         wrapper.settings(3, 2);
@@ -80,6 +84,23 @@ public class IndexTest {
         // 指定要删除哪个索引
         String indexName = Document.class.getSimpleName().toLowerCase();
         boolean isOk = documentMapper.deleteIndex(indexName);
+        Assert.assertTrue(isOk);
+    }
+
+    @Test
+    public void testCreateIndexByMap() {
+        // 演示通过自定义map创建索引,最为灵活,若我提供的创建索引API不能满足时可用此方法
+        LambdaEsIndexWrapper<Document> wrapper = new LambdaEsIndexWrapper<>();
+        wrapper.indexName(Document.class.getSimpleName().toLowerCase());
+        wrapper.settings(3, 2);
+        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> prop = new HashMap<>();
+        Map<String, String> field = new HashMap<>();
+        field.put("type", FieldType.KEYWORD.getType());
+        prop.put("this_is_field", field);
+        map.put("properties", prop);
+        wrapper.mapping(map);
+        boolean isOk = documentMapper.createIndex(wrapper);
         Assert.assertTrue(isOk);
     }
 }

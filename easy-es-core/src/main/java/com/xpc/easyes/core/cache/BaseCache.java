@@ -40,6 +40,7 @@ public class BaseCache {
         BaseEsMapperImpl baseEsMapper = new BaseEsMapperImpl();
         baseEsMapper.setClient(client);
         Class<?> entityClass = TypeUtils.getInterfaceT(mapperInterface, 0);
+
         baseEsMapper.setEntityClass(entityClass);
         baseEsMapper.setGlobalConfig(GlobalConfigCache.getGlobalConfig());
         baseEsMapperInstanceMap.put(mapperInterface, baseEsMapper);
@@ -52,7 +53,7 @@ public class BaseCache {
                     String methodName = entityMethod.getName();
                     if (methodName.startsWith(GET_FUNC_PREFIX) || methodName.startsWith(IS_FUNC_PREFIX)
                             || methodName.startsWith(SET_FUNC_PREFIX)) {
-                        invokeMethodsMap.put(FieldUtils.resolveFieldName(methodName), entityMethod);
+                        invokeMethodsMap.put(methodName, entityMethod);
                     }
                 });
         baseEsEntityMethodMap.putIfAbsent(entityClass, invokeMethodsMap);
@@ -70,15 +71,28 @@ public class BaseCache {
     }
 
     /**
-     * 获取缓存中对应的entity的所有字段(字段注解策略生效)
+     * 获取缓存中对应entity和methodName的getter方法
      *
      * @param entityClass 实体
      * @param methodName  方法名
      * @return 执行方法
      */
-    public static Method getEsEntityInvokeMethod(Class<?> entityClass, String methodName) {
+    public static Method getterMethod(Class<?> entityClass, String methodName) {
         return Optional.ofNullable(baseEsEntityMethodMap.get(entityClass))
-                .map(b -> b.get(methodName))
+                .map(b -> b.get(GET_FUNC_PREFIX + FieldUtils.firstToUpperCase(methodName)))
+                .orElseThrow(() -> ExceptionUtils.eee("no such method:", entityClass, methodName));
+    }
+
+    /**
+     * 获取缓存中对应entity和methodName的setter方法
+     *
+     * @param entityClass 实体
+     * @param methodName  方法名
+     * @return 执行方法
+     */
+    public static Method setterMethod(Class<?> entityClass, String methodName){
+        return Optional.ofNullable(baseEsEntityMethodMap.get(entityClass))
+                .map(b -> b.get(SET_FUNC_PREFIX + FieldUtils.firstToUpperCase(methodName)))
                 .orElseThrow(() -> ExceptionUtils.eee("no such method:", entityClass, methodName));
     }
 }

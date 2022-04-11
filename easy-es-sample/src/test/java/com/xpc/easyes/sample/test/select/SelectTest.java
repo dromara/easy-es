@@ -40,7 +40,7 @@ public class SelectTest {
     @Test
     public void testSelectById() {
         // 测试根据id查询
-        String id = "VSkMUX0BUP1SGucePGhx";
+        String id = "OWELCIAB0E2Rzy0qtVNY";
         Document document = documentMapper.selectById(id);
         System.out.println(document);
     }
@@ -48,28 +48,27 @@ public class SelectTest {
     @Test
     public void testSelectList() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        String creator = "老汉";
-        wrapper.eq(Document::getCreator, creator);
-        wrapper.select(Document::getTitle, Document::getCreator);
-        wrapper.notSelect(Document::getTitle, Document::getContent);
+        String title = "老王";
+        wrapper.eq(Document::getTitle, title);
+        wrapper.select(Document::getCreator);
+        wrapper.notSelect(Document::getContent, Document::getGmtCreate);
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);
     }
 
     @Test
     public void testSelectBatchIds() {
-        List<String> ids = Arrays.asList("VSkMUX0BUP1SGucePGhx", "UykMUX0BUP1SGucePGhx");
+        List<String> ids = Arrays.asList("OmEQCIAB0E2Rzy0qHFNV", "UykMUX0BUP1SGucePGhx");
         List<Document> documents = documentMapper.selectBatchIds(ids);
         System.out.println(documents);
     }
 
     @Test
-    public void testtrackTotalHits(){
+    public void testTrackTotalHits() {
+        // 查询超过1w条时,trackTotalHits=true 会自动开启
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.limit(20000);
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents.size());
-        //打印语句
-        System.out.println(documentMapper.getSearchSourceBuilder(wrapper));
     }
 }

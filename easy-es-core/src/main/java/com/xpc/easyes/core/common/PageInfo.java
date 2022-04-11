@@ -84,6 +84,7 @@ public class PageInfo<T> extends PageSerializable<T> {
 
     /**
      * 包装Page对象
+     *
      * @param list 数据
      */
     public PageInfo(List<T> list) {
@@ -92,7 +93,8 @@ public class PageInfo<T> extends PageSerializable<T> {
 
     /**
      * 包装Page对象
-     * @param list 数据
+     *
+     * @param list          数据
      * @param navigatePages 导航页
      */
     public PageInfo(List<T> list, int navigatePages) {

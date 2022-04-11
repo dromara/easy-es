@@ -24,6 +24,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 
 import java.util.*;
@@ -37,6 +38,7 @@ import static com.xpc.easyes.core.constants.BaseEsConstants.DEFAULT_SCHEMA;
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 @Configuration
+@Order(Integer.MIN_VALUE)
 @EnableConfigurationProperties(EsConfigProperties.class)
 @ConditionalOnClass(RestHighLevelClient.class)
 @ConditionalOnProperty(prefix = "easy-es", name = {"enable"}, havingValue = "true", matchIfMissing = true)
@@ -123,6 +125,8 @@ public class EsAutoConfiguration implements InitializingBean, EnvironmentAware, 
                 .ifPresent(p -> globalConfig.setPrintDsl(Boolean.parseBoolean(p)));
         GlobalConfig.DbConfig dbConfig = new GlobalConfig.DbConfig();
         Optional.ofNullable(environment.getProperty(TABLE_PREFIX)).ifPresent(dbConfig::setTablePrefix);
+        Optional.ofNullable(environment.getProperty(MAP_UNDERSCORE_TO_CAMEL_CASE))
+                .ifPresent(p -> dbConfig.setMapUnderscoreToCamelCase(Boolean.parseBoolean(p)));
         Optional.ofNullable(environment.getProperty(ID_TYPE))
                 .ifPresent(i -> dbConfig.setIdType(Enum.valueOf(IdType.class, i.toUpperCase(Locale.ROOT))));
         Optional.ofNullable(environment.getProperty(FIELD_STRATEGY))

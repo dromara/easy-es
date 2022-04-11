@@ -31,6 +31,10 @@ public class GlobalConfig {
          */
         private String tablePrefix;
         /**
+         * 是否开启下划线转驼峰 默认不开启,与MP相反
+         */
+        private boolean mapUnderscoreToCamelCase = false;
+        /**
          * 字段验证策略 (默认 NOT NULL)
          */
         private FieldStrategy fieldStrategy = FieldStrategy.NOT_NULL;
