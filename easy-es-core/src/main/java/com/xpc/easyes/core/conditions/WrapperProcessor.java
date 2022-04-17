@@ -245,7 +245,7 @@ public class WrapperProcessor {
     private static void setGeoQuery(GeoParam geoParam, BoolQueryBuilder boolQueryBuilder, Class<?> entityClass) {
         // 获取配置信息
         Map<String, String> columnMappingMap = EntityInfoHelper.getEntityInfo(entityClass).getColumnMappingMap();
-        GlobalConfig.DbConfig dbConfig = getGlobalConfig().getDbConfig();
+        GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
 
         // 使用实际字段名称覆盖实体类字段名称
         String realField = getRealField(geoParam.getField(), columnMappingMap, dbConfig);
@@ -400,18 +400,6 @@ public class WrapperProcessor {
     }
 
     /**
-     * 获取全局配置
-     *
-     * @return 全局配置
-     */
-    private static GlobalConfig getGlobalConfig() {
-        GlobalConfig globalConfig = new GlobalConfig();
-        globalConfig.setDbConfig(new GlobalConfig.DbConfig());
-        return Optional.ofNullable(GlobalConfigCache.getGlobalConfig())
-                .orElse(globalConfig);
-    }
-
-    /**
      * 设置查询/不查询字段列表
      *
      * @param wrapper             参数包装类
@@ -423,7 +411,7 @@ public class WrapperProcessor {
             return;
         }
         // 获取配置
-        GlobalConfig.DbConfig dbConfig = getGlobalConfig().getDbConfig();
+        GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
         String[] includes = getRealFields(wrapper.include, columnMappingMap, dbConfig);
         String[] excludes = getRealFields(wrapper.exclude, columnMappingMap, dbConfig);
         searchSourceBuilder.fetchSource(includes, excludes);
@@ -439,7 +427,7 @@ public class WrapperProcessor {
      */
     private static void setHighLight(LambdaEsQueryWrapper<?> wrapper, Map<String, String> columnMappingMap, SearchSourceBuilder searchSourceBuilder) {
         // 获取配置
-        GlobalConfig.DbConfig dbConfig = getGlobalConfig().getDbConfig();
+        GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
 
         // 设置高亮字段
         if (!CollectionUtils.isEmpty(wrapper.highLightParamList)) {
@@ -473,7 +461,7 @@ public class WrapperProcessor {
      */
     private static void setSort(LambdaEsQueryWrapper<?> wrapper, Map<String, String> columnMappingMap, SearchSourceBuilder searchSourceBuilder) {
         // 获取配置
-        GlobalConfig.DbConfig dbConfig = getGlobalConfig().getDbConfig();
+        GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
 
         // 设置排序字段
         if (CollectionUtils.isNotEmpty(wrapper.sortParamList)) {
@@ -549,7 +537,7 @@ public class WrapperProcessor {
         }
 
         // 获取配置
-        GlobalConfig.DbConfig dbConfig = getGlobalConfig().getDbConfig();
+        GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
 
         // 批量封装聚合参数
         aggregationParamList.forEach(aggregationParam -> {

@@ -4,10 +4,14 @@ import com.xpc.easyes.core.conditions.LambdaEsQueryWrapper;
 import com.xpc.easyes.sample.entity.Document;
 import com.xpc.easyes.sample.mapper.DocumentMapper;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.xml.crypto.Data;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -37,6 +41,15 @@ public class TestController {
         return documentMapper.selectList(wrapper);
     }
 
+    @GetMapping("insert")
+    public Integer insert(){
+        Document document = new Document();
+        document.setTitle("测试1");
+        document.setContent("测试内容1");
+        document.setCreator("老汉");
+        document.setGmtCreate(LocalDateTime.now());
+        return documentMapper.insert(document);
+    }
 
     /**
      * 演示根据title删除文章，同时会被 DeleteInterceptor 拦截，执行逻辑删除

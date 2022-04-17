@@ -7,25 +7,13 @@ package com.xpc.easyes.autoconfig.constants;
  **/
 public interface PropertyKeyConstants {
     /**
-     * es 地址
-     */
-    String ADDRESS = "easy-es.address";
-    /**
-     * 属性
-     */
-    String SCHEMA = "easy-es.schema";
-    /**
-     * es用户名
-     */
-    String USERNAME = "easy-es.username";
-    /**
-     * es密码
-     */
-    String PASSWORD = "easy-es.password";
-    /**
      * 框架banner是否展示
      */
     String PRINT_DSL = "easy-es.global-config.print-dsl";
+    /**
+     * 自动托管索引模式
+     */
+    String PROCESS_INDEX_MODE = "easy-es.global-config.process_index_mode";
     /**
      * es索引前缀
      */

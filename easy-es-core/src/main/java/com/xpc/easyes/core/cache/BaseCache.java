@@ -3,7 +3,6 @@ package com.xpc.easyes.core.cache;
 import com.xpc.easyes.core.conditions.BaseEsMapperImpl;
 import com.xpc.easyes.core.toolkit.ExceptionUtils;
 import com.xpc.easyes.core.toolkit.FieldUtils;
-import com.xpc.easyes.core.toolkit.TypeUtils;
 import org.elasticsearch.client.RestHighLevelClient;
 
 import java.lang.reflect.Method;
@@ -35,11 +34,10 @@ public class BaseCache {
      * @param mapperInterface mapper接口
      * @param client          es客户端
      */
-    public static void initCache(Class<?> mapperInterface, RestHighLevelClient client) {
+    public static void initCache(Class<?> mapperInterface, Class<?> entityClass, RestHighLevelClient client) {
         // 初始化baseEsMapper的所有实现类实例
         BaseEsMapperImpl baseEsMapper = new BaseEsMapperImpl();
         baseEsMapper.setClient(client);
-        Class<?> entityClass = TypeUtils.getInterfaceT(mapperInterface, 0);
 
         baseEsMapper.setEntityClass(entityClass);
         baseEsMapper.setGlobalConfig(GlobalConfigCache.getGlobalConfig());
@@ -90,7 +88,7 @@ public class BaseCache {
      * @param methodName  方法名
      * @return 执行方法
      */
-    public static Method setterMethod(Class<?> entityClass, String methodName){
+    public static Method setterMethod(Class<?> entityClass, String methodName) {
         return Optional.ofNullable(baseEsEntityMethodMap.get(entityClass))
                 .map(b -> b.get(SET_FUNC_PREFIX + FieldUtils.firstToUpperCase(methodName)))
                 .orElseThrow(() -> ExceptionUtils.eee("no such method:", entityClass, methodName));

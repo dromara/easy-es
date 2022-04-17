@@ -3,7 +3,9 @@ package com.xpc.easyes.core.common;
 import com.alibaba.fastjson.serializer.NameFilter;
 import com.xpc.easyes.core.anno.TableField;
 import com.xpc.easyes.core.config.GlobalConfig;
+import com.xpc.easyes.core.enums.Analyzer;
 import com.xpc.easyes.core.enums.FieldStrategy;
+import com.xpc.easyes.core.enums.FieldType;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
@@ -28,39 +30,30 @@ public class EntityFieldInfo {
      */
     private String column;
     /**
+     * 字段类型,如Integer
+     */
+    private String columnType;
+    /**
      * es中的字段名
      */
     private String mappingColumn;
     /**
-     * 表名称
+     * 自动在es中的存储类型
      */
-    private String tableName;
+    private FieldType fieldType;
     /**
-     * 表映射结果集
+     * 分词器
      */
-    private String resultMap;
+    private Analyzer analyzer;
     /**
-     * 表主键ID 属性名
+     * 查询分词器
      */
-    private String keyProperty;
-    /**
-     * 表主键ID 字段名
-     */
-    private String keyColumn;
+    private Analyzer searchAnalyzer;
     /**
      * 字段策略 默认，自判断 null
      */
     private final FieldStrategy fieldStrategy;
-    /**
-     * 表字段信息列表
-     */
-    private List<EntityFieldInfo> fieldList;
 
-
-    /**
-     * 标记该字段属于哪个类
-     */
-    private Class<?> clazz;
     /**
      * 缓存包含主键及字段的 sql select
      */
@@ -83,7 +76,6 @@ public class EntityFieldInfo {
      * @param tableField 字段注解
      */
     public EntityFieldInfo(GlobalConfig.DbConfig dbConfig, Field field, TableField tableField) {
-        this.clazz = field.getDeclaringClass();
         this.column = field.getName();
 
         // 优先使用单个字段注解，否则使用全局配置
@@ -102,7 +94,6 @@ public class EntityFieldInfo {
      */
     public EntityFieldInfo(GlobalConfig.DbConfig dbConfig, Field field) {
         this.fieldStrategy = dbConfig.getFieldStrategy();
-        this.clazz = field.getDeclaringClass();
         this.column = field.getName();
     }
 

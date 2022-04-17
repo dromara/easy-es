@@ -3,6 +3,7 @@ package com.xpc.easyes.autoconfig.config;
 import com.xpc.easyes.autoconfig.constants.PropertyKeyConstants;
 import com.xpc.easyes.core.cache.GlobalConfigCache;
 import com.xpc.easyes.core.config.GlobalConfig;
+import com.xpc.easyes.core.enums.ProcessIndexStrategyEnum;
 import com.xpc.easyes.core.enums.FieldStrategy;
 import com.xpc.easyes.core.enums.IdType;
 import com.xpc.easyes.core.toolkit.ExceptionUtils;
@@ -57,7 +58,7 @@ public class EsAutoConfiguration implements InitializingBean, EnvironmentAware, 
     @ConditionalOnMissingBean
     public RestHighLevelClient restHighLevelClient() {
         // 处理地址
-        String address = environment.getProperty(ADDRESS);
+        String address = esConfigProperties.getAddress();
         if (StringUtils.isEmpty(address)) {
             throw ExceptionUtils.eee("please config the es address");
         }
@@ -120,9 +121,14 @@ public class EsAutoConfiguration implements InitializingBean, EnvironmentAware, 
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        // 全局配置
         GlobalConfig globalConfig = new GlobalConfig();
         Optional.ofNullable(environment.getProperty(PRINT_DSL))
                 .ifPresent(p -> globalConfig.setPrintDsl(Boolean.parseBoolean(p)));
+        Optional.ofNullable(environment.getProperty(PROCESS_INDEX_MODE))
+                .ifPresent(p -> globalConfig.setProcessIndexMode(ProcessIndexStrategyEnum.getStrategy(p)));
+
+        // 其它配置
         GlobalConfig.DbConfig dbConfig = new GlobalConfig.DbConfig();
         Optional.ofNullable(environment.getProperty(TABLE_PREFIX)).ifPresent(dbConfig::setTablePrefix);
         Optional.ofNullable(environment.getProperty(MAP_UNDERSCORE_TO_CAMEL_CASE))

@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
  **/
 @AllArgsConstructor
 public enum Analyzer {
+    NONE,
     STANDARD,
     SIMPLE,
     STOP,

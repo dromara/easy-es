@@ -1,5 +1,6 @@
 package com.xpc.easyes.core.anno;
 
+import com.xpc.easyes.core.enums.FieldType;
 import com.xpc.easyes.core.enums.IdType;
 
 import java.lang.annotation.ElementType;

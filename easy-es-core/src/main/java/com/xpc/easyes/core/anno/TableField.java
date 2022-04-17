@@ -1,6 +1,8 @@
 package com.xpc.easyes.core.anno;
 
+import com.xpc.easyes.core.enums.Analyzer;
 import com.xpc.easyes.core.enums.FieldStrategy;
+import com.xpc.easyes.core.enums.FieldType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -28,6 +30,27 @@ public @interface TableField {
      * @return 存在
      */
     boolean exist() default true;
+
+    /**
+     * 字段在es索引中的类型,建议根据业务场景指定,若不指定则由本框架自动推断
+     *
+     * @return 类型
+     */
+    FieldType fieldType() default FieldType.NONE;
+
+    /**
+     * 索引文档时用的分词器
+     *
+     * @return 分词器
+     */
+    Analyzer analyzer() default Analyzer.NONE;
+
+    /**
+     * 查询分词器
+     *
+     * @return 分词器
+     */
+    Analyzer searchAnalyzer() default Analyzer.NONE;
 
     /**
      * 字段验证策略

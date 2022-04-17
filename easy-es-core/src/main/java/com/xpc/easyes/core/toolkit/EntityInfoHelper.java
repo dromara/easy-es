@@ -223,6 +223,10 @@ public class EntityInfoHelper {
                 mappingColumn = initMappingColumnMapAndGet(dbConfig, entityInfo, field);
             }
             entityFieldInfo.setMappingColumn(mappingColumn);
+            entityFieldInfo.setAnalyzer(tableField.analyzer());
+            entityFieldInfo.setSearchAnalyzer(tableField.searchAnalyzer());
+            entityFieldInfo.setFieldType(tableField.fieldType());
+            entityFieldInfo.setColumnType(field.getType().getSimpleName());
             fieldList.add(entityFieldInfo);
             hasAnnotation = true;
         }
@@ -252,10 +256,12 @@ public class EntityInfoHelper {
     private static void initTableFieldWithoutAnnotation(GlobalConfig.DbConfig dbConfig,
                                                         List<EntityFieldInfo> fieldList, Field field, EntityInfo entityInfo) {
         EntityFieldInfo entityFieldInfo = new EntityFieldInfo(dbConfig, field);
-        entityFieldInfo.setMappingColumn(field.getName());
-        fieldList.add(entityFieldInfo);
+
         // 初始化
-        initMappingColumnMapAndGet(dbConfig, entityInfo, field);
+        String mappingColumn = initMappingColumnMapAndGet(dbConfig, entityInfo, field);
+        entityFieldInfo.setMappingColumn(mappingColumn);
+        entityFieldInfo.setColumnType(field.getType().getSimpleName());
+        fieldList.add(entityFieldInfo);
     }
 
 
@@ -395,6 +401,7 @@ public class EntityInfoHelper {
             } else {
                 indexName = tableName;
             }
+            entityInfo.setAliasName(table.aliasName());
         }
 
         String targetIndexName = indexName;

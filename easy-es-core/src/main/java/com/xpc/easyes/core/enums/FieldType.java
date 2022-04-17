@@ -11,6 +11,10 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum FieldType {
     /**
+     * none Required inside the framework, do not use 框架内部需要,切勿使用,若不慎使用则会被当做keyword类型
+     */
+    NONE("none"),
+    /**
      * core
      */
     BYTE("byte"),
@@ -48,4 +52,6 @@ public enum FieldType {
     PERCOLATOR("percolator");
     @Getter
     private String type;
+
+
 }

@@ -5,6 +5,7 @@ easy-es:
   username: elastic
   password: WG7WVmuNMtM4GwNYkyWH
   global-config:
+    process_index_mode: not_smoothly
     print-dsl: true
     db-config:
 #      map-underscore-to-camel-case: true

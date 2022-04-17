@@ -13,14 +13,12 @@ import com.xpc.easyes.core.conditions.interfaces.BaseEsMapper;
 import com.xpc.easyes.core.config.GlobalConfig;
 import com.xpc.easyes.core.constants.BaseEsConstants;
 import com.xpc.easyes.core.enums.FieldStrategy;
-import com.xpc.easyes.core.enums.FieldType;
 import com.xpc.easyes.core.enums.IdType;
+import com.xpc.easyes.core.params.CreateIndexParam;
 import com.xpc.easyes.core.params.EsIndexParam;
 import com.xpc.easyes.core.params.EsUpdateParam;
 import com.xpc.easyes.core.toolkit.*;
 import lombok.Setter;
-import org.elasticsearch.action.admin.indices.alias.Alias;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -37,11 +35,7 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.core.CountRequest;
 import org.elasticsearch.client.core.CountResponse;
-import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.CreateIndexResponse;
-import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.PutMappingRequest;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -91,48 +85,32 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         if (StringUtils.isEmpty(indexName)) {
             throw ExceptionUtils.eee("indexName can not be empty");
         }
-        GetIndexRequest getIndexRequest = new GetIndexRequest(indexName);
-        try {
-            return client.indices().exists(getIndexRequest, RequestOptions.DEFAULT);
-        } catch (IOException e) {
-            throw ExceptionUtils.eee("existIndex exception", e);
-        }
+        return IndexUtils.existsIndex(client, indexName);
     }
 
     @Override
     public Boolean createIndex(LambdaEsIndexWrapper<T> wrapper) {
-        CreateIndexRequest createIndexRequest = new CreateIndexRequest(wrapper.indexName);
+        // 初始化创建索引参数
+        CreateIndexParam createIndexParam = new CreateIndexParam();
+        createIndexParam.setIndexName(wrapper.indexName);
 
-        // 分片个副本信息
-        Settings.Builder settings = Settings.builder();
-        Optional.ofNullable(wrapper.shardsNum).ifPresent(shards -> settings.put(BaseEsConstants.SHARDS_FIELD, shards));
-        Optional.ofNullable(wrapper.replicasNum).ifPresent(replicas -> settings.put(BaseEsConstants.REPLICAS_FIELD, replicas));
-        createIndexRequest.settings(settings);
+        // 设置分片个副本信息
+        Optional.ofNullable(wrapper.shardsNum).ifPresent(createIndexParam::setShardsNum);
+        Optional.ofNullable(wrapper.replicasNum).ifPresent(createIndexParam::setReplicasNum);
 
-        // mapping信息
+        // 设置mapping信息
         if (Objects.isNull(wrapper.mapping)) {
             List<EsIndexParam> indexParamList = wrapper.esIndexParamList;
-            if (!CollectionUtils.isEmpty(indexParamList)) {
-                Map<String, Object> mapping = initMapping(indexParamList);
-                createIndexRequest.mapping(mapping);
-            }
+            createIndexParam.setEsIndexParamList(indexParamList);
         } else {
-            // 用户手动指定的mapping
-            createIndexRequest.mapping(wrapper.mapping);
+            createIndexParam.setMapping(wrapper.mapping);
         }
 
-        // 别名信息
-        Optional.ofNullable(wrapper.aliasName).ifPresent(aliasName -> {
-            Alias alias = new Alias(aliasName);
-            createIndexRequest.alias(alias);
-        });
-        try {
-            CreateIndexResponse createIndexResponse = client.indices().create(createIndexRequest, RequestOptions.DEFAULT);
-            return createIndexResponse.isAcknowledged();
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw ExceptionUtils.eee("create index exception", e, wrapper.indexName);
-        }
+        // 设置别名
+        Optional.ofNullable(wrapper.aliasName).ifPresent(createIndexParam::setAliasName);
+
+        // 创建索引
+        return IndexUtils.createIndex(client, createIndexParam);
     }
 
 
@@ -150,7 +128,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                 // 空参数列表,则不更新
                 return Boolean.FALSE;
             }
-            Map<String, Object> mapping = initMapping(wrapper.esIndexParamList);
+            Map<String, Object> mapping = IndexUtils.initMapping(wrapper.esIndexParamList);
             putMappingRequest.source(mapping);
         } else {
             // 用户自行指定的mapping信息
@@ -170,13 +148,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         if (StringUtils.isEmpty(indexName)) {
             throw ExceptionUtils.eee("indexName can not be empty");
         }
-        DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(indexName);
-        try {
-            AcknowledgedResponse response = client.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT);
-            return response.isAcknowledged();
-        } catch (IOException e) {
-            throw ExceptionUtils.eee("delete index exception, indexName:%s", e, indexName);
-        }
+        return IndexUtils.deleteIndex(client, indexName);
     }
 
     @Override
@@ -831,42 +803,6 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     }
 
     /**
-     * 初始化索引mapping
-     *
-     * @param indexParamList 索引参数列表
-     * @return 索引mapping
-     */
-    private Map<String, Object> initMapping(List<EsIndexParam> indexParamList) {
-        Map<String, Object> mapping = new HashMap<>(1);
-        Map<String, Object> properties = new HashMap<>(indexParamList.size());
-        indexParamList.forEach(indexParam -> {
-            Map<String, Object> info = new HashMap<>();
-            info.put(BaseEsConstants.TYPE, indexParam.getFieldType());
-            // 设置分词器
-            if (FieldType.TEXT.getType().equals(indexParam.getFieldType())) {
-                Optional.ofNullable(indexParam.getAnalyzer())
-                        .ifPresent(analyzer ->
-                                info.put(BaseEsConstants.ANALYZER, indexParam.getAnalyzer().toString().toLowerCase()));
-                Optional.ofNullable(indexParam.getSearchAnalyzer())
-                        .ifPresent(searchAnalyzer ->
-                                info.put(BaseEsConstants.SEARCH_ANALYZER, indexParam.getSearchAnalyzer().toString().toLowerCase()));
-            }
-
-            // 驼峰处理
-            GlobalConfig.DbConfig dbConfig = Optional.ofNullable(globalConfig)
-                    .map(GlobalConfig::getDbConfig)
-                    .orElse(new GlobalConfig.DbConfig());
-            String fieldName = indexParam.getFieldName();
-            if (dbConfig.isMapUnderscoreToCamelCase()) {
-                fieldName = StringUtils.camelToUnderline(fieldName);
-            }
-            properties.put(fieldName, info);
-        });
-        mapping.put(BaseEsConstants.PROPERTIES, properties);
-        return mapping;
-    }
-
-    /**
      * 从ES返回结果中解析出SearchHit[]
      *
      * @param searchResponse es返回的响应体
@@ -977,12 +913,10 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param wrapper
      */
     private void printDSL(LambdaEsQueryWrapper<T> wrapper) {
-        Optional.ofNullable(globalConfig)
-                .ifPresent(p -> {
-                    if (p.isPrintDsl()) {
-                        System.out.println(DSL_PREFIX + getSource(wrapper));
-                    }
-                });
+        if (globalConfig.isPrintDsl()) {
+            LogUtils.info(DSL_PREFIX + getSource(wrapper));
+        }
+
     }
 
     /**
@@ -991,12 +925,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param wrapper 查询参数包装类
      */
     private void printCountDSL(LambdaEsQueryWrapper<T> wrapper) {
-        Optional.ofNullable(globalConfig)
-                .ifPresent(p -> {
-                    if (p.isPrintDsl()) {
-                        System.out.println(COUNT_DSL_PREFIX + getSource(wrapper));
-                    }
-                });
+        if (globalConfig.isPrintDsl()) {
+            LogUtils.info(COUNT_DSL_PREFIX + getSource(wrapper));
+        }
     }
 
     /**
@@ -1005,12 +936,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param searchRequest es查询请求参数
      */
     private void printDSL(SearchRequest searchRequest) {
-        Optional.ofNullable(globalConfig)
-                .ifPresent(p -> {
-                    if (p.isPrintDsl() && Objects.nonNull(searchRequest)) {
-                        Optional.ofNullable(searchRequest.source())
-                                .ifPresent(source -> System.out.println(DSL_PREFIX + source));
-                    }
-                });
+        if (globalConfig.isPrintDsl() && Objects.nonNull(searchRequest)) {
+            Optional.ofNullable(searchRequest.source())
+                    .ifPresent(source -> LogUtils.info(DSL_PREFIX + source));
+        }
     }
 }

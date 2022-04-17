@@ -15,6 +15,10 @@ public interface BaseEsConstants {
      */
     Integer ONE = 1;
     /**
+     * 默认索引别名
+     */
+    String DEFAULT_ALIAS = "default_alias";
+    /**
      * 高亮默认前缀标签
      */
     String HIGH_LIGHT_PRE_TAG = "<em>";
@@ -110,5 +114,40 @@ public interface BaseEsConstants {
      * count DSL语句前缀
      */
     String COUNT_DSL_PREFIX = "===> Execute Count DSL By Easy-Es(Note that size does not affect the total count): ";
-
+    /**
+     * 分片数key
+     */
+    String SHARDS_NUM_KEY = "index.number_of_shards";
+    /**
+     * 副本数key
+     */
+    String REPLICAS_NUM_KEY = "index.number_of_replicas";
+    /**
+     * 默认迁移操作规则
+     */
+    String DEFAULT_DEST_OP_TYPE = "create";
+    /**
+     * 默认冲突处理
+     */
+    String DEFAULT_CONFLICTS = "proceed";
+    /**
+     * 更新索引时自动创建的索引后缀s 灵感来源于jvm young区s0,s1垃圾回收
+     */
+    String S_SUFFIX = "_s";
+    /**
+     * 更新索引时自动创建的索引后缀s0
+     */
+    String SO_SUFFIX = "_s0";
+    /**
+     * 更新索引时自动创建的索引后缀s1
+     */
+    String S1_SUFFIX = "_s1";
+    /**
+     * 分布式锁提示内容
+     */
+    String DISTRIBUTED_LOCK_TIP_JSON = "{\"tip\":\"Do not delete unless deadlock occurs\"}";
+    /**
+     * 获取/释放 分布式锁 最大失败重试次数
+     */
+    Integer LOCK_MAX_RETRY = 5;
 }

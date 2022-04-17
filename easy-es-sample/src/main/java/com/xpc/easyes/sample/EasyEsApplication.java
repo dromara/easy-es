@@ -16,5 +16,4 @@ public class EasyEsApplication {
         SpringApplication.run(EasyEsApplication.class, args);
     }
 
-
 }

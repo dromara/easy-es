@@ -1,5 +1,7 @@
 package com.xpc.easyes.core.anno;
 
+import com.xpc.easyes.core.constants.BaseEsConstants;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -19,6 +21,13 @@ public @interface TableName {
      * @return 默认为空
      */
     String value() default "";
+
+    /**
+     * 索引别名
+     *
+     * @return 别名
+     */
+    String aliasName() default BaseEsConstants.DEFAULT_ALIAS;
 
     /**
      * 是否保持使用全局的 tablePrefix 的值
