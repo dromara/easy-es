@@ -38,6 +38,7 @@ public class Plugin implements InvocationHandler {
      *
      * @param t           泛型
      * @param interceptor 拦截器
+     * @param <T>         泛型
      * @return 泛型
      */
     public static <T> T wrap(T t, Interceptor interceptor) {

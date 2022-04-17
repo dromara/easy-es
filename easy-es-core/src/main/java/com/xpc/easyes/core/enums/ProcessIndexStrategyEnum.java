@@ -1,6 +1,5 @@
 package com.xpc.easyes.core.enums;
 
-import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -34,7 +33,7 @@ public enum ProcessIndexStrategyEnum {
      * 根据配置获取策略类型
      *
      * @param value 配置内容
-     * @return
+     * @return 策略类型
      */
     public static Integer getStrategy(String value) {
         return Arrays.stream(ProcessIndexStrategyEnum.values())

@@ -22,7 +22,8 @@ public class InterceptorChain {
     /**
      * 装载拦截器
      *
-     * @param t 泛型
+     * @param t   泛型
+     * @param <T> 泛型
      * @return 泛型
      */
     public <T> T pluginAll(T t) {
@@ -35,7 +36,7 @@ public class InterceptorChain {
     /**
      * 添加拦截器
      *
-     * @param interceptor
+     * @param interceptor 拦截器
      */
     public void addInterceptor(Interceptor interceptor) {
         interceptors.add(interceptor);

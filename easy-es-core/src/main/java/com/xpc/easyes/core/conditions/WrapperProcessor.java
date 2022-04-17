@@ -41,7 +41,8 @@ public class WrapperProcessor {
     /**
      * 构建es查询入参
      *
-     * @param wrapper 条件
+     * @param wrapper     条件
+     * @param entityClass 实体类
      * @return ES查询参数
      */
     public static SearchSourceBuilder buildSearchSourceBuilder(LambdaEsQueryWrapper<?> wrapper, Class<?> entityClass) {
@@ -63,6 +64,7 @@ public class WrapperProcessor {
      * 初始化BoolQueryBuilder 整个框架的核心
      *
      * @param baseEsParamList 基础参数列表
+     * @param entityClass     实体类
      * @return BoolQueryBuilder
      */
     public static BoolQueryBuilder initBoolQueryBuilder(List<BaseEsParam> baseEsParamList, Class<?> entityClass) {

@@ -74,7 +74,7 @@ public interface Query<Children, T, R> extends Serializable {
      *
      * @param m offset偏移量,从第几条开始取,作用同from
      * @param n 查询条数,作用同size
-     * @return
+     * @return 泛型
      */
     Children limit(Integer m, Integer n);
 }

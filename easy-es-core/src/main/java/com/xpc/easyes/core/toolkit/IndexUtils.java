@@ -332,7 +332,7 @@ public class IndexUtils {
      * @param client           RestHighLevelClient
      * @param oldIndexName     旧索引
      * @param releaseIndexName 新索引
-     * @return
+     * @return 是否成功
      */
     public static boolean changeAliasAtomic(RestHighLevelClient client, String oldIndexName, String releaseIndexName) {
         IndicesAliasesRequest.AliasActions addIndexAction = new IndicesAliasesRequest.AliasActions(

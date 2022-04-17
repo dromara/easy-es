@@ -33,6 +33,7 @@ public class BaseCache {
      *
      * @param mapperInterface mapper接口
      * @param client          es客户端
+     * @param entityClass     实体类
      */
     public static void initCache(Class<?> mapperInterface, Class<?> entityClass, RestHighLevelClient client) {
         // 初始化baseEsMapper的所有实现类实例

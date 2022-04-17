@@ -68,7 +68,7 @@ public class EsConfigProperties {
     /**
      * 添加拦截器
      *
-     * @param interceptor
+     * @param interceptor 拦截器
      */
     public void addInterceptor(Interceptor interceptor) {
         interceptorChain.addInterceptor(interceptor);

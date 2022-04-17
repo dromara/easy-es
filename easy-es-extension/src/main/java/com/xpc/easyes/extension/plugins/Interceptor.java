@@ -14,12 +14,11 @@ public interface Interceptor {
 
     /**
      * 代理
-     *
      * @param t 泛型
+     * @param <T> 泛型
      * @return 泛型
      */
     default <T> T plugin(T t) {
         return Plugin.wrap(t, this);
     }
-
 }
