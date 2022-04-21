@@ -7,6 +7,10 @@ package com.xpc.easyes.core.constants;
  **/
 public interface BaseEsConstants {
     /**
+     * 配置前缀
+     */
+    String CONFIG_PREFIX = "easy-es-test";
+    /**
      * 数字0
      */
     Integer ZERO = 0;
@@ -59,10 +63,6 @@ public interface BaseEsConstants {
      */
     String SET_FUNC_PREFIX = "set";
     /**
-     * 获取id方法名
-     */
-    String GET_ID_FUNC = "getId";
-    /**
      * 基本数据类型的get方法前缀
      */
     String IS_FUNC_PREFIX = "Is";
@@ -82,6 +82,10 @@ public interface BaseEsConstants {
      * 字段类型
      */
     String TYPE = "type";
+    /**
+     * 日期格式化
+     */
+    String FORMAT = "format";
     /**
      * 分词器
      */
@@ -150,4 +154,12 @@ public interface BaseEsConstants {
      * 获取/释放 分布式锁 最大失败重试次数
      */
     Integer LOCK_MAX_RETRY = 5;
+    /**
+     * 默认分片数
+     */
+    int DEFAULT_SHARDS = 1;
+    /**
+     * 默认副本数
+     */
+    int DEFAULT_REPLICAS = 1;
 }

@@ -7,6 +7,7 @@ import com.xpc.easyes.core.params.CreateIndexParam;
 import com.xpc.easyes.core.params.EsIndexInfo;
 import com.xpc.easyes.core.toolkit.EntityInfoHelper;
 import com.xpc.easyes.core.toolkit.IndexUtils;
+import com.xpc.easyes.core.toolkit.LogUtils;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -30,6 +31,7 @@ public class AutoProcessIndexNotSmoothlyServiceImpl implements AutoProcessIndexS
 
     @Override
     public void processIndexAsync(Class<?> entityClass, RestHighLevelClient client) {
+        LogUtils.info("===> Not smoothly process index mode activated");
         IndexUtils.supplyAsync(this::process, entityClass, client);
     }
 
@@ -53,6 +55,7 @@ public class AutoProcessIndexNotSmoothlyServiceImpl implements AutoProcessIndexS
         // 索引是否有变化 若有则直接删除旧索引,创建新索引 若无则直接返回托管成功
         boolean isIndexNeedChange = IndexUtils.isIndexNeedChange(esIndexInfo, entityInfo);
         if (!isIndexNeedChange) {
+            LogUtils.info("===> index has nothing changed");
             entityInfo.setIndexName(entityInfo.getRetrySuccessIndexName());
             return Boolean.TRUE;
         }

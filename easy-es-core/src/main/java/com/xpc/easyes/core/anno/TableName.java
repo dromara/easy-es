@@ -7,6 +7,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import static com.xpc.easyes.core.constants.BaseEsConstants.DEFAULT_REPLICAS;
+import static com.xpc.easyes.core.constants.BaseEsConstants.DEFAULT_SHARDS;
+
 /**
  * 索引注解
  * <p>
@@ -21,6 +24,20 @@ public @interface TableName {
      * @return 默认为空
      */
     String value() default "";
+
+    /**
+     * 分片数
+     *
+     * @return 默认为1
+     */
+    int shardsNum() default DEFAULT_SHARDS;
+
+    /**
+     * 副本数
+     *
+     * @return 默认为1
+     */
+    int replicasNum() default DEFAULT_REPLICAS;
 
     /**
      * 索引别名

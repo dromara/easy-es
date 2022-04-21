@@ -15,11 +15,31 @@ public class LogUtils {
     private final static Logger log = Logger.getAnonymousLogger();
 
     /**
-     * 打印日志
+     * 打印info级别日志
      *
      * @param params 参数
      */
     public static void info(String... params) {
         log.info(String.join(",", params));
     }
+
+    /**
+     * 打印warn级别日志
+     *
+     * @param params 参数
+     */
+    public static void warn(String... params) {
+        log.warning(String.join(",", params));
+    }
+
+    /**
+     * 打印server(error)级别日志
+     *
+     * @param params 参数
+     */
+    public static void error(String... params) {
+        log.severe(String.join(",", params));
+    }
+
+
 }

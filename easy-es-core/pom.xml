@@ -7,13 +7,13 @@
     <parent>
         <groupId>io.github.xpc1024</groupId>
         <artifactId>easy-es-parent</artifactId>
-        <version>0.9.10</version>
+        <version>0.9.11</version>
         <relativePath>../easy-es-parent</relativePath>
     </parent>
 
     <groupId>io.github.xpc1024</groupId>
     <artifactId>easy-es-core</artifactId>
-    <version>0.9.10</version>
+    <version>0.9.11</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -36,6 +36,10 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>
     </dependencies>
 

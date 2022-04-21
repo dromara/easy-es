@@ -58,4 +58,11 @@ public @interface TableField {
      * @return 默认策略
      */
     FieldStrategy strategy() default FieldStrategy.DEFAULT;
+
+    /**
+     * es索引中的日期格式
+     *
+     * @return 日期格式 例如yyyy-MM-dd HH:mm:ss
+     */
+    String dateFormat() default "";
 }

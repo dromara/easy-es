@@ -1,55 +1,59 @@
 package com.xpc.easyes.core.config;
 
-import com.xpc.easyes.core.enums.ProcessIndexStrategyEnum;
 import com.xpc.easyes.core.enums.FieldStrategy;
 import com.xpc.easyes.core.enums.IdType;
+import com.xpc.easyes.core.enums.ProcessIndexStrategyEnum;
 import lombok.Data;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
+
+import static com.xpc.easyes.core.constants.BaseEsConstants.EMPTY_STR;
 
 /**
- * 全局配置
+ * easy-es全局置项
  * <p>
- * Copyright © 2021 xpc1024 All Rights Reserved
+ * Copyright © 2022 xpc1024 All Rights Reserved
  **/
 @Data
 public class GlobalConfig {
     /**
-     * 是否开启本框架执行的DSL语句控制台打印 默认开启,生产环境建议关闭
+     * whether to print dsl log 是否打印执行的dsl语句
      */
     private boolean printDsl = true;
     /**
-     * 自动托管索引模式 默认为平滑迁移
+     * process index mode Smoothly by default 索引处理模式 默认开启平滑模式
      */
-    private Integer processIndexMode = ProcessIndexStrategyEnum.SMOOTHLY.getStrategyType();
+    private ProcessIndexStrategyEnum processIndexMode = ProcessIndexStrategyEnum.SMOOTHLY;
     /**
-     * 数据库配置
+     * is distributed environment true by default 是否分布式环境 默认为是
      */
-    private DbConfig dbConfig;
+    private boolean distributed = true;
 
+    /**
+     * es db config 数据库配置
+     */
+    @NestedConfigurationProperty
+    private DbConfig dbConfig = new DbConfig();
+
+    /**
+     * es db config 数据库配置
+     */
     @Data
     public static class DbConfig {
         /**
-         * 主键类型（默认 AUTO）
+         * index prefix eg:daily_, 索引前缀 可缺省
          */
-        private IdType idType = IdType.AUTO;
+        private String tablePrefix = EMPTY_STR;
         /**
-         * 索引前缀
-         */
-        private String tablePrefix;
-        /**
-         * 是否开启下划线转驼峰 默认不开启,与MP相反
+         * enable underscore to camel case default false 是否开启下划线自动转驼峰 默认关闭
          */
         private boolean mapUnderscoreToCamelCase = false;
         /**
-         * 字段验证策略 (默认 NOT NULL)
+         * es id generate type. es id生成类型 默认由es自动生成
+         */
+        private IdType idType = IdType.NONE;
+        /**
+         * Field update strategy default nonNull 字段更新策略,默认非null
          */
         private FieldStrategy fieldStrategy = FieldStrategy.NOT_NULL;
-        /**
-         * 是否开启自动托管索引 默认开启
-         */
-        private boolean openAutoProcessIndex = true;
-        /**
-         * 是否分布式环境
-         */
-        private boolean isDistributed = false;
     }
 }

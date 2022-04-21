@@ -7,6 +7,7 @@ import com.xpc.easyes.core.params.CreateIndexParam;
 import com.xpc.easyes.core.params.EsIndexInfo;
 import com.xpc.easyes.core.toolkit.EntityInfoHelper;
 import com.xpc.easyes.core.toolkit.IndexUtils;
+import com.xpc.easyes.core.toolkit.LogUtils;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -31,6 +32,7 @@ public class AutoProcessIndexSmoothlyServiceImpl implements AutoProcessIndexServ
 
     @Override
     public void processIndexAsync(Class<?> entityClass, RestHighLevelClient client) {
+        LogUtils.info("===> Smoothly process index mode activated");
         IndexUtils.supplyAsync(this::process, entityClass, client);
     }
 
@@ -62,6 +64,7 @@ public class AutoProcessIndexSmoothlyServiceImpl implements AutoProcessIndexServ
         // 索引是否有变化 若有则创建新索引并无感迁移, 若无则直接返回托管成功
         boolean isIndexNeedChange = IndexUtils.isIndexNeedChange(esIndexInfo, entityInfo);
         if (!isIndexNeedChange) {
+            LogUtils.info("===> index has nothing changed");
             return Boolean.TRUE;
         }
 
@@ -70,24 +73,28 @@ public class AutoProcessIndexSmoothlyServiceImpl implements AutoProcessIndexServ
         entityInfo.setReleaseIndexName(releaseIndexName);
         boolean isCreateIndexSuccess = doCreateIndex(entityInfo, client);
         if (!isCreateIndexSuccess) {
+            LogUtils.error("create release index failed", "releaseIndex:" + releaseIndexName);
             return Boolean.FALSE;
         }
 
         //  迁移数据至新创建的索引
         boolean isDataMigrationSuccess = doDataMigration(entityInfo.getIndexName(), releaseIndexName, client);
         if (!isDataMigrationSuccess) {
+            LogUtils.error("migrate data failed", "oldIndex:" + entityInfo.getIndexName(), "releaseIndex:" + releaseIndexName);
             return Boolean.FALSE;
         }
 
         // 原子操作 切换别名:将默认别名关联至新索引,并将旧索引的默认别名移除
         boolean isChangeAliasSuccess = IndexUtils.changeAliasAtomic(client, entityInfo.getIndexName(), releaseIndexName);
         if (!isChangeAliasSuccess) {
+            LogUtils.error("change alias atomically failed", "oldIndex:" + entityInfo.getIndexName(), "releaseIndex:" + releaseIndexName);
             return Boolean.FALSE;
         }
 
         // 删除旧索引
         boolean isDeletedIndexSuccess = IndexUtils.deleteIndex(client, entityInfo.getIndexName());
         if (!isDeletedIndexSuccess) {
+            LogUtils.error("delete old index failed", "oldIndex:" + entityInfo.getIndexName());
             return Boolean.FALSE;
         }
 

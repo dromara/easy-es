@@ -2,7 +2,9 @@ package com.xpc.easyes.sample.test.ignore;
 
 import com.xpc.easyes.sample.EasyEsApplication;
 import com.xpc.easyes.sample.test.TestEasyEsApplication;
+import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -15,7 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 //@RunWith(SpringRunner.class)
 //@SpringBootTest(classes = TestEasyEsApplication.class)
 public class IgnoreTest {
-//    @Resource
+    //    @Resource
 //    DocumentMapper documentMapper;
 //    @Autowired
 //    private RestHighLevelClient client;

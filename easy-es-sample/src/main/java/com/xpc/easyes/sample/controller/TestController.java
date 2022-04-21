@@ -12,6 +12,9 @@ import javax.annotation.Resource;
 import javax.xml.crypto.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalField;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -47,7 +50,7 @@ public class TestController {
         document.setTitle("测试1");
         document.setContent("测试内容1");
         document.setCreator("老汉");
-        document.setGmtCreate(LocalDateTime.now());
+        document.setGmtCreate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         return documentMapper.insert(document);
     }
 

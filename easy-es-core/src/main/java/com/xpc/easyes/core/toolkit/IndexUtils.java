@@ -112,7 +112,7 @@ public class IndexUtils {
         try {
             createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
         } catch (IOException e) {
-            System.out.println("already created");
+            LogUtils.info("===> distribute lock index has created");
             return Boolean.TRUE;
         }
         return createIndexResponse.isAcknowledged();
@@ -303,6 +303,7 @@ public class IndexUtils {
 
         indexParamList.forEach(indexParam -> {
             Map<String, Object> info = new HashMap<>();
+            Optional.ofNullable(indexParam.getDateFormat()).ifPresent(format -> info.put(FORMAT, indexParam.getDateFormat()));
             info.put(BaseEsConstants.TYPE, indexParam.getFieldType());
             // 设置分词器
             if (FieldType.TEXT.getType().equals(indexParam.getFieldType())) {
@@ -408,6 +409,7 @@ public class IndexUtils {
                 String esFieldType = IndexUtils.getEsFieldType(field.getFieldType(), field.getColumnType());
                 esIndexParam.setFieldType(esFieldType);
                 esIndexParam.setFieldName(field.getMappingColumn());
+                esIndexParam.setDateFormat(field.getDateFormat());
                 if (!Analyzer.NONE.equals(field.getAnalyzer())) {
                     esIndexParam.setAnalyzer(field.getAnalyzer());
                 }
@@ -497,8 +499,8 @@ public class IndexUtils {
      */
     public static void supplyAsync(BiFunction<Class<?>, RestHighLevelClient, Boolean> biFunction, Class<?> entityClass, RestHighLevelClient client) {
         CompletableFuture.supplyAsync(() -> {
-            GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
-            if (!dbConfig.isDistributed()) {
+            GlobalConfig globalConfig = GlobalConfigCache.getGlobalConfig();
+            if (!globalConfig.isDistributed()) {
                 // 非分布式项目, 直接处理
                 return biFunction.apply(entityClass, client);
             }
@@ -506,21 +508,23 @@ public class IndexUtils {
                 // 尝试获取分布式锁
                 boolean lock = LockUtils.tryLock(client, entityClass.getSimpleName().toLowerCase(), LOCK_MAX_RETRY);
                 if (!lock) {
+                    LogUtils.warn("retry get distribute lock failed, please check whether other resources have been preempted or deadlocked");
                     return Boolean.FALSE;
                 }
                 return biFunction.apply(entityClass, client);
             } finally {
                 LockUtils.release(client, entityClass.getSimpleName().toLowerCase(), LOCK_MAX_RETRY);
             }
-        }).whenCompleteAsync((status, throwable) -> {
-            if (status) {
+        }).exceptionally((throwable) -> {
+            Optional.ofNullable(throwable).ifPresent(e -> LogUtils.error("process index exception", e.toString()));
+            return Boolean.FALSE;
+        }).whenCompleteAsync((success, throwable) -> {
+            if (success) {
                 LogUtils.info("===> Congratulations auto process index by Easy-Es is done !");
             } else {
-                LogUtils.info("===> Unfortunately, auto process index by Easy-Es failed, please check your configuration");
+                LogUtils.warn("===> Unfortunately, auto process index by Easy-Es failed, please check your configuration");
             }
-            Optional.ofNullable(throwable).ifPresent(Throwable::printStackTrace);
-        });
-
+        }).join();
     }
 
 }

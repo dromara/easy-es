@@ -12,7 +12,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.lang.reflect.Field;
-import java.util.List;
 
 /**
  * es实体字段信息
@@ -49,6 +48,10 @@ public class EntityFieldInfo {
      * 查询分词器
      */
     private Analyzer searchAnalyzer;
+    /**
+     * 用户配置的日期格式 例如yyyy-MM-dd HH:mm:ss
+     */
+    private String dateFormat;
     /**
      * 字段策略 默认，自判断 null
      */

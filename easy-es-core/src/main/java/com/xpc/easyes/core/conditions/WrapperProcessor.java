@@ -126,21 +126,21 @@ public class WrapperProcessor {
      */
     private static SearchSourceBuilder initSearchSourceBuilder(LambdaEsQueryWrapper<?> wrapper, Class<?> entityClass) {
         // 获取自定义字段map
-        Map<String, String> columnMappingMap = EntityInfoHelper.getEntityInfo(entityClass).getMappingColumnMap();
+        Map<String, String> mappingColumnMap = EntityInfoHelper.getEntityInfo(entityClass).getMappingColumnMap();
 
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
         // 设置高亮
-        setHighLight(wrapper, columnMappingMap, searchSourceBuilder);
+        setHighLight(wrapper, mappingColumnMap, searchSourceBuilder);
 
         // 设置用户指定的各种排序规则
-        setSort(wrapper, columnMappingMap, searchSourceBuilder);
+        setSort(wrapper, mappingColumnMap, searchSourceBuilder);
 
         // 设置查询或不查询字段
-        setFetchSource(wrapper, columnMappingMap, searchSourceBuilder);
+        setFetchSource(wrapper, mappingColumnMap, searchSourceBuilder);
 
         // 设置聚合参数
-        setAggregations(wrapper, columnMappingMap, searchSourceBuilder);
+        setAggregations(wrapper, mappingColumnMap, searchSourceBuilder);
 
         // 设置查询起止参数
         Optional.ofNullable(wrapper.from).ifPresent(searchSourceBuilder::from);
@@ -246,11 +246,11 @@ public class WrapperProcessor {
      */
     private static void setGeoQuery(GeoParam geoParam, BoolQueryBuilder boolQueryBuilder, Class<?> entityClass) {
         // 获取配置信息
-        Map<String, String> columnMappingMap = EntityInfoHelper.getEntityInfo(entityClass).getColumnMappingMap();
+        Map<String, String> mappingColumnMap = EntityInfoHelper.getEntityInfo(entityClass).getMappingColumnMap();
         GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
 
         // 使用实际字段名称覆盖实体类字段名称
-        String realField = getRealField(geoParam.getField(), columnMappingMap, dbConfig);
+        String realField = getRealField(geoParam.getField(), mappingColumnMap, dbConfig);
         geoParam.setField(realField);
 
         GeoBoundingBoxQueryBuilder geoBoundingBox = initGeoBoundingBoxQueryBuilder(geoParam);
@@ -405,17 +405,17 @@ public class WrapperProcessor {
      * 设置查询/不查询字段列表
      *
      * @param wrapper             参数包装类
-     * @param columnMappingMap    字段映射map
+     * @param mappingColumnMap    字段映射map
      * @param searchSourceBuilder 查询参数建造者
      */
-    private static void setFetchSource(LambdaEsQueryWrapper<?> wrapper, Map<String, String> columnMappingMap, SearchSourceBuilder searchSourceBuilder) {
+    private static void setFetchSource(LambdaEsQueryWrapper<?> wrapper, Map<String, String> mappingColumnMap, SearchSourceBuilder searchSourceBuilder) {
         if (ArrayUtils.isEmpty(wrapper.include) && ArrayUtils.isEmpty(wrapper.exclude)) {
             return;
         }
         // 获取配置
         GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
-        String[] includes = getRealFields(wrapper.include, columnMappingMap, dbConfig);
-        String[] excludes = getRealFields(wrapper.exclude, columnMappingMap, dbConfig);
+        String[] includes = getRealFields(wrapper.include, mappingColumnMap, dbConfig);
+        String[] excludes = getRealFields(wrapper.exclude, mappingColumnMap, dbConfig);
         searchSourceBuilder.fetchSource(includes, excludes);
     }
 
@@ -424,10 +424,10 @@ public class WrapperProcessor {
      * 设置高亮参数
      *
      * @param wrapper             参数包装类
-     * @param columnMappingMap    字段映射map
+     * @param mappingColumnMap    字段映射map
      * @param searchSourceBuilder 查询参数建造者
      */
-    private static void setHighLight(LambdaEsQueryWrapper<?> wrapper, Map<String, String> columnMappingMap, SearchSourceBuilder searchSourceBuilder) {
+    private static void setHighLight(LambdaEsQueryWrapper<?> wrapper, Map<String, String> mappingColumnMap, SearchSourceBuilder searchSourceBuilder) {
         // 获取配置
         GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
 
@@ -436,7 +436,7 @@ public class WrapperProcessor {
             wrapper.highLightParamList.forEach(highLightParam -> {
                 HighlightBuilder highlightBuilder = new HighlightBuilder();
                 highLightParam.getFields().forEach(field -> {
-                    String customField = columnMappingMap.get(field);
+                    String customField = mappingColumnMap.get(field);
                     if (Objects.nonNull(customField)) {
                         highlightBuilder.field(customField);
                     } else {
@@ -458,10 +458,10 @@ public class WrapperProcessor {
      * 设置排序参数
      *
      * @param wrapper             参数包装类
-     * @param columnMappingMap    字段映射map
+     * @param mappingColumnMap    字段映射map
      * @param searchSourceBuilder 查询参数建造者
      */
-    private static void setSort(LambdaEsQueryWrapper<?> wrapper, Map<String, String> columnMappingMap, SearchSourceBuilder searchSourceBuilder) {
+    private static void setSort(LambdaEsQueryWrapper<?> wrapper, Map<String, String> mappingColumnMap, SearchSourceBuilder searchSourceBuilder) {
         // 获取配置
         GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
 
@@ -471,7 +471,7 @@ public class WrapperProcessor {
                 SortOrder sortOrder = sortParam.getIsAsc() ? SortOrder.ASC : SortOrder.DESC;
                 sortParam.getFields().forEach(field -> {
                     FieldSortBuilder fieldSortBuilder;
-                    String customField = columnMappingMap.get(field);
+                    String customField = mappingColumnMap.get(field);
                     if (Objects.nonNull(customField)) {
                         fieldSortBuilder = new FieldSortBuilder(customField).order(sortOrder);
                     } else {
@@ -491,7 +491,7 @@ public class WrapperProcessor {
             wrapper.orderByParams.forEach(orderByParam -> {
                 // 设置排序字段
                 FieldSortBuilder fieldSortBuilder;
-                String customField = columnMappingMap.get(orderByParam.getOrder());
+                String customField = mappingColumnMap.get(orderByParam.getOrder());
                 if (Objects.nonNull(customField)) {
                     fieldSortBuilder = new FieldSortBuilder(customField);
                 } else {
@@ -528,10 +528,10 @@ public class WrapperProcessor {
      * 设置聚合参数
      *
      * @param wrapper             参数包装类
-     * @param columnMappingMap    字段映射map
+     * @param mappingColumnMap    字段映射map
      * @param searchSourceBuilder 查询参数建造者
      */
-    private static void setAggregations(LambdaEsQueryWrapper<?> wrapper, Map<String, String> columnMappingMap,
+    private static void setAggregations(LambdaEsQueryWrapper<?> wrapper, Map<String, String> mappingColumnMap,
                                         SearchSourceBuilder searchSourceBuilder) {
         List<AggregationParam> aggregationParamList = wrapper.aggregationParamList;
         if (CollectionUtils.isEmpty(aggregationParamList)) {
@@ -543,7 +543,7 @@ public class WrapperProcessor {
 
         // 批量封装聚合参数
         aggregationParamList.forEach(aggregationParam -> {
-            String realField = getRealField(aggregationParam.getField(), columnMappingMap, dbConfig);
+            String realField = getRealField(aggregationParam.getField(), mappingColumnMap, dbConfig);
             switch (aggregationParam.getAggregationType()) {
                 case AVG:
                     AvgAggregationBuilder avg = AggregationBuilders.avg(aggregationParam.getName()).field(realField);
@@ -577,12 +577,12 @@ public class WrapperProcessor {
      * 获取实际字段名
      *
      * @param field            原字段名
-     * @param columnMappingMap 字段映射关系map
+     * @param mappingColumnMap 字段映射关系map
      * @param dbConfig         配置
      * @return 实际字段名
      */
-    private static String getRealField(String field, Map<String, String> columnMappingMap, GlobalConfig.DbConfig dbConfig) {
-        String customField = columnMappingMap.get(field);
+    private static String getRealField(String field, Map<String, String> mappingColumnMap, GlobalConfig.DbConfig dbConfig) {
+        String customField = mappingColumnMap.get(field);
         if (Objects.nonNull(customField)) {
             return customField;
         } else {
@@ -598,13 +598,13 @@ public class WrapperProcessor {
      * 获取实际字段名数组
      *
      * @param fields           原字段名数组
-     * @param columnMappingMap 字段映射关系map
+     * @param mappingColumnMap 字段映射关系map
      * @param dbConfig         配置
      * @return 实际字段数组
      */
-    private static String[] getRealFields(String[] fields, Map<String, String> columnMappingMap, GlobalConfig.DbConfig dbConfig) {
+    private static String[] getRealFields(String[] fields, Map<String, String> mappingColumnMap, GlobalConfig.DbConfig dbConfig) {
         return Arrays.stream(fields)
-                .map(field -> getRealField(field, columnMappingMap, dbConfig))
+                .map(field -> getRealField(field, mappingColumnMap, dbConfig))
                 .collect(Collectors.toList())
                 .toArray(new String[]{});
     }

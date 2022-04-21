@@ -12,6 +12,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,14 +31,16 @@ public class InsertTest {
     public void testInsert() {
         // 测试插入数据
         Document document = new Document();
+        document.setId("1");
         document.setTitle("老汉");
         document.setContent("推*技术过硬");
         document.setCreator("糟老头子");
         document.setLocation("40.171975,116.587105");
-        document.setGmtCreate(LocalDateTime.now());
-        document.setCustomField("乌拉乌拉俄罗斯真刚");
+        document.setGmtCreate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        document.setCustomField("乌拉乌拉俄罗斯真刚1");
         Point point = new Point(13.400544, 52.530286);
         document.setGeoLocation(point.toString());
+        document.setStarNum(1);
         int successCount = documentMapper.insert(document);
         Assert.assertEquals(successCount, 1);
     }
@@ -45,11 +48,13 @@ public class InsertTest {
     @Test
     public void testInsertBatch() {
         List<Document> documentList = new ArrayList<>();
+        String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         Document document = new Document();
         document.setTitle("老王");
         document.setContent("推*技术过硬");
         document.setCreator("隔壁老王");
-        document.setGmtCreate(LocalDateTime.now());
+
+        document.setGmtCreate(now);
         document.setCustomField("乌拉巴拉小魔仙");
         document.setLocation("40.17836693398477,116.64002551005981");
 
@@ -57,7 +62,7 @@ public class InsertTest {
         document1.setTitle("老李");
         document1.setContent("推*技术过硬");
         document1.setCreator("隔壁老李");
-        document1.setGmtCreate(LocalDateTime.now());
+        document1.setGmtCreate(now);
         document1.setCustomField("魔鬼的步伐");
         document1.setLocation("40.19103839805197,116.5624013764374");
 
@@ -66,7 +71,7 @@ public class InsertTest {
         document2.setTitle("小伙子");
         document2.setContent("推*技术过硬");
         document2.setCreator("大猪蹄子");
-        document2.setGmtCreate(LocalDateTime.now());
+        document2.setGmtCreate(now);
         document2.setCustomField("锤子科技");
         document2.setLocation("40.13933715136454,116.63441990026217");
 

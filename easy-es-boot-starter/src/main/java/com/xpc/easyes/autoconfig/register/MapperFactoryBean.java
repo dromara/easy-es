@@ -1,6 +1,6 @@
 package com.xpc.easyes.autoconfig.register;
 
-import com.xpc.easyes.autoconfig.config.EsConfigProperties;
+import com.xpc.easyes.autoconfig.config.EasyEsConfigProperties;
 import com.xpc.easyes.autoconfig.factory.IndexStrategyFactory;
 import com.xpc.easyes.autoconfig.service.AutoProcessIndexService;
 import com.xpc.easyes.core.cache.BaseCache;
@@ -8,14 +8,17 @@ import com.xpc.easyes.core.cache.GlobalConfigCache;
 import com.xpc.easyes.core.config.GlobalConfig;
 import com.xpc.easyes.core.enums.ProcessIndexStrategyEnum;
 import com.xpc.easyes.core.proxy.EsMapperProxy;
+import com.xpc.easyes.core.toolkit.LogUtils;
 import com.xpc.easyes.core.toolkit.TypeUtils;
 import com.xpc.easyes.extension.anno.Intercepts;
 import com.xpc.easyes.extension.plugins.Interceptor;
 import com.xpc.easyes.extension.plugins.InterceptorChain;
+import com.xpc.easyes.extension.plugins.InterceptorChainHolder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import sun.dc.pr.PRError;
 
 import java.lang.reflect.Proxy;
 import java.util.Map;
@@ -35,10 +38,10 @@ public class MapperFactoryBean<T> implements FactoryBean<T> {
     private ApplicationContext applicationContext;
 
     @Autowired
-    private EsConfigProperties esConfigProperties;
+    private IndexStrategyFactory indexStrategyFactory;
 
     @Autowired
-    private IndexStrategyFactory indexStrategyFactory;
+    private EasyEsConfigProperties esConfigProperties;
 
     public MapperFactoryBean() {
     }
@@ -65,10 +68,13 @@ public class MapperFactoryBean<T> implements FactoryBean<T> {
         InterceptorChain interceptorChain = this.initInterceptorChain();
 
         // 异步处理索引创建/更新/数据迁移等
-        GlobalConfig globalConfig = GlobalConfigCache.getGlobalConfig();
-        if (!ProcessIndexStrategyEnum.MANUAL.getStrategyType().equals(globalConfig.getProcessIndexMode())) {
-            AutoProcessIndexService autoProcessIndexService = indexStrategyFactory.getByStrategyType(globalConfig.getProcessIndexMode());
+        GlobalConfig globalConfig = esConfigProperties.getGlobalConfig();
+        if (!ProcessIndexStrategyEnum.MANUAL.equals(globalConfig.getProcessIndexMode())) {
+            AutoProcessIndexService autoProcessIndexService = indexStrategyFactory
+                    .getByStrategyType(globalConfig.getProcessIndexMode().getStrategyType());
             autoProcessIndexService.processIndexAsync(entityClass, client);
+        }else {
+            LogUtils.info("===> manual index mode activated");
         }
         return interceptorChain.pluginAll(t);
     }
@@ -84,20 +90,21 @@ public class MapperFactoryBean<T> implements FactoryBean<T> {
     }
 
     private InterceptorChain initInterceptorChain() {
-        InterceptorChain interceptorChain = esConfigProperties.getInterceptorChain();
+        InterceptorChainHolder interceptorChainHolder = InterceptorChainHolder.getInstance();
+        InterceptorChain interceptorChain = interceptorChainHolder.getInterceptorChain();
         if (interceptorChain == null) {
             synchronized (this) {
-                esConfigProperties.initInterceptorChain();
+                interceptorChainHolder.initInterceptorChain();
                 Map<String, Object> beansWithAnnotation = this.applicationContext.getBeansWithAnnotation(Intercepts.class);
                 beansWithAnnotation.forEach((key, val) -> {
                     if (val instanceof Interceptor) {
                         Interceptor interceptor = (Interceptor) val;
-                        esConfigProperties.addInterceptor(interceptor);
+                        interceptorChainHolder.addInterceptor(interceptor);
                     }
                 });
             }
         }
-        return esConfigProperties.getInterceptorChain();
+        return interceptorChainHolder.getInterceptorChain();
     }
 
 }

@@ -26,4 +26,8 @@ public class EsIndexParam {
      * 查询分词器
      */
     private Analyzer searchAnalyzer;
+    /**
+     * 日期格式化 如yyyy-MM-dd HH:mm:ss
+     */
+    private String dateFormat;
 }
