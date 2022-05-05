@@ -12,7 +12,14 @@ import java.util.logging.Logger;
  **/
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class LogUtils {
-    private final static Logger log = Logger.getAnonymousLogger();
+    /**
+     * 日志打印工具名称
+     */
+    private final static String LOGGER_NAME = "easy-es";
+    /**
+     * logger
+     */
+    private final static Logger log = Logger.getLogger(LOGGER_NAME);
 
     /**
      * 打印info级别日志

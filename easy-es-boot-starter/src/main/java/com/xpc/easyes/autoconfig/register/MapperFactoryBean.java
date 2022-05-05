@@ -60,6 +60,7 @@ public class MapperFactoryBean<T> implements FactoryBean<T> {
 
         // 初始化缓存
         BaseCache.initCache(mapperInterface, entityClass, client);
+        GlobalConfigCache.setGlobalConfig(esConfigProperties.getGlobalConfig());
 
         // 创建代理
         T t = (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[]{mapperInterface}, esMapperProxy);

@@ -5,7 +5,7 @@
     <parent>
         <artifactId>easy-es-parent</artifactId>
         <groupId>io.github.xpc1024</groupId>
-        <version>0.9.11</version>
+        <version>0.9.12</version>
         <relativePath>../easy-es-parent</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -21,12 +21,12 @@
         <dependency>
             <groupId>io.github.xpc1024</groupId>
             <artifactId>easy-es-core</artifactId>
-            <version>0.9.11</version>
+            <version>0.9.12</version>
         </dependency>
         <dependency>
             <groupId>io.github.xpc1024</groupId>
             <artifactId>easy-es-extension</artifactId>
-            <version>0.9.11</version>
+            <version>0.9.12</version>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>

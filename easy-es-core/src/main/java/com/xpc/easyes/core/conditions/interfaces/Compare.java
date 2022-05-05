@@ -1,8 +1,10 @@
 package com.xpc.easyes.core.conditions.interfaces;
 
-import com.xpc.easyes.core.constants.BaseEsConstants;
+import org.elasticsearch.index.query.Operator;
 
 import java.io.Serializable;
+
+import static com.xpc.easyes.core.constants.BaseEsConstants.*;
 
 /**
  * 比较相关
@@ -19,7 +21,7 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     default Children eq(boolean condition, R column, Object val) {
-        return eq(condition, column, val, BaseEsConstants.DEFAULT_BOOST);
+        return eq(condition, column, val, DEFAULT_BOOST);
     }
 
     /**
@@ -42,7 +44,7 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     default Children ne(boolean condition, R column, Object val) {
-        return ne(condition, column, val, BaseEsConstants.DEFAULT_BOOST);
+        return ne(condition, column, val, DEFAULT_BOOST);
     }
 
     /**
@@ -65,7 +67,7 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     default Children match(boolean condition, R column, Object val) {
-        return match(condition, column, val, BaseEsConstants.DEFAULT_BOOST);
+        return match(condition, column, val, DEFAULT_BOOST);
     }
 
     /**
@@ -79,6 +81,170 @@ public interface Compare<Children, R> extends Serializable {
      */
     Children match(boolean condition, R column, Object val, Float boost);
 
+
+    default Children matchPhase(R column, Object val) {
+        return matchPhase(true, column, val, DEFAULT_BOOST);
+    }
+
+    default Children matchPhase(boolean condition, R colmun, Object val) {
+        return matchPhase(condition, colmun, val, DEFAULT_BOOST);
+    }
+
+    default Children matchPhase(R column, Object val, Float boost) {
+        return matchPhase(true, column, val, boost);
+    }
+
+    /**
+     * 分词匹配 需要结果中也包含所有的分词，且顺序一样
+     *
+     * @param condition 条件
+     * @param column    列
+     * @param val       值
+     * @param boost     权重值
+     * @return 泛型
+     */
+    Children matchPhase(boolean condition, R column, Object val, Float boost);
+
+
+    default Children matchAllQuery() {
+        return matchAllQuery(true);
+    }
+
+    /**
+     * 查询全部文档
+     *
+     * @param condition 条件
+     * @return 泛型
+     */
+    Children matchAllQuery(boolean condition);
+
+
+    default Children matchPhrasePrefixQuery(R column, Object val) {
+        return matchPhrasePrefixQuery(true, column, val, DEFAULT_MAX_EXPANSIONS, DEFAULT_BOOST);
+    }
+
+    default Children matchPhrasePrefixQuery(boolean condition, R column, Object val) {
+        return matchPhrasePrefixQuery(condition, column, val, DEFAULT_MAX_EXPANSIONS, DEFAULT_BOOST);
+    }
+
+    default Children matchPhrasePrefixQuery(R column, Object val, Float boost) {
+        return matchPhrasePrefixQuery(true, column, val, DEFAULT_MAX_EXPANSIONS, boost);
+    }
+
+    default Children matchPhrasePrefixQuery(R column, Object val, int maxExpansions) {
+        return matchPhrasePrefixQuery(true, column, val, maxExpansions, DEFAULT_BOOST);
+    }
+
+    default Children matchPhrasePrefixQuery(R column, Object val, int maxExpansions, Float boost) {
+        return matchPhrasePrefixQuery(true, column, val, maxExpansions, boost);
+    }
+
+    /**
+     * 前缀匹配
+     *
+     * @param condition     条件
+     * @param column        列
+     * @param val           值
+     * @param maxExpansions 最大扩展数
+     * @param boost         权重值
+     * @return 泛型
+     */
+    Children matchPhrasePrefixQuery(boolean condition, R column, Object val, int maxExpansions, Float boost);
+
+
+    default Children multiMatchQuery(Object val, R... columns) {
+        return multiMatchQuery(true, val, columns);
+    }
+
+    default Children multiMatchQuery(boolean condition, Object val, R... columns) {
+        return multiMatchQuery(condition, val, Operator.OR, DEFAULT_MIN_SHOULD_MATCH, DEFAULT_BOOST, columns);
+    }
+
+    default Children multiMatchQuery(Object val, Float boost, R... columns) {
+        return multiMatchQuery(true, val, Operator.OR, DEFAULT_MIN_SHOULD_MATCH, boost, columns);
+    }
+
+    default Children multiMatchQuery(Object val, int minimumShouldMatch, R... columns) {
+        return multiMatchQuery(true, val, Operator.OR, minimumShouldMatch, DEFAULT_BOOST, columns);
+    }
+
+    default Children multiMatchQuery(Object val, Operator operator, int minimumShouldMatch, R... columns) {
+        return multiMatchQuery(true, val, operator, minimumShouldMatch, DEFAULT_BOOST, columns);
+    }
+
+    default Children multiMatchQuery(Object val, Operator operator, R... columns) {
+        return multiMatchQuery(true, val, operator, DEFAULT_MIN_SHOULD_MATCH, DEFAULT_BOOST, columns);
+    }
+
+    default Children multiMatchQuery(Object val, int minimumShouldMatch, Float boost, R... columns) {
+        return multiMatchQuery(true, val, Operator.OR, minimumShouldMatch, boost, columns);
+    }
+
+    default Children multiMatchQuery(Object val, Operator operator, Float boost, R... columns) {
+        return multiMatchQuery(true, val, operator, DEFAULT_MIN_SHOULD_MATCH, boost, columns);
+    }
+
+    default Children multiMatchQuery(Object val, Operator operator, int minimumShouldMatch, Float boost, R... columns) {
+        return multiMatchQuery(true, val, operator, minimumShouldMatch, boost, columns);
+    }
+
+    /**
+     * 多字段匹配
+     *
+     * @param condition          条件
+     * @param val                值
+     * @param boost              权重
+     * @param columns            字段列表
+     * @param operator           操作类型 or and
+     * @param minimumShouldMatch 最小匹配度 百分比
+     * @return 泛型
+     */
+    Children multiMatchQuery(boolean condition, Object val, Operator operator, int minimumShouldMatch, Float boost, R... columns);
+
+
+    default Children queryStringQuery(String queryString) {
+        return queryStringQuery(true, queryString, DEFAULT_BOOST);
+    }
+
+    default Children queryStringQuery(String queryString, Float boost) {
+        return queryStringQuery(true, queryString, boost);
+    }
+
+    /**
+     * 所有字段中搜索
+     *
+     * @param condition   条件
+     * @param queryString 查询内容
+     * @param boost       权重值
+     * @return 泛型
+     */
+    Children queryStringQuery(boolean condition, String queryString, Float boost);
+
+
+    default Children prefixQuery(R column, String prefix) {
+        return prefixQuery(true, column, prefix);
+    }
+
+    default Children prefixQuery(boolean condition, R column, String prefix) {
+        return prefixQuery(true, column, prefix, DEFAULT_BOOST);
+    }
+
+    default Children prefixQuery(R column, String prefix, Float boost) {
+        return prefixQuery(true, column, prefix, boost);
+    }
+
+    /**
+     * 前缀匹配搜索
+     *
+     * @param condition 条件
+     * @param column    列
+     * @param prefix    前缀
+     * @param boost     权重值
+     * @return 泛型
+     */
+    Children prefixQuery(boolean condition, R column, String prefix, Float boost);
+
+
     default Children notMatch(R column, Object val) {
         return notMatch(true, column, val);
     }
@@ -88,7 +254,7 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     default Children notMatch(boolean condition, R column, Object val) {
-        return notMatch(condition, column, val, BaseEsConstants.DEFAULT_BOOST);
+        return notMatch(condition, column, val, DEFAULT_BOOST);
     }
 
     /**
@@ -111,7 +277,7 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     default Children gt(boolean condition, R column, Object val) {
-        return gt(condition, column, val, BaseEsConstants.DEFAULT_BOOST);
+        return gt(condition, column, val, DEFAULT_BOOST);
     }
 
     /**
@@ -134,7 +300,7 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     default Children ge(boolean condition, R column, Object val) {
-        return ge(condition, column, val, BaseEsConstants.DEFAULT_BOOST);
+        return ge(condition, column, val, DEFAULT_BOOST);
     }
 
     /**
@@ -157,7 +323,7 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     default Children lt(boolean condition, R column, Object val) {
-        return lt(condition, column, val, BaseEsConstants.DEFAULT_BOOST);
+        return lt(condition, column, val, DEFAULT_BOOST);
     }
 
     /**
@@ -180,7 +346,7 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     default Children le(boolean condition, R column, Object val) {
-        return le(condition, column, val, BaseEsConstants.DEFAULT_BOOST);
+        return le(condition, column, val, DEFAULT_BOOST);
     }
 
     /**
@@ -203,7 +369,7 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     default Children between(boolean condition, R column, Object val1, Object val2) {
-        return between(condition, column, val1, val2, BaseEsConstants.DEFAULT_BOOST);
+        return between(condition, column, val1, val2, DEFAULT_BOOST);
     }
 
     /**
@@ -228,7 +394,7 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     default Children notBetween(boolean condition, R column, Object val1, Object val2) {
-        return notBetween(condition, column, val1, val2, BaseEsConstants.DEFAULT_BOOST);
+        return notBetween(condition, column, val1, val2, DEFAULT_BOOST);
     }
 
     /**
@@ -252,7 +418,7 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     default Children like(boolean condition, R column, Object val) {
-        return like(condition, column, val, BaseEsConstants.DEFAULT_BOOST);
+        return like(condition, column, val, DEFAULT_BOOST);
     }
 
     /**
@@ -275,7 +441,7 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     default Children notLike(boolean condition, R column, Object val) {
-        return notLike(condition, column, val, BaseEsConstants.DEFAULT_BOOST);
+        return notLike(condition, column, val, DEFAULT_BOOST);
     }
 
     /**
@@ -290,7 +456,7 @@ public interface Compare<Children, R> extends Serializable {
     Children notLike(boolean condition, R column, Object val, Float boost);
 
     default Children likeLeft(R column, Object val) {
-        return likeLeft(true, column, val, BaseEsConstants.DEFAULT_BOOST);
+        return likeLeft(true, column, val, DEFAULT_BOOST);
     }
 
     default Children likeLeft(R column, Object val, Float boost) {
@@ -310,7 +476,7 @@ public interface Compare<Children, R> extends Serializable {
 
 
     default Children likeRight(R column, Object val) {
-        return likeRight(true, column, val, BaseEsConstants.DEFAULT_BOOST);
+        return likeRight(true, column, val, DEFAULT_BOOST);
     }
 
 

@@ -28,6 +28,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
@@ -43,6 +44,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.metrics.ParsedCardinality;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 
@@ -51,6 +53,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static com.xpc.easyes.core.conditions.WrapperProcessor.buildSearchSourceBuilder;
@@ -146,20 +149,31 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     }
 
     @Override
-    public SearchResponse search(LambdaEsQueryWrapper<T> wrapper) throws IOException {
+    public SearchResponse search(LambdaEsQueryWrapper<T> wrapper) {
         // 构建es restHighLevel 查询参数
         SearchRequest searchRequest = new SearchRequest(getIndexName());
         SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper, entityClass);
         searchRequest.source(searchSourceBuilder);
         printDSL(wrapper);
         // 执行查询
-        return client.search(searchRequest, RequestOptions.DEFAULT);
+        SearchResponse response;
+        try {
+            response = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw ExceptionUtils.eee("search exception", e);
+        }
+        return response;
     }
 
     @Override
     public SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions) throws IOException {
         printDSL(searchRequest);
         return client.search(searchRequest, requestOptions);
+    }
+
+    @Override
+    public SearchResponse scroll(SearchScrollRequest searchScrollRequest, RequestOptions requestOptions) throws IOException {
+        return client.scroll(searchScrollRequest, requestOptions);
     }
 
     @Override
@@ -179,6 +193,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     }
 
     @Override
+    @Deprecated
     public PageInfo<SearchHit> pageQueryOriginal(LambdaEsQueryWrapper<T> wrapper) throws IOException {
         return this.pageQueryOriginal(wrapper, BaseEsConstants.PAGE_NUM, BaseEsConstants.PAGE_SIZE);
     }
@@ -198,31 +213,43 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     }
 
     @Override
-    public PageInfo<T> pageQuery(LambdaEsQueryWrapper<T> wrapper) {
-        return initPageInfo(wrapper, BaseEsConstants.PAGE_NUM, BaseEsConstants.PAGE_SIZE);
-    }
-
-    @Override
     public PageInfo<T> pageQuery(LambdaEsQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
-        return initPageInfo(wrapper, pageNum, pageSize);
+        // 兼容分页参数
+        pageNum = pageNum == null || pageNum <= ZERO ? BaseEsConstants.PAGE_NUM : pageNum;
+        pageSize = pageSize == null || pageSize <= ZERO ? BaseEsConstants.PAGE_SIZE : pageSize;
+        wrapper.from((pageNum - 1) * pageSize);
+        wrapper.size(pageSize);
+
+        // 请求es获取数据
+        SearchResponse response = getSearchResponse(wrapper);
+
+        // 解析数据
+        SearchHit[] searchHits = parseSearchHitArray(response);
+        List<T> dataList = Arrays.stream(searchHits).map(this::parseOne).collect(Collectors.toList());
+        long count = parseCount(response, Objects.nonNull(wrapper.distinctField));
+        return PageHelper.getPageInfo(dataList, count, pageNum, pageSize);
     }
 
-
     @Override
-    public Long selectCount(LambdaEsQueryWrapper<T> wrapper) {
-        CountRequest countRequest = new CountRequest(getIndexName());
-        BoolQueryBuilder boolQueryBuilder = initBoolQueryBuilder(wrapper.baseEsParamList, entityClass);
-        countRequest.query(boolQueryBuilder);
-        CountResponse count;
-        try {
-            printCountDSL(wrapper);
-            count = client.count(countRequest, RequestOptions.DEFAULT);
-        } catch (IOException e) {
-            throw ExceptionUtils.eee("selectCount exception", e);
+    public Long selectCount(LambdaEsQueryWrapper<T> wrapper, boolean distinct) {
+        if (distinct) {
+            // 去重, 总数来源于桶
+            SearchResponse response = getSearchResponse(wrapper);
+            return parseCount(response, Objects.nonNull(wrapper.distinctField));
+        } else {
+            // 不去重,直接count获取,效率更高
+            CountRequest countRequest = new CountRequest(getIndexName());
+            BoolQueryBuilder boolQueryBuilder = initBoolQueryBuilder(wrapper.baseEsParamList, entityClass);
+            countRequest.query(boolQueryBuilder);
+            CountResponse count;
+            try {
+                printCountDSL(wrapper);
+                count = client.count(countRequest, RequestOptions.DEFAULT);
+            } catch (IOException e) {
+                throw ExceptionUtils.eee("selectCount exception", e);
+            }
+            return count.getCount();
         }
-        return Optional.ofNullable(count)
-                .map(CountResponse::getCount)
-                .orElseThrow(() -> ExceptionUtils.eee("get long count exception"));
     }
 
     @Override
@@ -330,6 +357,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 构建更新请求参数
         UpdateRequest updateRequest = buildUpdateRequest(entity, idValue);
 
+        // 执行更新
         try {
             UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
             if (Objects.equals(updateResponse.status(), RestStatus.OK)) {
@@ -535,36 +563,27 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         return updateRequest;
     }
 
-
     /**
-     * 初始化分页数据
+     * 解析获取据数总数
      *
-     * @param wrapper  条件
-     * @param pageNum  当前页
-     * @param pageSize 每页条数
-     * @return 分页数据
+     * @param response es返回的数据
+     * @param distinct 是否去重统计
+     * @return 总数
      */
-    private PageInfo<T> initPageInfo(LambdaEsQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
-        long total = this.selectCount(wrapper);
-        if (total <= ZERO) {
-            return new PageInfo<>();
+    private long parseCount(SearchResponse response, boolean distinct) {
+        AtomicLong repeatNum = new AtomicLong(0);
+        if (distinct) {
+            Optional.ofNullable(response.getAggregations())
+                    .ifPresent(aggregations -> {
+                        ParsedCardinality parsedCardinality = aggregations.get(REPEAT_NUM_KEY);
+                        Optional.ofNullable(parsedCardinality).ifPresent(p -> repeatNum.getAndAdd(p.getValue()));
+                    });
+        } else {
+            Optional.ofNullable(response.getHits())
+                    .flatMap(searchHits -> Optional.ofNullable(searchHits.getTotalHits()))
+                    .ifPresent(totalHits -> repeatNum.getAndAdd(totalHits.value));
         }
-
-        // 请求es获取数据
-        pageNum = pageNum == null || pageNum <= ZERO ? BaseEsConstants.PAGE_NUM : pageNum;
-        pageSize = pageSize == null || pageSize <= ZERO ? BaseEsConstants.PAGE_SIZE : pageSize;
-        SearchHit[] searchHitArray;
-        try {
-            searchHitArray = getSearchHitArray(wrapper, pageNum, pageSize);
-        } catch (IOException e) {
-            throw ExceptionUtils.eee("page select exception:%s", e);
-        }
-
-        // 解析请求结果
-        List<T> list = Arrays.stream(searchHitArray)
-                .map(searchHit -> parseOne(searchHit, wrapper))
-                .collect(Collectors.toList());
-        return PageHelper.getPageInfo(list, total, pageNum, pageSize);
+        return repeatNum.get();
     }
 
     /**
@@ -611,6 +630,16 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
 
         return entity;
+    }
+
+    /**
+     * 获取es搜索响应体
+     *
+     * @param wrapper 条件
+     * @return 搜索响应体
+     */
+    private SearchResponse getSearchResponse(LambdaEsQueryWrapper<T> wrapper) {
+        return search(wrapper);
     }
 
     /**
@@ -811,7 +840,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         return Optional.ofNullable(searchResponse)
                 .map(SearchResponse::getHits)
                 .map(SearchHits::getHits)
-                .orElse(new SearchHit[0]);
+                .orElseThrow(() -> ExceptionUtils.eee("parseSearchHitArray exception, response:%s", searchResponse));
     }
 
     /**
@@ -940,4 +969,5 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                     .ifPresent(source -> LogUtils.info(DSL_PREFIX + source));
         }
     }
+
 }

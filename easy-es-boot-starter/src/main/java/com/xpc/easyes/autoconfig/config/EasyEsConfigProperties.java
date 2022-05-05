@@ -2,6 +2,7 @@ package com.xpc.easyes.autoconfig.config;
 
 import com.xpc.easyes.core.config.GlobalConfig;
 import lombok.Data;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
 @Data
 @Configuration
 @ConfigurationProperties(value = "easy-es")
+@ConditionalOnProperty(prefix = "easy-es", name = {"enable"}, havingValue = "true", matchIfMissing = true)
 public class EasyEsConfigProperties {
     /**
      * 是否开启easy-es 默认开启

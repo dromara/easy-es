@@ -12,6 +12,7 @@ import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.geo.ShapeRelation;
 import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.geometry.Geometry;
+import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
@@ -23,8 +24,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.xpc.easyes.core.enums.BaseEsParamTypeEnum.*;
-import static com.xpc.easyes.core.enums.EsAttachTypeEnum.MUST;
-import static com.xpc.easyes.core.enums.EsAttachTypeEnum.MUST_NOT;
+import static com.xpc.easyes.core.enums.EsAttachTypeEnum.*;
 import static com.xpc.easyes.core.enums.EsQueryTypeEnum.*;
 
 /**
@@ -54,6 +54,10 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      */
     protected List<AggregationParam> aggregationParamList;
     /**
+     * 折叠去重字段
+     */
+    protected String distinctField;
+    /**
      * geo相关参数
      */
     protected GeoParam geoParam;
@@ -69,6 +73,10 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * 排序参数列表
      */
     protected List<OrderByParam> orderByParams;
+    /**
+     * 是否查询全部文档
+     */
+    protected Boolean matchAllQuery;
     /**
      * 实体对象
      */
@@ -131,6 +139,48 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
+    public Children matchPhase(boolean condition, R column, Object val, Float boost) {
+        return doIt(condition, MATCH_PHASE, MUST, FieldUtils.getFieldName(column), val, boost);
+    }
+
+    @Override
+    public Children matchAllQuery(boolean condition) {
+        if (condition) {
+            this.matchAllQuery = true;
+        }
+        return typedThis;
+    }
+
+    @Override
+    public Children matchPhrasePrefixQuery(boolean condition, R column, Object val, int maxExpansions, Float boost) {
+        return doIt(condition, MATCH_PHRASE_PREFIX, MUST, FieldUtils.getFieldName(column), val, maxExpansions, boost);
+    }
+
+    @Override
+    public Children multiMatchQuery(boolean condition, Object val, Operator operator, int minimumShouldMatch, Float boost, R... columns) {
+        if (ArrayUtils.isEmpty(columns)) {
+            return typedThis;
+        }
+        return doIt(condition, MULTI_MATCH_QUERY, MUST_MULTI_FIELDS, val, operator, minimumShouldMatch, boost, columns);
+    }
+
+    @Override
+    public Children queryStringQuery(boolean condition, String queryString, Float boost) {
+        if (StringUtils.isBlank(queryString)) {
+            throw ExceptionUtils.eee("queryString can't be blank");
+        }
+        return doIt(condition, QUERY_STRING_QUERY, MUST, null, queryString, boost);
+    }
+
+    @Override
+    public Children prefixQuery(boolean condition, R column, String prefix, Float boost) {
+        if (StringUtils.isBlank(prefix)) {
+            throw ExceptionUtils.eee("prefix can't be blank");
+        }
+        return doIt(condition, PREFIX_QUERY, MUST, FieldUtils.getFieldName(column), prefix, boost);
+    }
+
+    @Override
     public Children notMatch(boolean condition, R column, Object val, Float boost) {
         return doIt(condition, MATCH_QUERY, MUST_NOT, FieldUtils.getFieldName(column), val, boost);
     }
@@ -187,12 +237,12 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children likeLeft(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, WILDCARD_QUERY, EsAttachTypeEnum.LIKE_LEFT, FieldUtils.getFieldName(column), val, boost);
+        return doIt(condition, WILDCARD_QUERY, LIKE_LEFT, FieldUtils.getFieldName(column), val, boost);
     }
 
     @Override
     public Children likeRight(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, WILDCARD_QUERY, EsAttachTypeEnum.LIKE_RIGHT, FieldUtils.getFieldName(column), val, boost);
+        return doIt(condition, WILDCARD_QUERY, LIKE_RIGHT, FieldUtils.getFieldName(column), val, boost);
     }
 
     @Override
@@ -297,6 +347,14 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     @Override
     public Children sum(boolean condition, String returnName, R column) {
         return doIt(condition, AggregationTypeEnum.SUM, returnName, column);
+    }
+
+    @Override
+    public Children distinct(boolean condition, R column) {
+        if (condition) {
+            this.distinctField = FieldUtils.getFieldName(column);
+        }
+        return typedThis;
     }
 
     @Override
@@ -469,6 +527,22 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * @return 泛型
      */
     private Children doIt(boolean condition, EsQueryTypeEnum queryTypeEnum, EsAttachTypeEnum attachTypeEnum, String field, Object val, Float boost) {
+        return doIt(condition, queryTypeEnum, attachTypeEnum, field, val, null, boost);
+    }
+
+    /**
+     * 封装查询参数(普通情况,不带括号)
+     *
+     * @param condition      条件
+     * @param queryTypeEnum  查询类型
+     * @param attachTypeEnum 连接类型
+     * @param field          字段
+     * @param val            值
+     * @param boost          权重
+     * @param ext            拓展字段
+     * @return 泛型
+     */
+    private Children doIt(boolean condition, EsQueryTypeEnum queryTypeEnum, EsAttachTypeEnum attachTypeEnum, String field, Object val, Object ext, Float boost) {
         if (condition) {
             BaseEsParam baseEsParam = new BaseEsParam();
             BaseEsParam.FieldValueModel model =
@@ -479,6 +553,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
                             .boost(boost)
                             .esQueryType(queryTypeEnum.getType())
                             .originalAttachType(attachTypeEnum.getType())
+                            .ext(ext)
                             .build();
 
             setModel(baseEsParam, model, attachTypeEnum);
@@ -539,6 +614,39 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
                             .originalAttachType(attachTypeEnum.getType())
                             .build();
 
+            setModel(baseEsParam, model, attachTypeEnum);
+            baseEsParamList.add(baseEsParam);
+        }
+        return typedThis;
+    }
+
+    /**
+     * 针对multiMatchQuery
+     *
+     * @param condition      条件
+     * @param queryTypeEnum  查询类型
+     * @param attachTypeEnum 连接类型
+     * @param val            值
+     * @param boost          权重
+     * @param columns        字段列表
+     * @return 泛型
+     */
+    private Children doIt(boolean condition, EsQueryTypeEnum queryTypeEnum, EsAttachTypeEnum attachTypeEnum, Object val,
+                          Operator operator, int minimumShouldMatch, Float boost, R... columns) {
+        if (condition) {
+            BaseEsParam baseEsParam = new BaseEsParam();
+            List<String> fields = Arrays.stream(columns).map(FieldUtils::getFieldName).collect(Collectors.toList());
+            BaseEsParam.FieldValueModel model =
+                    BaseEsParam.FieldValueModel
+                            .builder()
+                            .fields(fields)
+                            .value(val)
+                            .ext(operator)
+                            .minimumShouldMatch(minimumShouldMatch)
+                            .boost(boost)
+                            .esQueryType(queryTypeEnum.getType())
+                            .originalAttachType(attachTypeEnum.getType())
+                            .build();
             setModel(baseEsParam, model, attachTypeEnum);
             baseEsParamList.add(baseEsParam);
         }
@@ -735,6 +843,9 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
                 break;
             case LIKE_RIGHT:
                 baseEsParam.getLikeRightList().add(model);
+                break;
+            case MUST_MULTI_FIELDS:
+                baseEsParam.getMustMultiFieldList().add(model);
                 break;
             default:
                 throw new UnsupportedOperationException("不支持的连接类型,请参见EsAttachTypeEnum");

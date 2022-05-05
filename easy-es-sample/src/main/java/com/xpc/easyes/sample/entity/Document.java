@@ -18,7 +18,7 @@ import lombok.experimental.Accessors;
  **/
 @Data
 @Accessors(chain = true)
-@TableName(shardsNum = 3,replicasNum = 2)
+@TableName(shardsNum = 3, replicasNum = 2,keepGlobalPrefix = true)
 public class Document {
     /**
      * es中的唯一id,如果你想自定义es中的id为你提供的id,比如MySQL中的id,请将注解中的type指定为customize,如此id便支持任意数据类型)
@@ -62,7 +62,7 @@ public class Document {
     /**
      * 自定义字段名称
      */
-    @TableField(value = "wu-la")
+    @TableField(value = "wu-la",fieldType = FieldType.TEXT,analyzer = Analyzer.IK_SMART,searchAnalyzer = Analyzer.IK_SMART)
     private String customField;
 
     /**

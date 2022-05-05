@@ -9,6 +9,6 @@ easy-es:
     print-dsl: true
     db-config:
       map-underscore-to-camel-case: false
-#      table-prefix: daily_
+#      table-prefix: dev_
       id-type: customize
       field-strategy: not_empty

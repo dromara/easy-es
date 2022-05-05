@@ -20,7 +20,6 @@
   	- [条件构造器](condition.md)
   	  - [eq](eq.md)
   	  - [ne](ne.md)
-  	  - [match](match.md)
   	  - [gt](gt.md)
   	  - [ge](ge.md)
   	  - [lt](lt.md)
@@ -48,6 +47,7 @@
   	  - [QueryWrapper](QueryWrapper.md)
   	  - [UpdateWrapper](UpdateWrapper.md)
   - 拓展功能
+    - [分词查询](match.md)
     - [混合查询](hybrid-query.md)
     - [原生查询](origin-query.md)
     - [打印DSL语句](source.md)
@@ -57,6 +57,7 @@
   	- [排序](sort.md)
           - [自定义排序](custom-sort.md)
   	- [聚合查询](aggregation.md)
+        - [去重查询](distinct.md)
   	- [分词查询](particple.md)
   	- [权重](weight.md)
   	- [高亮查询](highlight.md)

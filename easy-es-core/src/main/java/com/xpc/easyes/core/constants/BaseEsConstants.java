@@ -1,5 +1,7 @@
 package com.xpc.easyes.core.constants;
 
+import org.elasticsearch.index.query.Operator;
+
 /**
  * EasyEs的常量
  * <p>
@@ -7,9 +9,9 @@ package com.xpc.easyes.core.constants;
  **/
 public interface BaseEsConstants {
     /**
-     * 配置前缀
+     * 是否启用本框架前缀, 默认启用
      */
-    String CONFIG_PREFIX = "easy-es-test";
+    String ENABLE_PREFIX = "easy-es.enable";
     /**
      * 数字0
      */
@@ -162,4 +164,20 @@ public interface BaseEsConstants {
      * 默认副本数
      */
     int DEFAULT_REPLICAS = 1;
+    /**
+     * 被折叠的重复数据数量的key
+     */
+    String REPEAT_NUM_KEY = "repeat_num";
+    /**
+     * 默认最大拓展数
+     */
+    int DEFAULT_MAX_EXPANSIONS = 50;
+    /**
+     * 默认最小匹配百分比
+     */
+    int DEFAULT_MIN_SHOULD_MATCH = 60;
+    /**
+     * 百分比符号
+     */
+    String PERCENT = "%";
 }

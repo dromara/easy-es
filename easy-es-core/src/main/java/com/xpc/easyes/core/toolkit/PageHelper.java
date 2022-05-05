@@ -23,12 +23,8 @@ public class PageHelper {
      * @return 分页信息
      */
     public static <T> PageInfo<T> getPageInfo(List<T> list, Long total, Integer pageNum, Integer pageSize) {
-        PageInfo<T> pageInfo = new PageInfo<>();
-        int pages = (int) (total / pageSize + ((total % pageSize == 0) ? 0 : 1));
-        pageInfo.setList(list);
-        pageInfo.setSize(list.size());
+        PageInfo<T> pageInfo = new PageInfo<>(list);
         pageInfo.setTotal(total);
-        pageInfo.setPages(pages);
         pageInfo.setPageNum(pageNum);
         pageInfo.setPageSize(pageSize);
         return pageInfo;

@@ -6,6 +6,7 @@ import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.geo.ShapeRelation;
 import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.geometry.Geometry;
+import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
@@ -90,6 +91,42 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     @Override
     public Children match(boolean condition, R column, Object val, Float boost) {
         getWrapper().match(condition, column, val, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children matchPhase(boolean condition, R column, Object val, Float boost) {
+        getWrapper().matchPhase(condition, column, val, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children matchAllQuery(boolean condition) {
+        getWrapper().matchAllQuery(condition);
+        return typedThis;
+    }
+
+    @Override
+    public Children matchPhrasePrefixQuery(boolean condition, R column, Object val, int maxExpansions, Float boost) {
+        getWrapper().matchPhrasePrefixQuery(condition, column, val, maxExpansions, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children multiMatchQuery(boolean condition, Object val, Operator operator, int minimumShouldMatch, Float boost, R... columns) {
+        getWrapper().multiMatchQuery(condition, val, operator, minimumShouldMatch, boost, columns);
+        return typedThis;
+    }
+
+    @Override
+    public Children queryStringQuery(boolean condition, String queryString, Float boost) {
+        getWrapper().queryStringQuery(condition, queryString, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children prefixQuery(boolean condition, R column, String prefix, Float boost) {
+        getWrapper().prefixQuery(condition, column, prefix, boost);
         return typedThis;
     }
 
@@ -204,6 +241,18 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     @Override
     public Children sum(boolean condition, String returnName, R column) {
         getWrapper().sum(condition, returnName, column);
+        return typedThis;
+    }
+
+    @Override
+    public Children sort(boolean condition, List<SortBuilder<?>> sortBuilders) {
+        getWrapper().sort(condition, sortBuilders);
+        return typedThis;
+    }
+
+    @Override
+    public Children distinct(boolean condition, R column) {
+        getWrapper().distinct(condition, column);
         return typedThis;
     }
 

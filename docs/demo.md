@@ -78,18 +78,7 @@
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class TestUseEeController {
     private final DocumentMapper documentMapper;
-
-    @GetMapping("/index")
-    public Boolean index() {
-        // 初始化-> 创建索引,相当于MySQL建表 | 此接口须首先调用,只调用一次即可
-        LambdaEsIndexWrapper<Document> indexWrapper = new LambdaEsIndexWrapper<>();
-        indexWrapper.indexName(Document.class.getSimpleName().toLowerCase());
-        indexWrapper.mapping(Document::getTitle, FieldType.KEYWORD)
-                .mapping(Document::getContent, FieldType.TEXT);
-        documentMapper.createIndex(indexWrapper);
-        return Boolean.TRUE;
-    }
-
+    
     @GetMapping("/insert")
     public Integer insert() {
         // 初始化-> 新增数据
@@ -126,8 +115,10 @@ easy-es:
 
 ![image.png](https://iknow.hs.net/b6d12f86-58db-45ad-af05-29ab9b398614.png)
 
+如果你的配置正确,ES版本及Springboot版本均兼容,你将看到ES索引被框架自动创建,并在控制台输出:
+===> Congratulations auto process index by Easy-Es is done !
+
 ### c.使用
-依次在浏览器访问<br />[http://localhost:8080/index](http://localhost:8080/index) (仅访问一次即可,完成索引创建,相当于MySQL建表,有了表才能进行后续CRUD)
 
 [http://localhost:8080/insert](http://localhost:8080/insert) (插入数据)
 

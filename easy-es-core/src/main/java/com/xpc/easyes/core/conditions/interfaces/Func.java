@@ -208,6 +208,10 @@ public interface Func<Children, R> extends Serializable {
      */
     Children isNotNull(boolean condition, R column, Float boost);
 
+    default Children groupBy(R column) {
+        return groupBy(column);
+    }
+
     default Children groupBy(R... columns) {
         return groupBy(true, columns);
     }
@@ -316,14 +320,14 @@ public interface Func<Children, R> extends Serializable {
         return sort(true, sortBuilder);
     }
 
-    default Children sort(boolean condition, SortBuilder<?> sortBuilder){
+    default Children sort(boolean condition, SortBuilder<?> sortBuilder) {
         return sort(condition, Collections.singletonList(sortBuilder));
     }
 
     /**
      * 用户自定义排序
      *
-     * @param condition   条件
+     * @param condition    条件
      * @param sortBuilders 排序规则列表
      * @return 泛型
      */
@@ -360,4 +364,18 @@ public interface Func<Children, R> extends Serializable {
      * @return 泛型
      */
     Children sortByScore(boolean condition, SortOrder sortOrder);
+
+
+    default Children distinct(R column) {
+        return distinct(true, column);
+    }
+
+    /**
+     * 单字段去重
+     *
+     * @param condition 条件
+     * @param column    去重字段
+     * @return 泛型
+     */
+    Children distinct(boolean condition, R column);
 }

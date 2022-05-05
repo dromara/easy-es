@@ -77,7 +77,11 @@ public enum EsAttachTypeEnum {
     /**
      * 右模糊,相当于Mysql中的like xxx%
      */
-    LIKE_RIGHT(17);
+    LIKE_RIGHT(17),
+    /**
+     * 多字段 multiMatchQuery
+     */
+    MUST_MULTI_FIELDS(18);
     /**
      * 类型
      */

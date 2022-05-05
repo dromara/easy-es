@@ -41,7 +41,31 @@ public enum EsQueryTypeEnum {
     /**
      * 通配,相当于mysql中的like
      */
-    WILDCARD_QUERY(8);
+    WILDCARD_QUERY(8),
+    /**
+     * 分词匹配 需要结果中也包含所有的分词，且顺序一样
+     */
+    MATCH_PHASE(9),
+    /**
+     * 查询全部文档 相当于select all
+     */
+    MATCH_ALL_QUERY(10),
+    /**
+     * 前缀匹配
+     */
+    MATCH_PHRASE_PREFIX(11),
+    /**
+     * 多字段匹配
+     */
+    MULTI_MATCH_QUERY(12),
+    /**
+     * 所有字段中搜索
+     */
+    QUERY_STRING_QUERY(13),
+    /**
+     * 前缀匹配搜索
+     */
+    PREFIX_QUERY(14);
 
     /**
      * 类型

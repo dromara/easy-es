@@ -31,13 +31,13 @@ public class InsertTest {
     public void testInsert() {
         // 测试插入数据
         Document document = new Document();
-        document.setId("1");
+        document.setId("13");
         document.setTitle("老汉");
         document.setContent("推*技术过硬");
-        document.setCreator("糟老头子");
+        document.setCreator("吃饭");
         document.setLocation("40.171975,116.587105");
         document.setGmtCreate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        document.setCustomField("乌拉乌拉俄罗斯真刚1");
+        document.setCustomField("俄罗斯方块");
         Point point = new Point(13.400544, 52.530286);
         document.setGeoLocation(point.toString());
         document.setStarNum(1);
@@ -50,7 +50,8 @@ public class InsertTest {
         List<Document> documentList = new ArrayList<>();
         String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         Document document = new Document();
-        document.setTitle("老王");
+        document.setId("2");
+        document.setTitle("老汉");
         document.setContent("推*技术过硬");
         document.setCreator("隔壁老王");
 
@@ -59,15 +60,17 @@ public class InsertTest {
         document.setLocation("40.17836693398477,116.64002551005981");
 
         Document document1 = new Document();
-        document1.setTitle("老李");
+        document1.setId("3");
+        document1.setTitle("老汉");
         document1.setContent("推*技术过硬");
-        document1.setCreator("隔壁老李");
+        document1.setCreator("隔壁老王");
         document1.setGmtCreate(now);
         document1.setCustomField("魔鬼的步伐");
         document1.setLocation("40.19103839805197,116.5624013764374");
 
 
         Document document2 = new Document();
+        document2.setId("4");
         document2.setTitle("小伙子");
         document2.setContent("推*技术过硬");
         document2.setCreator("大猪蹄子");
@@ -102,4 +105,5 @@ public class InsertTest {
         Document document1 = documentMapper.selectById(id);
         System.out.println("更新后的数据:" + document1);
     }
+
 }

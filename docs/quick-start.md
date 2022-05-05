@@ -13,7 +13,7 @@
 - 已安装Es **推荐7.x+版本**(没有安装的可自行百度教程,建议再装一个es-head插件,便于可视化验证),低版本可能存在API不兼容或其它未知情况,因为底层采用RestHighLevelClient而非RestLowLevelClient,本Demo采用Es版本为7.10.0
 
 > **TIP**
-> 如果您懒得看下述教程,也可以下载[Springboo集成demo](quick-start.md)直接运行
+> 如果您懒得看下述教程,也可以下载[Springboo集成demo](demo.md)直接运行
 
 ## 初始化工程
 

@@ -29,7 +29,7 @@ Easy-Es（简称EE）是一款基于ElasticSearch(简称Es)官方提供的RestHi
 - **支持自定义全局通用操作**：支持全局通用方法注入（ Write once, use anywhere ）
 - **内置分页插件**：基于RestHighLevelClient 物理分页，开发者无需关心具体操作，且无需额外配置插件，写分页等同于普通 List 查询,且保持和PageHelper插件同样的分页返回字段,无需担心命名影响
 - **MySQL功能全覆盖**:MySQL中支持的功能通过EE都可以轻松实现
-- **支持ES高阶语法**:支持高亮搜索,分词查询,权重查询,聚合查询等高阶语法
+- **支持ES高阶语法**:支持高亮搜索,分词查询,权重查询,Geo地理位置查询,IP查询,聚合查询等高阶语法
 - **良好的拓展性**:底层仍使用RestHighLevelClient,可保持其拓展性,开发者在使用EE的同时,仍可使用RestHighLevelClient的功能
 
 ...

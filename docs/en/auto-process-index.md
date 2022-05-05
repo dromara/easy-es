@@ -33,7 +33,7 @@ To configure the above three modes, you only need to add a line of configuration
 easy-es:
   global-config:
     process_index_mode: smoothly #smoothly: smooth mode, not_smoothly: non-smooth mode, manual: manual mode
-    distributed: false # Whether the project is deployed in a distributed environment, the default is true, if it is running on a single machine, you can fill in false, and a distributed lock will be added, which is more efficient.
+    distributed: false # Whether the project is deployed in a distributed environment, the default is true, if it is running on a single machine, you can fill in false, and a distributed lock will not be added, which is more efficient.
 ```
 If this line is configured by default, smooth mode is enabled by default.
 

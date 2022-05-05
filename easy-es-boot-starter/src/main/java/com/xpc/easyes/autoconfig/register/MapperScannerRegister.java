@@ -1,10 +1,13 @@
 package com.xpc.easyes.autoconfig.register;
 
 import com.xpc.easyes.autoconfig.annotation.EsMapperScan;
+import com.xpc.easyes.core.toolkit.LogUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.StringUtils;
@@ -15,14 +18,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.xpc.easyes.core.constants.BaseEsConstants.ENABLE_PREFIX;
+
 /**
  * 注册bean
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
-public class MapperScannerRegister implements ImportBeanDefinitionRegistrar, ResourceLoaderAware {
+public class MapperScannerRegister implements ImportBeanDefinitionRegistrar, ResourceLoaderAware, EnvironmentAware {
     private ResourceLoader resourceLoader;
-
+    private Environment environment;
     @Override
     public void setResourceLoader(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
@@ -30,6 +35,12 @@ public class MapperScannerRegister implements ImportBeanDefinitionRegistrar, Res
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+        Boolean enable = Optional.ofNullable(environment.getProperty(ENABLE_PREFIX)).map(Boolean::parseBoolean).orElse(Boolean.TRUE);
+        if (!enable){
+            LogUtils.info("===> Easy-Es is not enabled");
+            return;
+        }
+
         AnnotationAttributes mapperScanAttrs = AnnotationAttributes
                 .fromMap(importingClassMetadata.getAnnotationAttributes(EsMapperScan.class.getName()));
         if (mapperScanAttrs != null) {
@@ -41,7 +52,6 @@ public class MapperScannerRegister implements ImportBeanDefinitionRegistrar, Res
         ClassPathMapperScanner scanner = new ClassPathMapperScanner(registry);
         // this check is needed in Spring 3.1
         Optional.ofNullable(resourceLoader).ifPresent(scanner::setResourceLoader);
-
         List<String> basePackages = new ArrayList<>();
         basePackages.addAll(
                 Arrays.stream(annoAttrs.getStringArray("value"))
@@ -50,5 +60,10 @@ public class MapperScannerRegister implements ImportBeanDefinitionRegistrar, Res
 
         scanner.registerFilters();
         scanner.doScan(StringUtils.toStringArray(basePackages));
+    }
+
+    @Override
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
     }
 }

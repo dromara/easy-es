@@ -1,14 +1,11 @@
 package com.xpc.easyes.core.params;
 
-import com.xpc.easyes.core.common.EntityInfo;
 import lombok.Builder;
 import lombok.Data;
-import org.elasticsearch.common.geo.GeoPoint;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 核心 基本参数
@@ -22,6 +19,10 @@ public class BaseEsParam {
      */
     private List<FieldValueModel> mustList = new ArrayList<>();
     /**
+     * 存放多字段单值的必须满足条件列表 multiMatchQuery
+     */
+    private List<FieldValueModel> mustMultiFieldList = new ArrayList<>();
+    /**
      * 存放必须满足的条件列表,区别是不计算得分(必须满足,与must区别是不计算得分,效率更高)
      */
     private List<FieldValueModel> filterList = new ArrayList<>();
@@ -29,6 +30,10 @@ public class BaseEsParam {
      * 存放或条件列表(或,相当于MySQL中的or)
      */
     private List<FieldValueModel> shouldList = new ArrayList<>();
+    /**
+     * 存放多字段单值的或条件列表
+     */
+    private List<FieldValueModel> shouldMultiFieldList = new ArrayList<>();
     /**
      * 存放必须不满足的条件列表(否,相当于MySQL中的!=)
      */
@@ -125,17 +130,32 @@ public class BaseEsParam {
          * 连接类型 参见:EsAttachTypeEnum 由于should 包含转换的情况 所以转换之后应仍使用原来的连接类型
          */
         private Integer originalAttachType;
+        /**
+         * 字段列表
+         */
+        private List<String> fields;
+        /**
+         * 拓展字段
+         */
+        private Object ext;
+        /**
+         *最小匹配度 百分比
+         */
+        private int minimumShouldMatch;
     }
 
     /**
      * 重置查询条件 主要用于处理or查询条件
+     *
      * @param baseEsParam 基础参数
      */
     public static void setUp(BaseEsParam baseEsParam) {
         // 获取原查询条件
         List<FieldValueModel> mustList = baseEsParam.getMustList();
+        List<FieldValueModel> mustMultiFieldList = baseEsParam.getMustMultiFieldList();
         List<FieldValueModel> filterList = baseEsParam.getFilterList();
         List<FieldValueModel> shouldList = baseEsParam.getShouldList();
+        List<FieldValueModel> shouldMultiFieldList = baseEsParam.getShouldMultiFieldList();
         List<FieldValueModel> gtList = baseEsParam.getGtList();
         List<FieldValueModel> ltList = baseEsParam.getLtList();
         List<FieldValueModel> geList = baseEsParam.getGeList();
@@ -158,6 +178,7 @@ public class BaseEsParam {
         shouldList.addAll(notNullList);
         shouldList.addAll(likeLeftList);
         shouldList.addAll(likeRightList);
+        shouldMultiFieldList.addAll(mustMultiFieldList);
         baseEsParam.setShouldList(shouldList);
 
         // 置空原必须满足的条件列表
@@ -172,5 +193,6 @@ public class BaseEsParam {
         baseEsParam.setNotNullList(Collections.EMPTY_LIST);
         baseEsParam.setLikeLeftList(Collections.EMPTY_LIST);
         baseEsParam.setLikeRightList(Collections.EMPTY_LIST);
+        baseEsParam.setMustMultiFieldList(Collections.EMPTY_LIST);
     }
 }

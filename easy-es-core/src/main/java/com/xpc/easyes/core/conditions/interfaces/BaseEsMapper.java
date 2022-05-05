@@ -6,6 +6,7 @@ import com.xpc.easyes.core.conditions.LambdaEsQueryWrapper;
 import com.xpc.easyes.core.conditions.LambdaEsUpdateWrapper;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -14,6 +15,9 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+
+import static com.xpc.easyes.core.constants.BaseEsConstants.PAGE_NUM;
+import static com.xpc.easyes.core.constants.BaseEsConstants.PAGE_SIZE;
 
 /**
  * 核心 所有支持方法接口
@@ -58,9 +62,8 @@ public interface BaseEsMapper<T> {
      *
      * @param wrapper 条件
      * @return es标准结果
-     * @throws IOException IO异常
      */
-    SearchResponse search(LambdaEsQueryWrapper<T> wrapper) throws IOException;
+    SearchResponse search(LambdaEsQueryWrapper<T> wrapper);
 
     /**
      * 获取SearchSourceBuilder,可用于本框架生成基础查询条件,不支持的高阶语法用户可通过SearchSourceBuilder 进一步封装
@@ -81,6 +84,16 @@ public interface BaseEsMapper<T> {
     SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions) throws IOException;
 
     /**
+     * es原生滚动查询
+     *
+     * @param searchScrollRequest 查询请求参数
+     * @param requestOptions      类型
+     * @return es原生返回结果
+     * @throws IOException IO异常
+     */
+    SearchResponse scroll(SearchScrollRequest searchScrollRequest, RequestOptions requestOptions) throws IOException;
+
+    /**
      * 获取通过本框架生成的查询参数,可用于检验本框架生成的查询参数是否正确
      *
      * @param wrapper 条件
@@ -89,16 +102,17 @@ public interface BaseEsMapper<T> {
     String getSource(LambdaEsQueryWrapper<T> wrapper);
 
     /**
-     * 未指定返回类型,未指定分页参数
+     * 未指定返回类型,未指定分页参数 将在下个版本移除
      *
      * @param wrapper 条件
      * @return 原生分页返回
      * @throws IOException IO异常
      */
+    @Deprecated
     PageInfo<SearchHit> pageQueryOriginal(LambdaEsQueryWrapper<T> wrapper) throws IOException;
 
     /**
-     * 未指定返回类型,指定分页参数
+     * 未指定返回类型,指定分页参数, 将在下个版本移除
      *
      * @param wrapper  条件
      * @param pageNum  当前页
@@ -106,15 +120,19 @@ public interface BaseEsMapper<T> {
      * @return 原生分页返回
      * @throws IOException IO异常
      */
+    @Deprecated
     PageInfo<SearchHit> pageQueryOriginal(LambdaEsQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) throws IOException;
 
     /**
-     * 指定返回类型,但未指定分页参数
+     * 指定返回类型,但未指定分页参数 将在下个版本移除
      *
      * @param wrapper 条件
      * @return 指定的返回类型
      */
-    PageInfo<T> pageQuery(LambdaEsQueryWrapper<T> wrapper);
+    @Deprecated
+    default PageInfo<T> pageQuery(LambdaEsQueryWrapper<T> wrapper) {
+        return pageQuery(wrapper, PAGE_NUM, PAGE_SIZE);
+    }
 
     /**
      * 指定返回类型及分页参数
@@ -127,12 +145,23 @@ public interface BaseEsMapper<T> {
     PageInfo<T> pageQuery(LambdaEsQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
 
     /**
-     * 获取总数
+     * 获取总数 默认根据折叠参数去重
      *
      * @param wrapper 条件
      * @return 总数
      */
-    Long selectCount(LambdaEsQueryWrapper<T> wrapper);
+    default Long selectCount(LambdaEsQueryWrapper<T> wrapper) {
+        return selectCount(wrapper, true);
+    }
+
+    /**
+     * 是否去重获取总数
+     *
+     * @param wrapper  条件
+     * @param distinct 是否去重
+     * @return 总数
+     */
+    Long selectCount(LambdaEsQueryWrapper<T> wrapper, boolean distinct);
 
     /**
      * 插入一条记录
