@@ -57,6 +57,9 @@
 ~~1.重构了璐先生贡献的拦截器链链中部分不合理代码,提高代码可读性.~~
 ~~1.修复一处geoAPI下划线自动转驼峰未生效缺陷.~~
 ~~1.修复一处非String类型在NOT_EMPTY字段策略下,执行Insert时未赋值的情况~~
+
+~~[v0.9.12](https://gitee.com/dromara/easy-es/releases/V0.9.12)~~
+
 持续更新中...
 
 > **Tip**

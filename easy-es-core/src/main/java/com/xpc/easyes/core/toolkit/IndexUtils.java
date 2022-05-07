@@ -56,7 +56,7 @@ public class IndexUtils {
         try {
             return client.indices().exists(request, RequestOptions.DEFAULT);
         } catch (IOException e) {
-            throw ExceptionUtils.eee("existsIndex exception", indexName, e);
+            throw ExceptionUtils.eee("existsIndex exception indexName: %s", e, indexName);
         }
     }
 
@@ -95,7 +95,7 @@ public class IndexUtils {
             CreateIndexResponse createIndexResponse = client.indices().create(createIndexRequest, RequestOptions.DEFAULT);
             return createIndexResponse.isAcknowledged();
         } catch (IOException e) {
-            throw ExceptionUtils.eee("create index exception ", createIndexRequest, e);
+            throw ExceptionUtils.eee("create index exception createIndexRequest: %s ", e, createIndexRequest.toString());
         }
     }
 
@@ -131,7 +131,7 @@ public class IndexUtils {
         try {
             getIndexResponse = client.indices().get(request, RequestOptions.DEFAULT);
         } catch (IOException e) {
-            throw ExceptionUtils.eee("getIndex exception", indexName, e);
+            throw ExceptionUtils.eee("getIndex exception indexName: %s", e, indexName);
         }
         return parseGetIndexResponse(getIndexResponse, indexName);
     }
@@ -152,7 +152,7 @@ public class IndexUtils {
         try {
             client.indices().updateAliases(indicesAliasesRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
-            e.printStackTrace();
+            LogUtils.warn("addDefaultAlias exception", e.toString());
         }
 
     }
@@ -180,7 +180,7 @@ public class IndexUtils {
             }
             return Boolean.FALSE;
         } catch (IOException e) {
-            throw ExceptionUtils.eee("reindex exception", oldIndexName, releaseIndexName, e);
+            throw ExceptionUtils.eee("reindex exception oldIndexName:%s, releaseIndexName: %s", e, oldIndexName, releaseIndexName);
         }
     }
 
@@ -349,7 +349,7 @@ public class IndexUtils {
                     RequestOptions.DEFAULT);
             return acknowledgedResponse.isAcknowledged();
         } catch (IOException e) {
-            throw ExceptionUtils.eee("changeAlias exception", oldIndexName, releaseIndexName, e);
+            throw ExceptionUtils.eee("changeAlias exception oldIndexName: %s, releaseIndexName: %s", e, oldIndexName, releaseIndexName);
         }
     }
 
@@ -367,7 +367,7 @@ public class IndexUtils {
             AcknowledgedResponse acknowledgedResponse = client.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT);
             return acknowledgedResponse.isAcknowledged();
         } catch (IOException e) {
-            throw ExceptionUtils.eee("deleteIndex exception", indexName, e);
+            throw ExceptionUtils.eee("deleteIndex exception indexName: %s", e, indexName);
         }
     }
 
@@ -498,7 +498,7 @@ public class IndexUtils {
      * @param client      RestHighLevelClient
      */
     public static void supplyAsync(BiFunction<Class<?>, RestHighLevelClient, Boolean> biFunction, Class<?> entityClass, RestHighLevelClient client) {
-        CompletableFuture.supplyAsync(() -> {
+        CompletableFuture<Boolean> completableFuture = CompletableFuture.supplyAsync(() -> {
             GlobalConfig globalConfig = GlobalConfigCache.getGlobalConfig();
             if (!globalConfig.isDistributed()) {
                 // 非分布式项目, 直接处理
@@ -524,7 +524,14 @@ public class IndexUtils {
             } else {
                 LogUtils.warn("===> Unfortunately, auto process index by Easy-Es failed, please check your configuration");
             }
-        }).join();
+        });
+
+        // 是否开启阻塞 默认开启 运行测试模块时建议开启阻塞,否则测试用例跑完后,主线程退出,但异步线程可能还没跑完,可能出现死锁
+        // 生产环境或迁移数据量比较大的情况下,可以配置开启非阻塞,这样服务启动更快
+        GlobalConfig globalConfig = GlobalConfigCache.getGlobalConfig();
+        if (globalConfig.isAsyncProcessIndexBlocking()) {
+            completableFuture.join();
+        }
     }
 
 }

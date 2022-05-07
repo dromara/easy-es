@@ -1,6 +1,9 @@
+匹配相关功能API
 ```java
 match(boolean condition, R column, Object val);
 notMatch(boolean condition, R column, Object val, Float boost);
+
+// 下面这些API 0.9.12+版本才支持,如需可自行升级EE版本
 matchPhase(boolean condition, R column, Object val, Float boost);
 matchAllQuery();
 matchPhrasePrefixQuery(boolean condition, R column, Object val, int maxExpansions, Float boost);

@@ -37,7 +37,7 @@ public class EsQueryTypeUtil {
             setQueryBuilder(boolQueryBuilder, attachType, termQueryBuilder);
         } else if (Objects.equals(queryType, TERMS_QUERY.getType())) {
             // 此处处理由or转入shouldList的in参数
-            TermsQueryBuilder termsQueryBuilder = QueryBuilders.termsQuery(field, value).boost(boost);
+            TermsQueryBuilder termsQueryBuilder = QueryBuilders.termsQuery(field, (Collection<?>)value).boost(boost);
             setQueryBuilder(boolQueryBuilder, attachType, termsQueryBuilder);
         } else if (Objects.equals(queryType, MATCH_PHASE.getType())) {
             // 封装模糊分词查询参数(分词必须按原关键词顺序)

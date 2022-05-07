@@ -6,9 +6,11 @@ easy-es:
   password: WG7WVmuNMtM4GwNYkyWH
   global-config:
     process-index-mode: smoothly
+    async-process-index-blocking: true
     print-dsl: true
     db-config:
       map-underscore-to-camel-case: false
 #      table-prefix: dev_
       id-type: customize
       field-strategy: not_empty
+

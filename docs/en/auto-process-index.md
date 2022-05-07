@@ -33,11 +33,14 @@ To configure the above three modes, you only need to add a line of configuration
 easy-es:
   global-config:
     process_index_mode: smoothly #smoothly: smooth mode, not_smoothly: non-smooth mode, manual: manual mode
+    async-process-index-blocking: true # Whether the asynchronous processing of the index blocks the main thread is blocked by default
     distributed: false # Whether the project is deployed in a distributed environment, the default is true, if it is running on a single machine, you can fill in false, and a distributed lock will not be added, which is more efficient.
 ```
 If this line is configured by default, smooth mode is enabled by default.
 
 > **TIPS:**
+> - When running the test module, it is strongly recommended to open the asynchronous processing index to block the main thread. Otherwise, after the test case is run, the main thread exits, but the asynchronous thread may not finish running, and a deadlock may occur. If a deadlock occurs unfortunately, delete the ee-distribute-lock That's it.
+> - In the production environment or when the amount of data to be migrated is relatively large, non-blocking can be configured to enable the service to start faster.
 > - For the above three modes, users can flexibly choose and experience freely according to actual needs. If you have any comments or suggestions during use, you can feedback to us, and we will continue to optimize and improve.
 > - EE adopts the strategy + factory design mode in index hosting. If there are more and better modes in the future, the expansion can be easily completed without changing the original code, which conforms to the principle of open and closed. Open source enthusiasts are welcome to contribute more modes PR!
 > - We will continue to uphold the concept of leaving complexity to the framework and leaving ease of use to users, and forge ahead.

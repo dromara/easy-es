@@ -24,6 +24,10 @@ public class GlobalConfig {
      */
     private ProcessIndexStrategyEnum processIndexMode = ProcessIndexStrategyEnum.SMOOTHLY;
     /**
+     * process index blocking main thread true by default 异步处理索引是否阻塞主线程 默认阻塞
+     */
+    private boolean asyncProcessIndexBlocking = true;
+    /**
      * is distributed environment true by default 是否分布式环境 默认为是
      */
     private boolean distributed = true;

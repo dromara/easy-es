@@ -268,7 +268,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                 throw ExceptionUtils.eee("insert failed, result:%s entity:%s", indexResponse.getResult(), entity);
             }
         } catch (IOException e) {
-            throw ExceptionUtils.eee("insert entity:%s exception", e, entity);
+            throw ExceptionUtils.eee("insert entity:%s exception", e, entity.toString());
         }
     }
 
@@ -302,7 +302,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                 return ONE;
             }
         } catch (IOException e) {
-            throw ExceptionUtils.eee("deleteById exception:%s, id:%s", e, id);
+            throw ExceptionUtils.eee("deleteById exception, id:%s", e, id.toString());
         }
         return BaseEsConstants.ZERO;
     }
@@ -364,7 +364,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                 return ONE;
             }
         } catch (IOException e) {
-            throw ExceptionUtils.eee("updateById exception,entity:%s", e, entity);
+            throw ExceptionUtils.eee("updateById exception,entity:%s", e, entity.toString());
         }
 
         return BaseEsConstants.ZERO;
@@ -476,7 +476,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     public T selectOne(LambdaEsQueryWrapper<T> wrapper) {
         long count = this.selectCount(wrapper);
         if (count > ONE && wrapper.size > ONE) {
-            throw ExceptionUtils.eee("fond more than one result: %d , please use limit function to limit 1", count);
+            throw ExceptionUtils.eee("found more than one result: %d , please use limit function to limit 1", count);
         }
 
         // 请求es获取数据
@@ -654,7 +654,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         try {
             searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
-            throw ExceptionUtils.eee("getSearchHitArray exception,searchRequest:%s", e, searchRequest);
+            throw ExceptionUtils.eee("getSearchHitArray exception,searchRequest:%s", e, searchRequest.toString());
         }
         return parseSearchHitArray(searchResponse);
     }
@@ -675,7 +675,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         try {
             response = client.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
-            throw ExceptionUtils.eee("getSearchHitArray IOException, searchRequest:%s", e, searchRequest);
+            throw ExceptionUtils.eee("getSearchHitArray IOException, searchRequest:%s", e, searchRequest.toString());
         }
         return parseSearchHitArray(response);
     }
@@ -744,7 +744,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                             });
                 }
             } catch (Exception e) {
-                throw ExceptionUtils.eee("buildJsonIndexSource exception, entity:%s", e, entity);
+                throw ExceptionUtils.eee("buildJsonIndexSource exception, entity:%s", e, entity.toString());
             }
         });
 
@@ -825,7 +825,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                 }
             }
         } catch (IOException e) {
-            throw ExceptionUtils.eee("bulkRequest exception, msg:%s,cause:%s", e.getMessage(), e.getCause());
+            throw ExceptionUtils.eee("bulkRequest exception", e);
         }
         return totalSuccess;
     }
@@ -840,7 +840,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         return Optional.ofNullable(searchResponse)
                 .map(SearchResponse::getHits)
                 .map(SearchHits::getHits)
-                .orElseThrow(() -> ExceptionUtils.eee("parseSearchHitArray exception, response:%s", searchResponse));
+                .orElseThrow(() -> ExceptionUtils.eee("parseSearchHitArray exception"));
     }
 
     /**
