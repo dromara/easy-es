@@ -46,5 +46,15 @@ public class AggTest {
         System.out.println(response);
     }
 
+    @Test
+    public void testAggNotPipeline() {
+        // 对于下面两个字段,如果不想以pipeline管道聚合,各自聚合的结果在各自的桶中展示的话,我们也提供了支持
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        // 指定启用管道聚合为false
+        wrapper.groupBy(false, Document::getCreator, Document::getTitle);
+        SearchResponse response = documentMapper.search(wrapper);
+        System.out.println(response);
+    }
+
 }
 

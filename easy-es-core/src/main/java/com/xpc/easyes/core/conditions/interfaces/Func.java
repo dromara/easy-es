@@ -209,111 +209,165 @@ public interface Func<Children, R> extends Serializable {
     Children isNotNull(boolean condition, R column, Float boost);
 
     default Children groupBy(R column) {
-        return groupBy(column);
+        return groupBy(true, true, column);
+    }
+
+    default Children groupBy(boolean enablePipeline, R column) {
+        return groupBy(true, enablePipeline, column);
     }
 
     default Children groupBy(R... columns) {
-        return groupBy(true, columns);
+        return groupBy(true, true, columns);
+    }
+
+    default Children groupBy(boolean enablePipeline, R... columns) {
+        return groupBy(true, enablePipeline, columns);
     }
 
     /**
      * 分组：GROUP BY 字段, ...
      *
      * @param condition 条件
+     * @param enablePipeline  是否管道聚合
      * @param columns   列,支持多列
      * @return 泛型
      */
-    Children groupBy(boolean condition, R... columns);
+    Children groupBy(boolean condition, boolean enablePipeline, R... columns);
 
     default Children termsAggregation(R column) {
-        return termsAggregation(true, FieldUtils.getFieldName(column), column);
+        return termsAggregation(true, true, FieldUtils.getFieldName(column), column);
+    }
+
+    default Children termsAggregation(boolean enablePipeline, R column) {
+        return termsAggregation(true, enablePipeline, FieldUtils.getFieldName(column), column);
     }
 
     default Children termsAggregation(String returnName, R column) {
-        return termsAggregation(true, returnName, column);
+        return termsAggregation(true, true, returnName, column);
+    }
+
+    default Children termsAggregation(boolean enablePipeline, String returnName, R column) {
+        return termsAggregation(true, enablePipeline, returnName, column);
     }
 
     /**
      * 可指定返回名称分组,相当于mysql group by
      *
      * @param condition  条件
+     * @param enablePipeline   是否管道聚合
      * @param returnName 返回的聚合字段名称
      * @param column     列
      * @return 泛型
      */
-    Children termsAggregation(boolean condition, String returnName, R column);
+    Children termsAggregation(boolean condition, boolean enablePipeline, String returnName, R column);
 
     default Children avg(R column) {
-        return avg(true, FieldUtils.getFieldName(column), column);
+        return avg(true, true, FieldUtils.getFieldName(column), column);
+    }
+
+    default Children avg(boolean enablePipeline, R column) {
+        return avg(true, enablePipeline, FieldUtils.getFieldName(column), column);
+    }
+
+    default Children avg(boolean enablePipeline, String returnName, R column) {
+        return avg(true, enablePipeline, returnName, column);
     }
 
     default Children avg(String returnName, R column) {
-        return avg(true, returnName, column);
+        return avg(true, true, returnName, column);
     }
 
     /**
      * 求平均值
      *
      * @param condition  条件
+     * @param enablePipeline   是否管道聚合
      * @param returnName 返回的聚合字段名称
      * @param column     列
      * @return 泛型
      */
-    Children avg(boolean condition, String returnName, R column);
+    Children avg(boolean condition, boolean enablePipeline, String returnName, R column);
 
     default Children min(R column) {
         return min(true, FieldUtils.getFieldName(column), column);
     }
 
+    default Children min(boolean enablePipeline, R column) {
+        return min(true, enablePipeline, FieldUtils.getFieldName(column), column);
+    }
+
+    default Children min(boolean enablePipeline, String returnName, R column) {
+        return min(true, enablePipeline, returnName, column);
+    }
+
     default Children min(String returnName, R column) {
-        return min(true, returnName, column);
+        return min(true, true, returnName, column);
     }
 
     /**
      * 求最小值
      *
      * @param condition  条件
+     * @param enablePipeline   是否管道聚合
      * @param returnName 返回的聚合字段名称
      * @param column     列
      * @return 泛型
      */
-    Children min(boolean condition, String returnName, R column);
+    Children min(boolean condition, boolean enablePipeline, String returnName, R column);
 
     default Children max(R column) {
         return max(true, FieldUtils.getFieldName(column), column);
     }
 
+    default Children max(boolean enablePipeline, R column) {
+        return max(true, enablePipeline, FieldUtils.getFieldName(column), column);
+    }
+
+    default Children max(boolean enablePipeline, String returnName, R column) {
+        return max(true, enablePipeline, returnName, column);
+    }
+
     default Children max(String returnName, R column) {
-        return max(true, returnName, column);
+        return max(true, true, returnName, column);
     }
 
     /**
      * 求最大值
      *
      * @param condition  条件
+     * @param enablePipeline   是否管道聚合
      * @param returnName 返回的聚合字段名称
      * @param column     列
      * @return 泛型
      */
-    Children max(boolean condition, String returnName, R column);
+    Children max(boolean condition, boolean enablePipeline, String returnName, R column);
 
     default Children sum(R column) {
         return sum(true, FieldUtils.getFieldName(column), column);
     }
 
+    default Children sum(boolean enablePipeline, R column) {
+        return sum(true, enablePipeline, FieldUtils.getFieldName(column), column);
+    }
+
+    default Children sum(boolean enablePipeline, String returnName, R column) {
+        return sum(true, enablePipeline, returnName, column);
+    }
+
     default Children sum(String returnName, R column) {
-        return sum(true, returnName, column);
+        return sum(true, true, returnName, column);
     }
 
     /**
      * 求和
      *
      * @param condition  条件
+     * @param enablePipeline   是否管道聚合
      * @param returnName 返回的聚合字段名称
      * @param column     列
      * @return 泛型
      */
-    Children sum(boolean condition, String returnName, R column);
+    Children sum(boolean condition, boolean enablePipeline, String returnName, R column);
 
 
     default Children sort(SortBuilder<?> sortBuilder) {

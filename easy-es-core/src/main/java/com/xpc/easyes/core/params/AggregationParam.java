@@ -11,6 +11,10 @@ import lombok.Data;
 @Data
 public class AggregationParam {
     /**
+     * 是否开启管道聚合
+     */
+    private boolean enablePipeline;
+    /**
      * 返回字段名称
      */
     private String name;

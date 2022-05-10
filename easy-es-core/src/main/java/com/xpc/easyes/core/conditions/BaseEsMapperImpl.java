@@ -225,7 +225,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
         // 解析数据
         SearchHit[] searchHits = parseSearchHitArray(response);
-        List<T> dataList = Arrays.stream(searchHits).map(this::parseOne).collect(Collectors.toList());
+        List<T> dataList = Arrays.stream(searchHits).map(searchHit -> parseOne(searchHit, wrapper))
+                .collect(Collectors.toList());
         long count = parseCount(response, Objects.nonNull(wrapper.distinctField));
         return PageHelper.getPageInfo(dataList, count, pageNum, pageSize);
     }

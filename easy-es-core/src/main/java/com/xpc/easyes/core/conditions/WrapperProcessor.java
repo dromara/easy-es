@@ -571,15 +571,22 @@ public class WrapperProcessor {
         for (AggregationParam aggParam : aggregationParamList) {
             String realField = getRealField(aggParam.getField(), mappingColumnMap, dbConfig);
             AggregationBuilder builder = getRealAggregationBuilder(aggParam.getAggregationType(), aggParam.getName(), realField);
-            if (root == null) {
-                root = builder;
-                cursor = root;
+            if (aggParam.isEnablePipeline()) {
+                // 管道聚合, 构造聚合树
+                if (root == null) {
+                    root = builder;
+                    cursor = root;
+                } else {
+                    cursor.subAggregation(builder);
+                    cursor = builder;
+                }
             } else {
-                cursor.subAggregation(builder);
-                cursor = builder;
+                // 非管道聚合
+                searchSourceBuilder.aggregation(builder);
             }
+
         }
-        searchSourceBuilder.aggregation(root);
+        Optional.ofNullable(root).ifPresent(searchSourceBuilder::aggregation);
     }
 
     /**

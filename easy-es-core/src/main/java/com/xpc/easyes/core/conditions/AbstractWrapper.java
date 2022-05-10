@@ -156,8 +156,9 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         return doIt(condition, MATCH_PHRASE_PREFIX, MUST, FieldUtils.getFieldName(column), val, maxExpansions, boost);
     }
 
+    @SafeVarargs
     @Override
-    public Children multiMatchQuery(boolean condition, Object val, Operator operator, int minimumShouldMatch, Float boost, R... columns) {
+    public final Children multiMatchQuery(boolean condition, Object val, Operator operator, int minimumShouldMatch, Float boost, R... columns) {
         if (ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
@@ -256,8 +257,9 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         return typedThis;
     }
 
+    @SafeVarargs
     @Override
-    public Children highLight(boolean condition, String preTag, String postTag, R... columns) {
+    public final Children highLight(boolean condition, String preTag, String postTag, R... columns) {
         if (condition) {
             List<String> fields = Arrays.stream(columns).map(FieldUtils::getFieldName).collect(Collectors.toList());
             highLightParamList.add(new HighLightParam(preTag, postTag, fields));
@@ -265,8 +267,9 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         return typedThis;
     }
 
+    @SafeVarargs
     @Override
-    public Children orderBy(boolean condition, boolean isAsc, R... columns) {
+    public final Children orderBy(boolean condition, boolean isAsc, R... columns) {
         if (ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
@@ -312,41 +315,42 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         return doIt(condition, EsAttachTypeEnum.EXISTS, FieldUtils.getFieldName(column), boost);
     }
 
+    @SafeVarargs
     @Override
-    public Children groupBy(boolean condition, R... columns) {
+    public final Children groupBy(boolean condition, boolean enablePipeline, R... columns) {
         if (ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
         Arrays.stream(columns).forEach(column -> {
             String returnName = FieldUtils.getFieldName(column);
-            doIt(condition, AggregationTypeEnum.TERMS, returnName, column);
+            doIt(condition, enablePipeline, AggregationTypeEnum.TERMS, returnName, column);
         });
         return typedThis;
     }
 
     @Override
-    public Children termsAggregation(boolean condition, String returnName, R column) {
-        return doIt(condition, AggregationTypeEnum.TERMS, returnName, column);
+    public Children termsAggregation(boolean condition, boolean enablePipeline, String returnName, R column) {
+        return doIt(condition, enablePipeline, AggregationTypeEnum.TERMS, returnName, column);
     }
 
     @Override
-    public Children avg(boolean condition, String returnName, R column) {
-        return doIt(condition, AggregationTypeEnum.AVG, returnName, column);
+    public Children avg(boolean condition, boolean enablePipeline, String returnName, R column) {
+        return doIt(condition, enablePipeline, AggregationTypeEnum.AVG, returnName, column);
     }
 
     @Override
-    public Children min(boolean condition, String returnName, R column) {
-        return doIt(condition, AggregationTypeEnum.MIN, returnName, column);
+    public Children min(boolean condition, boolean enablePipeline, String returnName, R column) {
+        return doIt(condition, enablePipeline, AggregationTypeEnum.MIN, returnName, column);
     }
 
     @Override
-    public Children max(boolean condition, String returnName, R column) {
-        return doIt(condition, AggregationTypeEnum.MAX, returnName, column);
+    public Children max(boolean condition, boolean enablePipeline, String returnName, R column) {
+        return doIt(condition, enablePipeline, AggregationTypeEnum.MAX, returnName, column);
     }
 
     @Override
-    public Children sum(boolean condition, String returnName, R column) {
-        return doIt(condition, AggregationTypeEnum.SUM, returnName, column);
+    public Children sum(boolean condition, boolean enablePipeline, String returnName, R column) {
+        return doIt(condition, enablePipeline, AggregationTypeEnum.SUM, returnName, column);
     }
 
     @Override
@@ -448,14 +452,16 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * 封装查询参数 聚合类
      *
      * @param condition           条件
+     * @param enablePipeline      是否管道聚合
      * @param aggregationTypeEnum 聚合类型
      * @param returnName          返回的聚合字段名称
      * @param column              列
      * @return 泛型
      */
-    private Children doIt(boolean condition, AggregationTypeEnum aggregationTypeEnum, String returnName, R column) {
+    private Children doIt(boolean condition, boolean enablePipeline, AggregationTypeEnum aggregationTypeEnum, String returnName, R column) {
         if (condition) {
             AggregationParam aggregationParam = new AggregationParam();
+            aggregationParam.setEnablePipeline(enablePipeline);
             aggregationParam.setName(returnName);
             aggregationParam.setField(FieldUtils.getFieldName(column));
             aggregationParam.setAggregationType(aggregationTypeEnum);

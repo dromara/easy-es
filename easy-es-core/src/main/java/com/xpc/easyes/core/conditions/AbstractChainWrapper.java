@@ -209,38 +209,38 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children groupBy(boolean condition, R... columns) {
-        getWrapper().groupBy(condition, columns);
+    public Children groupBy(boolean condition, boolean pipeline, R... columns) {
+        getWrapper().groupBy(condition, pipeline, columns);
         return typedThis;
     }
 
     @Override
-    public Children termsAggregation(boolean condition, String returnName, R column) {
-        getWrapper().termsAggregation(condition, returnName, column);
+    public Children termsAggregation(boolean condition, boolean pipeline, String returnName, R column) {
+        getWrapper().termsAggregation(condition, pipeline, returnName, column);
         return typedThis;
     }
 
     @Override
-    public Children avg(boolean condition, String returnName, R column) {
-        getWrapper().avg(condition, returnName, column);
+    public Children avg(boolean condition, boolean pipeline, String returnName, R column) {
+        getWrapper().avg(condition, pipeline, returnName, column);
         return typedThis;
     }
 
     @Override
-    public Children min(boolean condition, String returnName, R column) {
-        getWrapper().min(condition, returnName, column);
+    public Children min(boolean condition, boolean pipeline, String returnName, R column) {
+        getWrapper().min(condition, pipeline, returnName, column);
         return typedThis;
     }
 
     @Override
-    public Children max(boolean condition, String returnName, R column) {
-        getWrapper().max(condition, returnName, column);
+    public Children max(boolean condition, boolean pipeline, String returnName, R column) {
+        getWrapper().max(condition, pipeline, returnName, column);
         return typedThis;
     }
 
     @Override
-    public Children sum(boolean condition, String returnName, R column) {
-        getWrapper().sum(condition, returnName, column);
+    public Children sum(boolean condition, boolean pipeline, String returnName, R column) {
+        getWrapper().sum(condition, pipeline, returnName, column);
         return typedThis;
     }
 
