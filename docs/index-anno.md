@@ -5,6 +5,13 @@ public class Document {
     ...
 }
 ```
+
+>  **动态索引名称支持**
+>  如果你的索引名称是不固定的,我们提供了两种方式可修改CRUD时的索引名称
+>  - 调用mapper.setCurrentActiveIndex(String indexName)方法,此处的mapper为你自定义的mapper,如documentMapper,通过此API修改索引名称后,全局生效.
+>  - 在对应的参数中指定当前操作作用的索引,例如 wrapper.index(String indexName),通过此API修改索引名称后,仅作用于该wrapper对应的操作,粒度最细.
+
+
 > **Tips:**
 > - 通过注解指定的索引名称优先级最高,指定了注解索引,则全局配置和自动生成索引不生效,采用注解中指定的索引名称.  优先级排序: 注解索引>全局配置索引前缀>自动生成
 > - keepGlobalPrefix选项,(0.9.4+版本才支持)默认值为false,是否保持使用全局的 tablePrefix 的值:

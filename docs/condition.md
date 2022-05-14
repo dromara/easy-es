@@ -1,3 +1,8 @@
+> **Tips**
+>Wrapper支持两种方式创建:
+> - 直接new,例如 new LambdaEsQueryWrapper<>().
+> - 通过EsWrappers.lambdaQuery()创建,可支撑链式编程的场景,对标MP的Wrappers
+
 > **说明:**
 > - 以下出现的第一个入参boolean condition表示该条件是否加入最后生成的语句中，例如：query.like(StringUtils.isNotBlank(name), Entity::getName, name) .eq(age!=null && age >= 0, Entity::getAge, age)
 > - 以下代码块内的多个方法均为从上往下补全个别boolean类型的入参,默认为true

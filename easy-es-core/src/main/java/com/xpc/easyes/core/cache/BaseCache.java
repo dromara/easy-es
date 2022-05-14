@@ -1,6 +1,8 @@
 package com.xpc.easyes.core.cache;
 
 import com.xpc.easyes.core.conditions.BaseEsMapperImpl;
+import com.xpc.easyes.core.toolkit.CollectionUtils;
+import com.xpc.easyes.core.toolkit.EntityInfoHelper;
 import com.xpc.easyes.core.toolkit.ExceptionUtils;
 import com.xpc.easyes.core.toolkit.FieldUtils;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -9,6 +11,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.xpc.easyes.core.constants.BaseEsConstants.*;
@@ -44,9 +47,24 @@ public class BaseCache {
         baseEsMapperInstanceMap.put(mapperInterface, baseEsMapper);
 
         // 初始化entity中所有字段(注解策略生效)
-        Method[] entityMethods = entityClass.getMethods();
-        Map<String, Method> invokeMethodsMap = new ConcurrentHashMap<>(entityMethods.length);
-        Arrays.stream(entityMethods)
+        Map<String, Method> invokeMethodsMap = initInvokeMethodsMap(entityClass);
+        baseEsEntityMethodMap.putIfAbsent(entityClass, invokeMethodsMap);
+
+        // 初始化嵌套类中的所有方法
+        Set<Class<?>> allNestedClass = EntityInfoHelper.getEntityInfo(entityClass).getAllNestedClass();
+        if (CollectionUtils.isNotEmpty(allNestedClass)) {
+            allNestedClass.forEach(nestedClass -> {
+                Map<String, Method> nestedInvokeMethodsMap = initInvokeMethodsMap(nestedClass);
+                baseEsEntityMethodMap.putIfAbsent(nestedClass, nestedInvokeMethodsMap);
+            });
+
+        }
+    }
+
+    private static Map<String, Method> initInvokeMethodsMap(Class<?> clazz) {
+        Method[] methods = clazz.getMethods();
+        Map<String, Method> invokeMethodsMap = new ConcurrentHashMap<>(methods.length);
+        Arrays.stream(methods)
                 .forEach(entityMethod -> {
                     String methodName = entityMethod.getName();
                     if (methodName.startsWith(GET_FUNC_PREFIX) || methodName.startsWith(IS_FUNC_PREFIX)
@@ -54,7 +72,7 @@ public class BaseCache {
                         invokeMethodsMap.put(methodName, entityMethod);
                     }
                 });
-        baseEsEntityMethodMap.putIfAbsent(entityClass, invokeMethodsMap);
+        return invokeMethodsMap;
     }
 
     /**

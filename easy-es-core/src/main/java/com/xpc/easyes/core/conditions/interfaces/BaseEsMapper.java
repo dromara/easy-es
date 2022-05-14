@@ -8,16 +8,12 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
-
-import static com.xpc.easyes.core.constants.BaseEsConstants.PAGE_NUM;
-import static com.xpc.easyes.core.constants.BaseEsConstants.PAGE_SIZE;
 
 /**
  * 核心 所有支持方法接口
@@ -102,39 +98,6 @@ public interface BaseEsMapper<T> {
     String getSource(LambdaEsQueryWrapper<T> wrapper);
 
     /**
-     * 未指定返回类型,未指定分页参数 将在下个版本移除
-     *
-     * @param wrapper 条件
-     * @return 原生分页返回
-     * @throws IOException IO异常
-     */
-    @Deprecated
-    PageInfo<SearchHit> pageQueryOriginal(LambdaEsQueryWrapper<T> wrapper) throws IOException;
-
-    /**
-     * 未指定返回类型,指定分页参数, 将在下个版本移除
-     *
-     * @param wrapper  条件
-     * @param pageNum  当前页
-     * @param pageSize 每页显示条数
-     * @return 原生分页返回
-     * @throws IOException IO异常
-     */
-    @Deprecated
-    PageInfo<SearchHit> pageQueryOriginal(LambdaEsQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) throws IOException;
-
-    /**
-     * 指定返回类型,但未指定分页参数 将在下个版本移除
-     *
-     * @param wrapper 条件
-     * @return 指定的返回类型
-     */
-    @Deprecated
-    default PageInfo<T> pageQuery(LambdaEsQueryWrapper<T> wrapper) {
-        return pageQuery(wrapper, PAGE_NUM, PAGE_SIZE);
-    }
-
-    /**
      * 指定返回类型及分页参数
      *
      * @param wrapper  条件
@@ -172,12 +135,30 @@ public interface BaseEsMapper<T> {
     Integer insert(T entity);
 
     /**
+     * 插入一条记录,可指定索引插入
+     *
+     * @param entity    插入的数据对象
+     * @param indexName 指定插入的索引名
+     * @return 成功条数
+     */
+    Integer insert(T entity, String indexName);
+
+    /**
      * 批量插入
      *
      * @param entityList 插入的数据对象列表
      * @return 总成功条数
      */
     Integer insertBatch(Collection<T> entityList);
+
+    /**
+     * 批量插入
+     *
+     * @param entityList 插入的数据对象列表
+     * @param indexName  指定插入的索引名
+     * @return 总成功条数
+     */
+    Integer insertBatch(Collection<T> entityList, String indexName);
 
     /**
      * 根据 ID 删除
@@ -187,6 +168,14 @@ public interface BaseEsMapper<T> {
      */
     Integer deleteById(Serializable id);
 
+    /**
+     * 根据 ID 删除
+     *
+     * @param id        主键
+     * @param indexName 指定删除的索引名
+     * @return 成功条数
+     */
+    Integer deleteById(Serializable id, String indexName);
 
     /**
      * 根据 entity 条件，删除记录
@@ -205,6 +194,15 @@ public interface BaseEsMapper<T> {
     Integer deleteBatchIds(Collection<? extends Serializable> idList);
 
     /**
+     * 删除（根据ID 批量删除）
+     *
+     * @param idList    主键列表
+     * @param indexName 指定删除的索引名
+     * @return 总成功条数
+     */
+    Integer deleteBatchIds(Collection<? extends Serializable> idList, String indexName);
+
+    /**
      * 根据 ID 更新
      *
      * @param entity 更新对象
@@ -213,12 +211,30 @@ public interface BaseEsMapper<T> {
     Integer updateById(T entity);
 
     /**
+     * 根据 ID 更新
+     *
+     * @param entity    更新对象
+     * @param indexName 指定更新的索引名称
+     * @return 总成功条数
+     */
+    Integer updateById(T entity, String indexName);
+
+    /**
      * 根据ID 批量更新
      *
      * @param entityList 更新对象列表
      * @return 总成功条数
      */
     Integer updateBatchByIds(Collection<T> entityList);
+
+    /**
+     * 根据ID 批量更新
+     *
+     * @param entityList 更新对象列表
+     * @param indexName  指定更新的索引名称
+     * @return 总成功条数
+     */
+    Integer updateBatchByIds(Collection<T> entityList, String indexName);
 
     /**
      * 根据 whereEntity 条件，更新记录
@@ -238,12 +254,30 @@ public interface BaseEsMapper<T> {
     T selectById(Serializable id);
 
     /**
+     * 根据 ID 查询
+     *
+     * @param id        主键
+     * @param indexName 指定查询的索引名
+     * @return 指定的返回对象
+     */
+    T selectById(Serializable id, String indexName);
+
+    /**
      * 查询（根据ID 批量查询）
      *
      * @param idList 主键列表
      * @return 指定的返回对象列表
      */
     List<T> selectBatchIds(Collection<? extends Serializable> idList);
+
+    /**
+     * 查询（根据ID 批量查询）
+     *
+     * @param idList    主键列表
+     * @param indexName 指定查询的索引名
+     * @return 指定的返回对象列表
+     */
+    List<T> selectBatchIds(Collection<? extends Serializable> idList, String indexName);
 
     /**
      * 根据 entity 条件，查询一条记录
@@ -260,4 +294,12 @@ public interface BaseEsMapper<T> {
      * @return 指定的返回对象列表
      */
     List<T> selectList(LambdaEsQueryWrapper<T> wrapper);
+
+    /**
+     * 设置当前Mapper默认激活的全局索引名称 务必谨慎操作,设置后全局生效,永驻jvm,除非项目重启
+     *
+     * @param indexName 索引名称
+     * @return 是否成功
+     */
+    Boolean setCurrentActiveIndex(String indexName);
 }

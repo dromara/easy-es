@@ -2,6 +2,7 @@ package com.xpc.easyes.core.conditions;
 
 import com.xpc.easyes.core.common.OrderByParam;
 import com.xpc.easyes.core.conditions.interfaces.*;
+import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.geo.ShapeRelation;
 import org.elasticsearch.common.unit.DistanceUnit;
@@ -45,6 +46,7 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
         getWrapper().eq(condition, column, val, boost);
         return typedThis;
     }
+
 
     @Override
     public Children ne(boolean condition, R column, Object val, Float boost) {
@@ -91,6 +93,12 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     @Override
     public Children match(boolean condition, R column, Object val, Float boost) {
         getWrapper().match(condition, column, val, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children nestedMatch(boolean condition, String path, String column, Object val, ScoreMode scoreMode, Float boost) {
+        getWrapper().nestedMatch(condition, path, column, val, scoreMode, boost);
         return typedThis;
     }
 
@@ -431,6 +439,274 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
 
     @Override
     public Children notInGeoShape(boolean condition, R column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
+        getWrapper().notInGeoShape(condition, column, geometry, shapeRelation, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children eq(boolean condition, String column, Object val, Float boost) {
+        getWrapper().eq(condition, column, val, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children ne(boolean condition, String column, Object val, Float boost) {
+        getWrapper().ne(condition, column, val, boost);
+        return typedThis;
+
+    }
+
+    @Override
+    public Children match(boolean condition, String column, Object val, Float boost) {
+        getWrapper().match(condition, column, val, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children matchPhase(boolean condition, String column, Object val, Float boost) {
+        getWrapper().matchPhase(condition, column, val, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children matchPhrasePrefixQuery(boolean condition, String column, Object val, int maxExpansions, Float boost) {
+        getWrapper().matchPhrasePrefixQuery(condition, column, val, maxExpansions, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children multiMatchQuery(boolean condition, Object val, Operator operator, int minimumShouldMatch, Float boost, String... columns) {
+        getWrapper().multiMatchQuery(condition, val, operator, minimumShouldMatch, boost, columns);
+        return typedThis;
+    }
+
+    @Override
+    public Children prefixQuery(boolean condition, String column, String prefix, Float boost) {
+        getWrapper().prefixQuery(condition, column, prefix, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notMatch(boolean condition, String column, Object val, Float boost) {
+        getWrapper().notMatch(condition, column, val, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children gt(boolean condition, String column, Object val, Float boost) {
+        getWrapper().gt(condition, column, val, boost);
+        return typedThis;
+
+    }
+
+    @Override
+    public Children ge(boolean condition, String column, Object val, Float boost) {
+        getWrapper().ge(condition, column, val, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children lt(boolean condition, String column, Object val, Float boost) {
+        getWrapper().lt(condition, column, val, boost);
+        return typedThis;
+
+    }
+
+    @Override
+    public Children le(boolean condition, String column, Object val, Float boost) {
+        getWrapper().le(condition, column, val, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children between(boolean condition, String column, Object val1, Object val2, Float boost) {
+        getWrapper().between(condition, column, val1, val2, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notBetween(boolean condition, String column, Object val1, Object val2, Float boost) {
+        getWrapper().notBetween(condition, column, val1, val2, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children like(boolean condition, String column, Object val, Float boost) {
+        getWrapper().like(condition, column, val, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notLike(boolean condition, String column, Object val, Float boost) {
+        getWrapper().notLike(condition, column, val, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children likeLeft(boolean condition, String column, Object val, Float boost) {
+        getWrapper().likeLeft(condition, column, val, boost);
+        return typedThis;
+
+    }
+
+    @Override
+    public Children likeRight(boolean condition, String column, Object val, Float boost) {
+        getWrapper().likeRight(condition, column, val, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children highLight(boolean condition, String preTag, String postTag, String column) {
+        getWrapper().highLight(column, preTag, postTag, column);
+        return typedThis;
+    }
+
+    @Override
+    public Children highLight(boolean condition, String preTag, String postTag, String... columns) {
+        getWrapper().highLight(condition, preTag, postTag, columns);
+        return typedThis;
+    }
+
+    @Override
+    public Children orderBy(boolean condition, boolean isAsc, String... columns) {
+        getWrapper().orderBy(condition, isAsc, columns);
+        return typedThis;
+    }
+
+    @Override
+    public Children in(boolean condition, String column, Collection<?> coll, Float boost) {
+        getWrapper().in(condition, column, coll, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notIn(boolean condition, String column, Collection<?> coll, Float boost) {
+        getWrapper().notIn(condition, column, coll, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children isNull(boolean condition, String column, Float boost) {
+        getWrapper().isNull(condition, column, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children isNotNull(boolean condition, String column, Float boost) {
+        getWrapper().isNotNull(condition, column, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children groupBy(boolean condition, boolean enablePipeline, String... columns) {
+        getWrapper().groupBy(condition, enablePipeline, columns);
+        return typedThis;
+    }
+
+    @Override
+    public Children termsAggregation(boolean condition, boolean enablePipeline, String returnName, String column) {
+        getWrapper().termsAggregation(condition, enablePipeline, returnName, column);
+        return typedThis;
+    }
+
+    @Override
+    public Children avg(boolean condition, boolean enablePipeline, String returnName, String column) {
+        getWrapper().avg(condition, enablePipeline, returnName, column);
+        return typedThis;
+    }
+
+    @Override
+    public Children min(boolean condition, boolean enablePipeline, String returnName, String column) {
+        getWrapper().min(condition, enablePipeline, returnName, column);
+        return typedThis;
+    }
+
+    @Override
+    public Children max(boolean condition, boolean enablePipeline, String returnName, String column) {
+        getWrapper().max(condition, enablePipeline, returnName, column);
+        return typedThis;
+    }
+
+    @Override
+    public Children sum(boolean condition, boolean enablePipeline, String returnName, String column) {
+        getWrapper().sum(condition, enablePipeline, returnName, column);
+        return typedThis;
+    }
+
+    @Override
+    public Children distinct(boolean condition, String column) {
+        getWrapper().distinct(column);
+        return typedThis;
+    }
+
+    @Override
+    public Children geoBoundingBox(boolean condition, String column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
+        getWrapper().geoBoundingBox(condition, column, topLeft, bottomRight, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notInGeoBoundingBox(boolean condition, String column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
+        getWrapper().notInGeoBoundingBox(condition, column, topLeft, bottomRight, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children geoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
+        getWrapper().geoDistance(condition, column, distance, distanceUnit, centralGeoPoint, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notInGeoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
+        getWrapper().notInGeoDistance(condition, column, distance, distanceUnit, centralGeoPoint, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children geoDistance(boolean condition, String column, String distance, GeoPoint centralGeoPoint, Float boost) {
+        getWrapper().geoDistance(condition, column, distance, centralGeoPoint, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notInGeoDistance(boolean condition, String column, String distance, GeoPoint centralGeoPoint, Float boost) {
+        getWrapper().notInGeoDistance(condition, column, distance, centralGeoPoint, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children geoPolygon(boolean condition, String column, List<GeoPoint> geoPoints, Float boost) {
+        getWrapper().geoPolygon(condition, column, geoPoints, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notInGeoPolygon(boolean condition, String column, Collection<GeoPoint> geoPoints, Float boost) {
+        getWrapper().notInGeoPolygon(condition, column, geoPoints, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children geoShape(boolean condition, String column, String indexedShapeId, Float boost) {
+        getWrapper().geoShape(condition, column, indexedShapeId, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notInGeoShape(boolean condition, String column, String indexedShapeId, Float boost) {
+        getWrapper().notInGeoShape(condition, column, indexedShapeId, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children geoShape(boolean condition, String column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
+        getWrapper().geoShape(condition, column, geometry, shapeRelation, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children notInGeoShape(boolean condition, String column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
         getWrapper().notInGeoShape(condition, column, geometry, shapeRelation, boost);
         return typedThis;
     }

@@ -1,10 +1,10 @@
 package com.xpc.easyes.sample.test.select;
 
 import com.xpc.easyes.core.conditions.LambdaEsQueryWrapper;
+import com.xpc.easyes.core.toolkit.EsWrappers;
 import com.xpc.easyes.sample.entity.Document;
 import com.xpc.easyes.sample.mapper.DocumentMapper;
 import com.xpc.easyes.sample.test.TestEasyEsApplication;
-import org.elasticsearch.index.query.Operator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,6 +32,9 @@ public class SelectTest {
         String title = "老汉";
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq(Document::getTitle, title);
+        // 字段名亦可指定为字符串,不推荐
+//        wrapper.eq("title",title);
+
         wrapper.limit(1);
         Document document = documentMapper.selectOne(wrapper);
         System.out.println(document);
@@ -39,9 +42,16 @@ public class SelectTest {
     }
 
     @Test
+    public void testLambdaSelect() {
+        // 类似MP的lambda链式查询
+        List<Document> documents = documentMapper.selectList(EsWrappers.lambdaQuery(Document.class).eq(Document::getTitle, "老汉"));
+        System.out.println(documents);
+    }
+
+    @Test
     public void testSelectById() {
         // 测试根据id查询
-        String id = "OWELCIAB0E2Rzy0qtVNY";
+        String id = "13";
         Document document = documentMapper.selectById(id);
         System.out.println(document);
     }
@@ -74,10 +84,10 @@ public class SelectTest {
     }
 
     @Test
-    public void testMatch(){
+    public void testMatch() {
         // 会对输入做分词,只要所有分词中有一个词在内容中有匹配就会查询出该数据,无视分词顺序
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.match(Document::getContent,"技术");
+        wrapper.match(Document::getContent, "技术");
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents.size());
     }
@@ -143,4 +153,5 @@ public class SelectTest {
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);
     }
+
 }

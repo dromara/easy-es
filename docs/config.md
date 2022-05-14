@@ -29,17 +29,22 @@ easy-es:
       table-prefix: daily_ # 索引前缀,可用于区分环境  默认为空 用法和MP一样
       id-type: auto # id生成策略 默认为auto 
       field-strategy: not_empty # 字段更新策略 默认为not_null
+      enable-track-total-hits: true # 查询超过1w条时可开启,默认为false
+      refresh-policy: immediate # 数据刷新策略,默认为不刷新
 
 ```
 > **Tips:**
 > - id-type支持3种类型:
-> auto: 由ES自动生成,是默认的配置,无需您额外配置 推荐
-> uuid: 系统生成UUID,然后插入ES (不推荐)
-> customize: 用户自定义,在此类型下,用户可以将任意数据类型的id存入es作为es中的数据id,比如将mysql自增的id作为es的id,可以开启此模式,或通过@TableId(type)注解指定.
+>     - auto: 由ES自动生成,是默认的配置,无需您额外配置 推荐
+>     - uuid: 系统生成UUID,然后插入ES (不推荐)
+>     - customize: 用户自定义,在此类型下,用户可以将任意数据类型的id存入es作为es中的数据id,比如将mysql自增的id作为es的id,可以开启此模式,或通过@TableId(type)注解指定.
 
 > - field-strategy支持3种类型:
-> not_null: 非Null判断,字段值为非Null时,才会被更新
-> not_empty: 非空判断,字段值为非空字符串时才会被更新
-> ignore: 忽略判断,无论字段值为什么,都会被更新
-> - 在配置了全局策略后,您仍可以通过注解针对个别类进行个性化配置,全局配置的优先级是小于注解配置的
-
+>     - not_null: 非Null判断,字段值为非Null时,才会被更新
+>     - not_empty: 非空判断,字段值为非空字符串时才会被更新
+>     - ignore: 忽略判断,无论字段值为什么,都会被更新
+>     - 在配置了全局策略后,您仍可以通过注解针对个别类进行个性化配置,全局配置的优先级是小于注解配置的
+> - refresh-policy支持3种策略
+>     - none: 默认策略,不刷新数据
+>     - immediate : 立即刷新,会损耗较多性能,对数据实时性要求高的场景下适用
+>     - wait_until: 请求提交数据后，等待数据完成刷新(1s)，再结束请求 性能损耗适中

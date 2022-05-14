@@ -105,7 +105,6 @@ public class LockUtils {
         DeleteResponse response;
         try {
             response = client.delete(deleteRequest, RequestOptions.DEFAULT);
-            System.out.println(response.status());
         } catch (IOException e) {
             return retryRelease(client, idValue, --maxRetry);
         }

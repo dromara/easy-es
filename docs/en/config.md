@@ -34,6 +34,8 @@ easy-es:
       table-prefix: dev_ # Index prefix, can be used to distinguish the environment, the default is empty
       id-type: auto # id generation strategy defaults to auto
       field-strategy: not_empty # The field update strategy defaults to not_null, and the field is updated only when the field value is not empty
+      enable-track-total-hits: true # It can be turned on when the query exceeds 1w, the default is false
+      refresh-policy: immediate # Data refresh strategy, the default is no refresh
 
 ```
 > **Tips:**
@@ -45,5 +47,10 @@ easy-es:
 >    - not_null: non-Null judgment, only when the field value is non-Null will be updated
 >    - not_empty: non-empty judgment, will be updated only when the field value is a non-empty string
 >    - ignore: Ignore the judgment, no matter what the field value is, it will be updated
-> - After configuring the global policy, you can still customize the configuration for individual classes through annotations, and the priority of the global configuration is lower than the annotation configuration
+>    - After configuring the global policy, you can still customize the configuration for individual classes through annotations, and the priority of the global configuration is lower than the annotation configuration
+
+> - refresh-policy supports 3 policies
+>     - none: default policy, no data refresh
+>     - immediate : Immediate refresh will consume more performance, suitable for scenarios with high real-time data requirements
+>     - wait_until: After requesting to submit data, wait for the data to be refreshed (1s) before ending the request. The performance loss is moderate
 

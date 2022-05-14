@@ -70,17 +70,24 @@ public class IndexUtils {
     public static boolean createIndex(RestHighLevelClient client, CreateIndexParam indexParam) {
         CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexParam.getIndexName());
 
-        // 分片个副本信息
-        Settings.Builder settings = Settings.builder();
-        Optional.ofNullable(indexParam.getShardsNum()).ifPresent(shards -> settings.put(BaseEsConstants.SHARDS_FIELD, shards));
-        Optional.ofNullable(indexParam.getReplicasNum()).ifPresent(replicas -> settings.put(BaseEsConstants.REPLICAS_FIELD, replicas));
-        createIndexRequest.settings(settings);
+        // 设置settings信息
+        if (Objects.isNull(indexParam.getSettings())) {
+            // 分片个副本信息
+            Settings.Builder settings = Settings.builder();
+            Optional.ofNullable(indexParam.getShardsNum()).ifPresent(shards -> settings.put(BaseEsConstants.SHARDS_FIELD, shards));
+            Optional.ofNullable(indexParam.getReplicasNum()).ifPresent(replicas -> settings.put(BaseEsConstants.REPLICAS_FIELD, replicas));
+            createIndexRequest.settings(settings);
+        } else {
+            // 用户自定义settings
+            createIndexRequest.settings(indexParam.getSettings());
+        }
 
         // mapping信息
         if (Objects.isNull(indexParam.getMapping())) {
             Map<String, Object> mapping = initMapping(indexParam.getEsIndexParamList());
             createIndexRequest.mapping(mapping);
         } else {
+            // 用户自定义的mapping
             createIndexRequest.mapping(indexParam.getMapping());
         }
 

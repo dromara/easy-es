@@ -1,6 +1,8 @@
 package com.xpc.easyes.sample.test.insert;
 
 import com.xpc.easyes.sample.entity.Document;
+import com.xpc.easyes.sample.entity.Faq;
+import com.xpc.easyes.sample.entity.User;
 import com.xpc.easyes.sample.mapper.DocumentMapper;
 import com.xpc.easyes.sample.test.TestEasyEsApplication;
 import org.elasticsearch.geometry.Point;
@@ -14,7 +16,9 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 插入测试
@@ -31,9 +35,9 @@ public class InsertTest {
     public void testInsert() {
         // 测试插入数据
         Document document = new Document();
-        document.setId("13");
+        document.setId("3");
         document.setTitle("老汉");
-        document.setContent("推*技术过硬");
+        document.setContent("人才");
         document.setCreator("吃饭");
         document.setLocation("40.171975,116.587105");
         document.setGmtCreate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -41,6 +45,17 @@ public class InsertTest {
         Point point = new Point(13.400544, 52.530286);
         document.setGeoLocation(point.toString());
         document.setStarNum(1);
+        List<User> users = new ArrayList<>();
+        Set<Faq> faqs = new HashSet<>();
+        faqs.add(new Faq("问题1", "回答1"));
+        faqs.add(new Faq("问题2", "回答2"));
+
+        Set<Faq> faqs1 = new HashSet<>();
+        faqs1.add(new Faq("问题3","回答3"));
+        faqs1.add(new Faq("问题4","回答4"));
+        users.add(new User("用户1", 18, faqs));
+        users.add(new User("用户2", 19, faqs1));
+        document.setUsers(users);
         int successCount = documentMapper.insert(document);
         Assert.assertEquals(successCount, 1);
     }
@@ -54,6 +69,7 @@ public class InsertTest {
         document.setTitle("老汉");
         document.setContent("推*技术过硬");
         document.setCreator("隔壁老王");
+
 
         document.setGmtCreate(now);
         document.setCustomField("乌拉巴拉小魔仙");

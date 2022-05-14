@@ -12,9 +12,17 @@ public abstract class AbstractLambdaQueryWrapper<T, Children extends AbstractLam
 
     protected T entity;
 
+    protected Class<T> entityClass;
+
     @Override
     public Children setEntity(T entity) {
         this.entity = entity;
+        return typedThis;
+    }
+
+    @Override
+    public Children setEntityClass(Class<T> entityClass) {
+        this.entityClass = entityClass;
         return typedThis;
     }
 }

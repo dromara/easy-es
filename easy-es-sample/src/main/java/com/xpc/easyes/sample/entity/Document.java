@@ -11,6 +11,8 @@ import com.xpc.easyes.core.enums.IdType;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.util.List;
+
 /**
  * es 数据模型
  * <p>
@@ -18,7 +20,7 @@ import lombok.experimental.Accessors;
  **/
 @Data
 @Accessors(chain = true)
-@TableName(shardsNum = 3, replicasNum = 2,keepGlobalPrefix = true)
+@TableName(shardsNum = 3, replicasNum = 2, keepGlobalPrefix = true)
 public class Document {
     /**
      * es中的唯一id,如果你想自定义es中的id为你提供的id,比如MySQL中的id,请将注解中的type指定为customize,如此id便支持任意数据类型)
@@ -62,7 +64,7 @@ public class Document {
     /**
      * 自定义字段名称
      */
-    @TableField(value = "wu-la",fieldType = FieldType.TEXT,analyzer = Analyzer.IK_SMART,searchAnalyzer = Analyzer.IK_SMART)
+    @TableField(value = "wu-la", fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART, searchAnalyzer = Analyzer.IK_SMART)
     private String customField;
 
     /**
@@ -74,4 +76,9 @@ public class Document {
      * 文档点赞数
      */
     private Integer starNum;
+    /**
+     * 嵌套类型 注意,务必像下面示例一样指定类型为nested及其nested class,否则会导致框架无法正常运行
+     */
+    @TableField(fieldType = FieldType.NESTED, nestedClass = User.class)
+    private List<User> users;
 }

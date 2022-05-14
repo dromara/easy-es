@@ -12,8 +12,14 @@
         // 0.9.8 + 版本支持直接传入字段名称字符串
         wrapper.mapping("wu-la", FieldType.TEX);
 
+        // 如果上述简单的mapping不能满足你业务需求,可自定义mapping
+        // wrapper.mapping(Map);
+
         // 设置分片及副本信息,3个shards,2个replicas,可缺省
         wrapper.settings(3,2);
+
+        // 如果上述简单的settings不能满足你业务需求,可自定义settings
+        // wrapper.settings(Settings);
         
         // 设置别名信息,可缺省
         String aliasName = "daily";

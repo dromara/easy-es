@@ -7,11 +7,7 @@ package com.xpc.easyes.core.enums;
  **/
 public enum IdType {
     /**
-     * es自动生成
-     */
-    AUTO,
-    /**
-     * 该类型为未设置主键类型
+     * 该类型为未设置主键类型,由es自动生成
      */
     NONE,
     /**

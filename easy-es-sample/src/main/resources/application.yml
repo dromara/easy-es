@@ -1,6 +1,6 @@
 easy-es:
   enable: true
-  address : 10.20.64.228:9200
+  address: 10.20.64.228:9200
   schema: http
   username: elastic
   password: WG7WVmuNMtM4GwNYkyWH
@@ -10,7 +10,9 @@ easy-es:
     print-dsl: true
     db-config:
       map-underscore-to-camel-case: false
-#      table-prefix: dev_
+      #      table-prefix: dev_
       id-type: customize
       field-strategy: not_empty
+      refresh-policy: immediate
+      enable-track-total-hits: true
 

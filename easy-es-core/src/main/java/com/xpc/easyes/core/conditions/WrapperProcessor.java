@@ -22,7 +22,6 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.xpc.easyes.core.constants.BaseEsConstants.*;
 import static com.xpc.easyes.core.enums.BaseEsParamTypeEnum.*;
@@ -69,6 +68,8 @@ public class WrapperProcessor {
      */
     public static BoolQueryBuilder initBoolQueryBuilder(List<BaseEsParam> baseEsParamList, Class<?> entityClass) {
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
+        GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
+
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
         // 用于连接and,or条件内的多个查询条件,包装成boolQuery
         BoolQueryBuilder inner = null;
@@ -112,9 +113,9 @@ public class WrapperProcessor {
 
             // 添加字段名称,值,查询类型等
             if (Objects.isNull(inner)) {
-                addQuery(baseEsParam, boolQueryBuilder, entityInfo);
+                addQuery(baseEsParam, boolQueryBuilder, entityInfo, dbConfig);
             } else {
-                addQuery(baseEsParam, inner, entityInfo);
+                addQuery(baseEsParam, inner, entityInfo, dbConfig);
             }
         }
         return boolQueryBuilder;
@@ -148,9 +149,12 @@ public class WrapperProcessor {
         Optional.ofNullable(wrapper.from).ifPresent(searchSourceBuilder::from);
         MyOptional.ofNullable(wrapper.size).ifPresent(searchSourceBuilder::size, DEFAULT_SIZE);
 
-        // 查询超过一万条, trackTotalHists自动开启
         if (searchSourceBuilder.size() > DEFAULT_SIZE) {
+            // 查询超过一万条, trackTotalHists自动开启
             searchSourceBuilder.trackTotalHits(true);
+        } else {
+            // 根据全局配置决定是否开启
+            searchSourceBuilder.trackTotalHits(GlobalConfigCache.getGlobalConfig().getDbConfig().isEnableTrackTotalHits());
         }
 
         return searchSourceBuilder;
@@ -252,7 +256,7 @@ public class WrapperProcessor {
         GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
 
         // 使用实际字段名称覆盖实体类字段名称
-        String realField = getRealField(geoParam.getField(), mappingColumnMap, dbConfig);
+        String realField = FieldUtils.getRealField(geoParam.getField(), mappingColumnMap, dbConfig);
         geoParam.setField(realField);
 
         GeoBoundingBoxQueryBuilder geoBoundingBox = initGeoBoundingBoxQueryBuilder(geoParam);
@@ -293,66 +297,43 @@ public class WrapperProcessor {
      * @param baseEsParam      基础参数
      * @param boolQueryBuilder es boolQueryBuilder
      */
-    private static void addQuery(BaseEsParam baseEsParam, BoolQueryBuilder boolQueryBuilder, EntityInfo entityInfo) {
-        baseEsParam.getMustList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.MUST.getType(), fieldValueModel.getOriginalAttachType(),
-                        entityInfo.getMappingColumn(fieldValueModel.getField()), fieldValueModel.getValue(),
-                        fieldValueModel.getExt(), fieldValueModel.getBoost()));
+    private static void addQuery(BaseEsParam baseEsParam, BoolQueryBuilder boolQueryBuilder, EntityInfo entityInfo, GlobalConfig.DbConfig dbConfig) {
+        baseEsParam.getMustList().forEach(fieldValueModel -> EsQueryTypeUtil.addQueryByType(boolQueryBuilder,
+                EsAttachTypeEnum.MUST.getType(), fieldValueModel, entityInfo, dbConfig));
+
         // 多字段情形
         baseEsParam.getMustMultiFieldList().forEach(fieldValueModel ->
                 EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.MUST.getType(),
-                        getRealFields(fieldValueModel.getFields(), entityInfo.getMappingColumnMap()), fieldValueModel.getValue(),
+                        FieldUtils.getRealFields(fieldValueModel.getFields(), entityInfo.getMappingColumnMap()), fieldValueModel.getValue(),
                         fieldValueModel.getExt(), fieldValueModel.getMinimumShouldMatch(), fieldValueModel.getBoost()));
 
         baseEsParam.getFilterList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.FILTER.getType(), fieldValueModel.getOriginalAttachType(),
-                        entityInfo.getMappingColumn(fieldValueModel.getField()), fieldValueModel.getValue(),
-                        fieldValueModel.getExt(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, EsAttachTypeEnum.FILTER.getType(), fieldValueModel, entityInfo, dbConfig));
 
         baseEsParam.getShouldList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.SHOULD.getType(), fieldValueModel.getOriginalAttachType(),
-                        entityInfo.getMappingColumn(fieldValueModel.getField()),
-                        fieldValueModel.getValue() == null ? fieldValueModel.getValues() : fieldValueModel.getValue(),
-                        fieldValueModel.getExt(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder,
+                        EsAttachTypeEnum.SHOULD.getType(), fieldValueModel, entityInfo, dbConfig));
 
         // 多字段情形
         baseEsParam.getMustMultiFieldList().forEach(fieldValueModel ->
                 EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.SHOULD.getType(),
-                        getRealFields(fieldValueModel.getFields(), entityInfo.getMappingColumnMap()), fieldValueModel.getValue(),
+                        FieldUtils.getRealFields(fieldValueModel.getFields(), entityInfo.getMappingColumnMap()), fieldValueModel.getValue(),
                         fieldValueModel.getExt(), fieldValueModel.getMinimumShouldMatch(), fieldValueModel.getBoost()));
 
         baseEsParam.getMustNotList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.MUST_NOT.getType(), fieldValueModel.getOriginalAttachType(),
-                        entityInfo.getMappingColumn(fieldValueModel.getField()), fieldValueModel.getValue(),
-                        fieldValueModel.getExt(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, EsAttachTypeEnum.MUST_NOT.getType(), fieldValueModel, entityInfo, dbConfig));
 
         baseEsParam.getGtList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.GT.getType(), fieldValueModel.getOriginalAttachType(),
-                        entityInfo.getMappingColumn(fieldValueModel.getField()), fieldValueModel.getValue(),
-                        fieldValueModel.getExt(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, EsAttachTypeEnum.GT.getType(), fieldValueModel, entityInfo, dbConfig));
 
         baseEsParam.getLtList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.LT.getType(), fieldValueModel.getOriginalAttachType(),
-                        entityInfo.getMappingColumn(fieldValueModel.getField()), fieldValueModel.getValue(),
-                        fieldValueModel.getExt(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, EsAttachTypeEnum.LT.getType(), fieldValueModel, entityInfo, dbConfig));
 
         baseEsParam.getGeList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.GE.getType(), fieldValueModel.getOriginalAttachType(),
-                        entityInfo.getMappingColumn(fieldValueModel.getField()), fieldValueModel.getValue(),
-                        fieldValueModel.getExt(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, EsAttachTypeEnum.GE.getType(), fieldValueModel, entityInfo, dbConfig));
 
         baseEsParam.getLeList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.LE.getType(), fieldValueModel.getOriginalAttachType(),
-                        entityInfo.getMappingColumn(fieldValueModel.getField()), fieldValueModel.getValue(),
-                        fieldValueModel.getExt(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, EsAttachTypeEnum.LE.getType(), fieldValueModel, entityInfo, dbConfig));
 
         baseEsParam.getBetweenList().forEach(fieldValueModel ->
                 EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
@@ -375,28 +356,16 @@ public class WrapperProcessor {
                         fieldValueModel.getValues(), fieldValueModel.getBoost()));
 
         baseEsParam.getIsNullList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.NOT_EXISTS.getType(), fieldValueModel.getOriginalAttachType(),
-                        entityInfo.getMappingColumn(fieldValueModel.getField()), Optional.empty(),
-                        fieldValueModel.getExt(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, EsAttachTypeEnum.NOT_EXISTS.getType(), fieldValueModel, entityInfo, dbConfig));
 
         baseEsParam.getNotNullList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.EXISTS.getType(), fieldValueModel.getOriginalAttachType(),
-                        entityInfo.getMappingColumn(fieldValueModel.getField()), Optional.empty(),
-                        fieldValueModel.getExt(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, EsAttachTypeEnum.EXISTS.getType(), fieldValueModel, entityInfo, dbConfig));
 
         baseEsParam.getLikeLeftList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.LIKE_LEFT.getType(), fieldValueModel.getOriginalAttachType(),
-                        entityInfo.getMappingColumn(fieldValueModel.getField()), fieldValueModel.getValue(),
-                        fieldValueModel.getExt(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, EsAttachTypeEnum.LIKE_LEFT.getType(), fieldValueModel, entityInfo, dbConfig));
 
         baseEsParam.getLikeRightList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.LIKE_RIGHT.getType(), fieldValueModel.getOriginalAttachType(),
-                        entityInfo.getMappingColumn(fieldValueModel.getField()), fieldValueModel.getValue(),
-                        fieldValueModel.getExt(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, EsAttachTypeEnum.LIKE_RIGHT.getType(), fieldValueModel, entityInfo, dbConfig));
     }
 
     /**
@@ -430,8 +399,8 @@ public class WrapperProcessor {
         }
         // 获取配置
         GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
-        String[] includes = getRealFields(wrapper.include, mappingColumnMap, dbConfig);
-        String[] excludes = getRealFields(wrapper.exclude, mappingColumnMap, dbConfig);
+        String[] includes = FieldUtils.getRealFields(wrapper.include, mappingColumnMap, dbConfig);
+        String[] excludes = FieldUtils.getRealFields(wrapper.exclude, mappingColumnMap, dbConfig);
         searchSourceBuilder.fetchSource(includes, excludes);
     }
 
@@ -569,7 +538,7 @@ public class WrapperProcessor {
         AggregationBuilder root = null;
         AggregationBuilder cursor = null;
         for (AggregationParam aggParam : aggregationParamList) {
-            String realField = getRealField(aggParam.getField(), mappingColumnMap, dbConfig);
+            String realField = FieldUtils.getRealField(aggParam.getField(), mappingColumnMap, dbConfig);
             AggregationBuilder builder = getRealAggregationBuilder(aggParam.getAggregationType(), aggParam.getName(), realField);
             if (aggParam.isEnablePipeline()) {
                 // 管道聚合, 构造聚合树
@@ -620,53 +589,4 @@ public class WrapperProcessor {
         }
         return aggregationBuilder;
     }
-
-    /**
-     * 获取实际字段名
-     *
-     * @param field            原字段名
-     * @param mappingColumnMap 字段映射关系map
-     * @param dbConfig         配置
-     * @return 实际字段名
-     */
-    private static String getRealField(String field, Map<String, String> mappingColumnMap, GlobalConfig.DbConfig dbConfig) {
-        String customField = mappingColumnMap.get(field);
-        if (Objects.nonNull(customField)) {
-            return customField;
-        } else {
-            if (dbConfig.isMapUnderscoreToCamelCase()) {
-                return StringUtils.camelToUnderline(field);
-            } else {
-                return field;
-            }
-        }
-    }
-
-    /**
-     * 获取实际字段名数组
-     *
-     * @param fields           原字段名数组
-     * @param mappingColumnMap 字段映射关系map
-     * @param dbConfig         配置
-     * @return 实际字段数组
-     */
-    private static String[] getRealFields(String[] fields, Map<String, String> mappingColumnMap, GlobalConfig.DbConfig dbConfig) {
-        return Arrays.stream(fields)
-                .map(field -> getRealField(field, mappingColumnMap, dbConfig))
-                .collect(Collectors.toList())
-                .toArray(new String[]{});
-    }
-
-    /**
-     * 获取实际字段名数组
-     *
-     * @param fields           原字段名数组
-     * @param mappingColumnMap 字段映射关系map
-     * @return 实际字段数组
-     */
-    private static List<String> getRealFields(List<String> fields, Map<String, String> mappingColumnMap) {
-        return Arrays.stream(getRealFields(fields.toArray(new String[0]), mappingColumnMap, GlobalConfigCache.getGlobalConfig().getDbConfig()))
-                .collect(Collectors.toList());
-    }
-
 }

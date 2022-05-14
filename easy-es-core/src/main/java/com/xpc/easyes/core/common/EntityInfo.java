@@ -3,16 +3,14 @@ package com.xpc.easyes.core.common;
 import com.alibaba.fastjson.PropertyNamingStrategy;
 import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
 import com.alibaba.fastjson.serializer.SerializeFilter;
+import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
 import com.xpc.easyes.core.constants.BaseEsConstants;
 import com.xpc.easyes.core.enums.IdType;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -57,10 +55,6 @@ public class EntityInfo {
      */
     private String keyProperty;
     /**
-     * 表主键ID 字段名
-     */
-    private String keyColumn;
-    /**
      * 分片数 默认为1
      */
     private Integer shardsNum = BaseEsConstants.ONE;
@@ -81,25 +75,13 @@ public class EntityInfo {
      */
     private Class<?> clazz;
     /**
-     * 是否有id注解
-     */
-    private Boolean hasIdAnnotation;
-
-    /**
-     * fastjson字段名称过滤器
-     */
-    private SerializeFilter serializeFilter;
-
-    /**
      * fastjson 字段命名策略
      */
     private PropertyNamingStrategy propertyNamingStrategy;
-
     /**
      * fastjson 实体中不存在的字段处理器
      */
     private ExtraProcessor extraProcessor;
-
     /**
      * 实体字段->高亮返回结果 键值对
      */
@@ -112,7 +94,30 @@ public class EntityInfo {
      * es实际字段映射->实体字段 (仅包含被重命名字段)
      */
     private final Map<String, String> columnMappingMap = new HashMap<>();
-
+    /**
+     * 不需要序列化JSON的字段 不存在字段,高亮字段等
+     */
+    private final Set<String> notSerializeField = new HashSet<>();
+    /**
+     * 嵌套类不需要序列化JSON的字段 不存在字段,高亮字段等
+     */
+    private final Map<Class<?>, Set<String>> nestedNotSerializeField = new HashMap<>();
+    /**
+     * 嵌套类型 path和class对应关系
+     */
+    private final Map<String, Class<?>> pathClassMap = new HashMap<>();
+    /**
+     * 嵌套类型 实体字段->es实际字段映射
+     */
+    private final Map<Class<?>, Map<String, String>> nestedClassMappingColumnMap = new HashMap<>();
+    /**
+     * 嵌套类型 es实际字段映射->实体字段 (仅包含被重命名字段)
+     */
+    private final Map<Class<?>, Map<String, String>> nestedClassColumnMappingMap = new HashMap<>();
+    /**
+     * fastjson 过滤器
+     */
+    private final Map<Class<?>, List<SerializeFilter>> classSimplePropertyPreFilterMap = new HashMap<>();
 
     /**
      * 获取需要进行查询的字段列表
@@ -128,15 +133,6 @@ public class EntityInfo {
     }
 
     /**
-     * 获取id字段名
-     *
-     * @return id字段名
-     */
-    public String getId() {
-        return keyColumn;
-    }
-
-    /**
      * 获取实体字段映射es中的字段名
      *
      * @param column 字段名
@@ -146,4 +142,27 @@ public class EntityInfo {
         return Optional.ofNullable(mappingColumnMap.get(column))
                 .orElse(column);
     }
+
+    /**
+     * 获取全部嵌套类
+     *
+     * @return 嵌套类集合
+     */
+    public Set<Class<?>> getAllNestedClass() {
+        return nestedClassColumnMappingMap.keySet();
+    }
+
+    /**
+     * 根据path获取嵌套类字段关系map
+     *
+     * @param path 路径
+     * @return 字段关系map
+     */
+    public Map<String, String> getNestedMappingColumnMapByPath(String path) {
+        return Optional.ofNullable(pathClassMap.get(path))
+                .map(nestedClassMappingColumnMap::get)
+                .orElse(new HashMap<>(0));
+    }
+
+
 }

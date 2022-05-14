@@ -4,17 +4,12 @@ import com.xpc.easyes.core.conditions.LambdaEsQueryWrapper;
 import com.xpc.easyes.sample.entity.Document;
 import com.xpc.easyes.sample.mapper.DocumentMapper;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.xml.crypto.Data;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalField;
-import java.util.Date;
 import java.util.List;
 
 /**

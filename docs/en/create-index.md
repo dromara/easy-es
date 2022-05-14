@@ -12,8 +12,14 @@
         // Version 0.9.8+ supports passing in field name String directly
         wrapper.mapping("wu-la", FieldType.TEX);
 
+        // If the above simple mapping cannot meet your business needs, you can customize the mapping
+        // wrapper.mapping(Map);
+
         // Set shard and replica information, here 3 shards and 2 replicas are set, which can be defaulted
         wrapper.settings(3,2);
+
+        // If the above simple settings cannot meet your business needs, you can customize the settings
+        // wrapper.settings(Settings);
         
         // Set alias information, which can be defaulted
         String aliasName = "dev";

@@ -3,6 +3,7 @@ package com.xpc.easyes.core.anno;
 import com.xpc.easyes.core.enums.Analyzer;
 import com.xpc.easyes.core.enums.FieldStrategy;
 import com.xpc.easyes.core.enums.FieldType;
+import com.xpc.easyes.core.params.DefaultNestedClass;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -65,4 +66,11 @@ public @interface TableField {
      * @return 日期格式 例如yyyy-MM-dd HH:mm:ss
      */
     String dateFormat() default "";
+
+    /**
+     * 默认嵌套类
+     *
+     * @return 默认嵌套类
+     */
+    Class<?> nestedClass() default DefaultNestedClass.class;
 }

@@ -8,6 +8,13 @@ public class Document {
     ...
 }
 ```
+
+> **Dynamic index name support**
+> If your index name is not fixed, we provide two ways to modify the index name in CRUD
+> - Call the mapper.setCurrentActiveIndex(String indexName) method. The mapper here is your custom mapper, such as documentMapper. After modifying the index name through this API, it will take effect globally.
+> - Specify the index of the current operation in the corresponding parameter, such as wrapper.index(String indexName), after modifying the index name through this API, it only affects the operation corresponding to the wrapper, with the smallest granularity.
+
+
 > Tips:
 > - The index name specified by the annotation has the highest priority. If the annotation index is specified, the global configuration and automatically generated index will not take effect, and the index name specified in the annotation will be used. Priority order: Annotation index>Global configuration index prefix>Auto generated
 > - The keepGlobalPrefix option, (only supported in version 0.9.4+), the default value is false, whether to keep using the global tablePrefix value:

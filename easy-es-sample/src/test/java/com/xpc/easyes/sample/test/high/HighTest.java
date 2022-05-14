@@ -121,19 +121,9 @@ public class HighTest {
 
     @Test
     public void testPageQuery() {
-        String customField = "乌拉";
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.match(Document::getCustomField, customField);
-        PageInfo<Document> documentPageInfo = documentMapper.pageQuery(wrapper);
-        System.out.println(documentPageInfo);
-    }
-
-    @Test
-    public void testPageQueryWithPageParams(){
-        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.match(Document::getContent, "技术");
-        wrapper.highLight(Document::getContent);
-        PageInfo<Document> documentPageInfo = documentMapper.pageQuery(wrapper, 1, 5);
+        wrapper.match(Document::getTitle, "老汉");
+        PageInfo<Document> documentPageInfo = documentMapper.pageQuery(wrapper,1,10);
         System.out.println(documentPageInfo);
     }
 

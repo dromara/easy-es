@@ -1,15 +1,14 @@
-主键注解@TableId功能和MP一致,但相比MP针对一些低频使用功能做了一些阉割,后续根据用户反馈可随迭代逐步加入,目前版本目前只支持以下两种场景:
+主键注解@TableId功能和MP一致,但相比MP针对一些低频使用功能做了一些阉割,后续根据用户反馈可随迭代逐步加入
 
-1. 对es中的唯一id进行重命名
 1. 指定es中的唯一id生成方式
 
 示例:
 ```java
 public class Document {
-	/**
+    /**
      * es中的唯一id
      */
-    @TableId(value = "myId",type = IdType.AUTO)
+    @TableId(type = IdType.AUTO)
     private String id;
     
     // 省略其它字段...

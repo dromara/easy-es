@@ -4,7 +4,6 @@ import com.xpc.easyes.core.conditions.interfaces.SFunction;
 import com.xpc.easyes.core.conditions.interfaces.Update;
 import com.xpc.easyes.core.params.BaseEsParam;
 import com.xpc.easyes.core.params.EsUpdateParam;
-import com.xpc.easyes.core.toolkit.FieldUtils;
 import org.elasticsearch.action.search.SearchRequest;
 
 import java.util.ArrayList;
@@ -22,19 +21,20 @@ public class LambdaEsUpdateWrapper<T> extends AbstractLambdaUpdateWrapper<T, Lam
     List<EsUpdateParam> updateParamList;
 
     /**
+     * 更新操作作用的索引名
+     */
+    protected String indexName;
+
+    /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
      */
     public LambdaEsUpdateWrapper() {
         this(null);
     }
 
-    /**
-     * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
-     * @param entity 实体
-     */
-    public LambdaEsUpdateWrapper(T entity) {
+    public LambdaEsUpdateWrapper(Class<T> entityClass) {
         super.initNeed();
-        super.setEntity(entity);
+        super.setEntityClass(entityClass);
         updateParamList = new ArrayList<>();
     }
 
@@ -45,13 +45,19 @@ public class LambdaEsUpdateWrapper<T> extends AbstractLambdaUpdateWrapper<T, Lam
     }
 
     @Override
-    public LambdaEsUpdateWrapper<T> set(boolean condition, SFunction<T, ?> column, Object val) {
+    public LambdaEsUpdateWrapper<T> set(boolean condition, String column, Object val) {
         if (condition) {
             EsUpdateParam esUpdateParam = new EsUpdateParam();
-            esUpdateParam.setField(FieldUtils.getFieldName(column));
+            esUpdateParam.setField(column);
             esUpdateParam.setValue(val);
             updateParamList.add(esUpdateParam);
         }
+        return typedThis;
+    }
+
+    @Override
+    public LambdaEsUpdateWrapper<T> index(boolean condition, String indexName) {
+        this.indexName = indexName;
         return typedThis;
     }
 

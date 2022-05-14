@@ -2,6 +2,8 @@ package com.xpc.easyes.core.conditions.interfaces;
 
 import com.xpc.easyes.core.enums.Analyzer;
 import com.xpc.easyes.core.enums.FieldType;
+import com.xpc.easyes.core.toolkit.FieldUtils;
+import org.elasticsearch.common.settings.Settings;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -30,6 +32,14 @@ public interface Index<Children, R> extends Serializable {
     Children settings(Integer shards, Integer replicas);
 
     /**
+     * 用户手动指定的settings
+     *
+     * @param settings settings
+     * @return 泛型
+     */
+    Children settings(Settings settings);
+
+    /**
      * 用户自行指定mapping
      *
      * @param mapping mapping信息
@@ -54,8 +64,8 @@ public interface Index<Children, R> extends Serializable {
         return mapping(column, fieldType, analyzer, null, dateFormat);
     }
 
-    default Children mapping(R colmun, FieldType fieldType, Analyzer analyzer, Analyzer searchAnalyzer) {
-        return mapping(colmun, fieldType, analyzer, searchAnalyzer, null);
+    default Children mapping(R column, FieldType fieldType, Analyzer analyzer, Analyzer searchAnalyzer) {
+        return mapping(column, fieldType, analyzer, searchAnalyzer, null);
     }
 
     /**
@@ -68,7 +78,9 @@ public interface Index<Children, R> extends Serializable {
      * @param dateFormat     日期格式
      * @return 泛型
      */
-    Children mapping(R column, FieldType fieldType, Analyzer analyzer, Analyzer searchAnalyzer, String dateFormat);
+    default Children mapping(R column, FieldType fieldType, Analyzer analyzer, Analyzer searchAnalyzer, String dateFormat) {
+        return mapping(FieldUtils.getFieldName(column), fieldType, analyzer, searchAnalyzer, dateFormat);
+    }
 
 
     default Children mapping(String column, FieldType fieldType) {

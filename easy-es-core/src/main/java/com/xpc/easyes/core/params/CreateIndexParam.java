@@ -2,6 +2,7 @@ package com.xpc.easyes.core.params;
 
 
 import lombok.Data;
+import org.elasticsearch.common.settings.Settings;
 
 import java.util.List;
 import java.util.Map;
@@ -40,5 +41,9 @@ public class CreateIndexParam {
     /**
      * 用户手动指定的mapping信息,优先级最高
      */
-    protected Map<String, Object> mapping;
+    private Map<String, Object> mapping;
+    /**
+     * 用户手动指定的settings信息,优先级最高
+     */
+    private Settings settings;
 }

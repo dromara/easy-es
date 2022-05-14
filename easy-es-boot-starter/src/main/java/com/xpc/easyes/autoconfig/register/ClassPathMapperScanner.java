@@ -17,12 +17,6 @@ import java.util.Set;
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
-    private MapperFactoryBean<?> mapperFactoryBean = new MapperFactoryBean<>();
-
-    public void setMapperFactoryBean(MapperFactoryBean<?> mapperFactoryBean) {
-        this.mapperFactoryBean = mapperFactoryBean != null ? mapperFactoryBean : new MapperFactoryBean<>();
-    }
-
     public ClassPathMapperScanner(BeanDefinitionRegistry registry) {
         super(registry, false);
     }
@@ -60,7 +54,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
             // the mapper interface is the original class of the bean
             // but, the actual class of the bean is MapperFactoryBean
             definition.getConstructorArgumentValues().addGenericArgumentValue(beanClassName);
-            definition.setBeanClass(this.mapperFactoryBean.getClass());
+            definition.setBeanClass(MapperFactoryBean.class);
 
             logger.debug("Enabling autowire by type for MapperFactoryBean with name '" + holder.getBeanName() + "'.");
             definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);

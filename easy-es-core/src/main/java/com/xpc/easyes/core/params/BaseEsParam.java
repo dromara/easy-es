@@ -139,9 +139,17 @@ public class BaseEsParam {
          */
         private Object ext;
         /**
-         *最小匹配度 百分比
+         * 最小匹配度 百分比
          */
         private int minimumShouldMatch;
+        /**
+         * nested path
+         */
+        private String path;
+        /**
+         * 得分模式or是否计算得分
+         */
+        private Object scoreMode;
     }
 
     /**

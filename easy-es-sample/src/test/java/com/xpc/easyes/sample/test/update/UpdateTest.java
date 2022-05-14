@@ -1,6 +1,7 @@
 package com.xpc.easyes.sample.test.update;
 
 import com.xpc.easyes.core.conditions.LambdaEsUpdateWrapper;
+import com.xpc.easyes.core.toolkit.EsWrappers;
 import com.xpc.easyes.sample.EasyEsApplication;
 import com.xpc.easyes.sample.entity.Document;
 import com.xpc.easyes.sample.mapper.DocumentMapper;

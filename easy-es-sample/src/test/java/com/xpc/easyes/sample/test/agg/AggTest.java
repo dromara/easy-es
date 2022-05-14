@@ -2,9 +2,12 @@ package com.xpc.easyes.sample.test.agg;
 
 import com.xpc.easyes.core.common.PageInfo;
 import com.xpc.easyes.core.conditions.LambdaEsQueryWrapper;
+import com.xpc.easyes.core.toolkit.FieldUtils;
 import com.xpc.easyes.sample.entity.Document;
+import com.xpc.easyes.sample.entity.User;
 import com.xpc.easyes.sample.mapper.DocumentMapper;
 import com.xpc.easyes.sample.test.TestEasyEsApplication;
+import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.action.search.SearchResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,6 +15,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import javax.print.Doc;
+import java.util.List;
 
 /**
  * 聚合测试
@@ -55,6 +60,5 @@ public class AggTest {
         SearchResponse response = documentMapper.search(wrapper);
         System.out.println(response);
     }
-
 }
 

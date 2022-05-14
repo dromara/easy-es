@@ -43,3 +43,17 @@ Example:
          System.out.println(response);
      }
 ```
+
+>In version 0.9.14+, we have further strengthened the aggregation api and provided parameters that can configure whether to enable pipeline aggregation. The default is to enable. If you want the results of multiple field aggregations to appear in their respective buckets, you can specify The eanblePipeline parameter can be false.
+
+```java
+    @Test
+    public void testAggNotPipeline() {
+        // For the following two fields, if you do not want to aggregate in the pipeline pipeline, and the results of each aggregation are displayed in their respective buckets, we also provide support
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        // Specifies that enable pipeline aggregation is false
+        wrapper.groupBy(false, Document::getCreator, Document::getTitle);
+        SearchResponse response = documentMapper.search(wrapper);
+        System.out.println(response);
+    }
+```

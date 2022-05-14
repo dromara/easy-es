@@ -1,15 +1,14 @@
-> The primary key annotation @TableId  function is the same as[ Mybatis-Plus](https://github.com/baomidou/mybatis-plus)(Hereafter referred to as MP), but compared to MP, some low-frequency usage functions have been castrated. According to user feedback, it can be added gradually with the iteration. The current version currently only supports the following two scenarios: 
-> 
-> 1. Rename the unique id in es
+> The primary key annotation @TableId  function is the same as[ Mybatis-Plus](https://github.com/baomidou/mybatis-plus)(Hereafter referred to as MP), but compared to MP, some low-frequency usage functions have been castrated. According to user feedback, it can be added gradually with the iteration. 
+
 > 1. Specify the unique id generation method in es
 
 Example:
 ```java
 public class Document {
-	/**
+    /**
      * unique id in es
      */
-    @TableId(value = "myId",type = IdType.AUTO)
+    @TableId(type = IdType.AUTO)
     private String id;
     
     //  Omit other fields...

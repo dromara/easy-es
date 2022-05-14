@@ -1,7 +1,5 @@
 package com.xpc.easyes.core.constants;
 
-import org.elasticsearch.index.query.Operator;
-
 /**
  * EasyEs的常量
  * <p>
@@ -180,4 +178,8 @@ public interface BaseEsConstants {
      * 百分比符号
      */
     String PERCENT = "%";
+    /**
+     * 嵌套类型 path和field连接符
+     */
+    String PATH_FIELD_JOIN = ".";
 }

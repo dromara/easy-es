@@ -1,5 +1,8 @@
 package com.xpc.easyes.core.conditions.interfaces;
 
+import org.apache.lucene.search.join.ScoreMode;
+import org.elasticsearch.index.query.QueryBuilder;
+
 import java.io.Serializable;
 
 /**
@@ -19,5 +22,4 @@ public interface Join<Children> extends Serializable {
      * @return 泛型
      */
     Children or(boolean condition);
-
 }

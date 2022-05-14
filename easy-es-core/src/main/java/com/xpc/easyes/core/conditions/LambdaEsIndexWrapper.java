@@ -5,9 +5,9 @@ import com.xpc.easyes.core.conditions.interfaces.SFunction;
 import com.xpc.easyes.core.enums.Analyzer;
 import com.xpc.easyes.core.enums.FieldType;
 import com.xpc.easyes.core.params.EsIndexParam;
-import com.xpc.easyes.core.toolkit.FieldUtils;
 import com.xpc.easyes.core.toolkit.StringUtils;
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.common.settings.Settings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,17 +38,23 @@ public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaE
      */
     protected Integer replicasNum;
     /**
-     * 用户手动指定的mapping信息,优先级最高
+     * 用户手动指定的索引mapping信息,优先级最高
      */
     protected Map<String, Object> mapping;
+    /**
+     * 用户手动指定的索引settings,优先级最高
+     */
+    protected Settings settings;
     /**
      * 索引相关参数列表
      */
     List<EsIndexParam> esIndexParamList;
     /**
-     * 对应实体
+     * 对应实体类
      */
-    private final T entity;
+    private final Class<T> entityClass;
+
+
     /**
      * 此包装类本身
      */
@@ -61,13 +67,8 @@ public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaE
         this(null);
     }
 
-    /**
-     * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
-     *
-     * @param entity 实体
-     */
-    public LambdaEsIndexWrapper(T entity) {
-        this.entity = entity;
+    public LambdaEsIndexWrapper(Class<T> entityClass) {
+        this.entityClass = entityClass;
         esIndexParamList = new ArrayList<>();
     }
 
@@ -98,21 +99,20 @@ public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaE
     }
 
     @Override
+    public LambdaEsIndexWrapper<T> settings(Settings settings) {
+        this.settings = settings;
+        return typedThis;
+    }
+
+    @Override
     public LambdaEsIndexWrapper<T> mapping(Map<String, Object> mapping) {
         this.mapping = mapping;
         return typedThis;
     }
 
     @Override
-    public LambdaEsIndexWrapper<T> mapping(SFunction<T, ?> column, FieldType fieldType, Analyzer analyzer, Analyzer searchAnalyzer, String dateFormat) {
-        String fieldName = FieldUtils.getFieldName(column);
-        addEsIndexParam(fieldName, fieldType, analyzer, analyzer,dateFormat);
-        return typedThis;
-    }
-
-    @Override
     public LambdaEsIndexWrapper<T> mapping(String column, FieldType fieldType, Analyzer analyzer, Analyzer searchAnalyzer, String dateFormat) {
-        addEsIndexParam(column, fieldType, analyzer, analyzer,dateFormat);
+        addEsIndexParam(column, fieldType, analyzer, analyzer, dateFormat);
         return typedThis;
     }
 

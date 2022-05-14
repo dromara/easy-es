@@ -4,9 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
+/**
+ * java数据类型枚举
+ * <p>
+ * Copyright © 2021 xpc1024 All Rights Reserved
+ **/
 @AllArgsConstructor
 public enum JdkDataTypeEnum {
     BYTE("byte"),

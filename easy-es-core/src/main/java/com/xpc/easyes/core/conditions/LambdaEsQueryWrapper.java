@@ -41,6 +41,10 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
      * 查询多少条记录
      */
     protected Integer size;
+    /**
+     * 查询索引名
+     */
+    protected String indexName;
 
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
@@ -51,14 +55,9 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
         exclude = new String[]{};
     }
 
-    /**
-     * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
-     *
-     * @param entity 实体
-     */
-    public LambdaEsQueryWrapper(T entity) {
+    public LambdaEsQueryWrapper(Class<T> entityClass) {
         super.initNeed();
-        super.setEntity(entity);
+        super.setEntityClass(entityClass);
         include = new String[]{};
         exclude = new String[]{};
     }
@@ -80,13 +79,8 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
     }
 
     @Override
-    public LambdaEsQueryWrapper<T> select(SFunction<T, ?>... columns) {
-        if (ArrayUtils.isNotEmpty(columns)) {
-            List<String> list = Arrays.stream(columns)
-                    .map(FieldUtils::getFieldName)
-                    .collect(Collectors.toList());
-            include = list.toArray(include);
-        }
+    public LambdaEsQueryWrapper<T> select(String... columns) {
+        this.include = columns;
         return typedThis;
     }
 
@@ -104,13 +98,8 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
     }
 
     @Override
-    public LambdaEsQueryWrapper<T> notSelect(SFunction<T, ?>... columns) {
-        if (ArrayUtils.isNotEmpty(columns)) {
-            List<String> list = Arrays.stream(columns)
-                    .map(FieldUtils::getFieldName)
-                    .collect(Collectors.toList());
-            exclude = list.toArray(exclude);
-        }
+    public LambdaEsQueryWrapper<T> notSelect(String... columns) {
+        this.exclude = columns;
         return typedThis;
     }
 
@@ -136,6 +125,14 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
     public LambdaEsQueryWrapper<T> limit(Integer m, Integer n) {
         this.from = m;
         this.size = n;
+        return typedThis;
+    }
+
+    @Override
+    public LambdaEsQueryWrapper<T> index(boolean condition, String indexName) {
+        if (condition) {
+            this.indexName = indexName;
+        }
         return typedThis;
     }
 

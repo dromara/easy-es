@@ -28,6 +28,7 @@ public class IndexTest {
     private DocumentMapper documentMapper;
 
     /**
+     * 注意,此测试类下所有方法请先关闭自动挡模式,开启手动挡 配置: process-index-mode=manual
      * 测试创建索引 不了解Es索引概念的建议先去了解 懒汉可以简单理解为MySQL中的一张表
      */
     @Test

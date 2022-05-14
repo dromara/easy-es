@@ -2,12 +2,10 @@ package com.xpc.easyes.core.conditions;
 
 import com.xpc.easyes.core.common.OrderByParam;
 import com.xpc.easyes.core.conditions.interfaces.*;
-import com.xpc.easyes.core.enums.AggregationTypeEnum;
-import com.xpc.easyes.core.enums.BaseEsParamTypeEnum;
-import com.xpc.easyes.core.enums.EsAttachTypeEnum;
-import com.xpc.easyes.core.enums.EsQueryTypeEnum;
+import com.xpc.easyes.core.enums.*;
 import com.xpc.easyes.core.params.*;
 import com.xpc.easyes.core.toolkit.*;
+import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.geo.ShapeRelation;
 import org.elasticsearch.common.unit.DistanceUnit;
@@ -21,11 +19,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.xpc.easyes.core.enums.BaseEsParamTypeEnum.*;
 import static com.xpc.easyes.core.enums.EsAttachTypeEnum.*;
 import static com.xpc.easyes.core.enums.EsQueryTypeEnum.*;
+import static com.xpc.easyes.core.enums.JoinTypeEnum.*;
 
 /**
  * 抽象Lambda表达式父类
@@ -92,6 +90,12 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         return typedThis;
     }
 
+    public Children setEntityClass(Class<T> entityClass) {
+        this.entityClass = entityClass;
+        this.initEntityClass();
+        return typedThis;
+    }
+
     protected void initEntityClass() {
         if (this.entityClass == null && this.entity != null) {
             this.entityClass = (Class<T>) entity.getClass();
@@ -114,13 +118,13 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
-    public Children eq(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, TERM_QUERY, MUST, FieldUtils.getFieldName(column), val, boost);
+    public Children eq(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, TERM_QUERY, MUST, column, val, boost);
     }
 
     @Override
-    public Children ne(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, TERM_QUERY, MUST_NOT, FieldUtils.getFieldName(column), val, boost);
+    public Children ne(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, TERM_QUERY, MUST_NOT, column, val, boost);
     }
 
     @Override
@@ -134,13 +138,28 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
-    public Children match(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, MATCH_QUERY, MUST, FieldUtils.getFieldName(column), val, boost);
+    public Children match(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, MATCH_QUERY, MUST, column, val, boost);
     }
 
     @Override
-    public Children matchPhase(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, MATCH_PHASE, MUST, FieldUtils.getFieldName(column), val, boost);
+    public Children nestedMatch(boolean condition, String path, String column, Object val, ScoreMode scoreMode, Float boost) {
+        return doIt(condition, MATCH_QUERY, MUST, NESTED, path, column, val, scoreMode, boost);
+    }
+
+    @Override
+    public Children childMatch(boolean condition, String type, String column, Object val, ScoreMode scoreMode, Float boost) {
+        return doIt(condition, MATCH_QUERY, MUST, HAS_CHILD, type, column, val, scoreMode, boost);
+    }
+
+    @Override
+    public Children parentMatch(boolean condition, String type, String column, Object val, boolean score, Float boost) {
+        return doIt(condition, MATCH_QUERY, MUST, HAS_PARENT, type, column, val, score, boost);
+    }
+
+    @Override
+    public Children matchPhase(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, MATCH_PHASE, MUST, column, val, boost);
     }
 
     @Override
@@ -152,13 +171,13 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
-    public Children matchPhrasePrefixQuery(boolean condition, R column, Object val, int maxExpansions, Float boost) {
-        return doIt(condition, MATCH_PHRASE_PREFIX, MUST, FieldUtils.getFieldName(column), val, maxExpansions, boost);
+    public Children matchPhrasePrefixQuery(boolean condition, String column, Object val, int maxExpansions, Float boost) {
+        return doIt(condition, MATCH_PHRASE_PREFIX, MUST, column, val, maxExpansions, boost);
     }
 
     @SafeVarargs
     @Override
-    public final Children multiMatchQuery(boolean condition, Object val, Operator operator, int minimumShouldMatch, Float boost, R... columns) {
+    public final Children multiMatchQuery(boolean condition, Object val, Operator operator, int minimumShouldMatch, Float boost, String... columns) {
         if (ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
@@ -174,46 +193,46 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
-    public Children prefixQuery(boolean condition, R column, String prefix, Float boost) {
+    public Children prefixQuery(boolean condition, String column, String prefix, Float boost) {
         if (StringUtils.isBlank(prefix)) {
             throw ExceptionUtils.eee("prefix can't be blank");
         }
-        return doIt(condition, PREFIX_QUERY, MUST, FieldUtils.getFieldName(column), prefix, boost);
+        return doIt(condition, PREFIX_QUERY, MUST, column, prefix, boost);
     }
 
     @Override
-    public Children notMatch(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, MATCH_QUERY, MUST_NOT, FieldUtils.getFieldName(column), val, boost);
+    public Children notMatch(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, MATCH_QUERY, MUST_NOT, column, val, boost);
     }
 
     @Override
-    public Children gt(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, RANGE_QUERY, EsAttachTypeEnum.GT, FieldUtils.getFieldName(column), val, boost);
+    public Children gt(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, RANGE_QUERY, EsAttachTypeEnum.GT, column, val, boost);
     }
 
     @Override
-    public Children ge(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, RANGE_QUERY, EsAttachTypeEnum.GE, FieldUtils.getFieldName(column), val, boost);
+    public Children ge(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, RANGE_QUERY, EsAttachTypeEnum.GE, column, val, boost);
     }
 
     @Override
-    public Children lt(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, RANGE_QUERY, EsAttachTypeEnum.LT, FieldUtils.getFieldName(column), val, boost);
+    public Children lt(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, RANGE_QUERY, EsAttachTypeEnum.LT, column, val, boost);
     }
 
     @Override
-    public Children le(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, RANGE_QUERY, EsAttachTypeEnum.LE, FieldUtils.getFieldName(column), val, boost);
+    public Children le(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, RANGE_QUERY, EsAttachTypeEnum.LE, column, val, boost);
     }
 
     @Override
-    public Children between(boolean condition, R column, Object val1, Object val2, Float boost) {
-        return doIt(condition, EsAttachTypeEnum.BETWEEN, FieldUtils.getFieldName(column), val1, val2, boost);
+    public Children between(boolean condition, String column, Object val1, Object val2, Float boost) {
+        return doIt(condition, EsAttachTypeEnum.BETWEEN, column, val1, val2, boost);
     }
 
     @Override
-    public Children notBetween(boolean condition, R column, Object val1, Object val2, Float boost) {
-        return doIt(condition, EsAttachTypeEnum.NOT_BETWEEN, FieldUtils.getFieldName(column), val1, val2, boost);
+    public Children notBetween(boolean condition, String column, Object val1, Object val2, Float boost) {
+        return doIt(condition, EsAttachTypeEnum.NOT_BETWEEN, column, val1, val2, boost);
     }
 
     @Override
@@ -227,55 +246,52 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
-    public Children like(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, WILDCARD_QUERY, MUST, FieldUtils.getFieldName(column), val, boost);
+    public Children like(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, WILDCARD_QUERY, MUST, column, val, boost);
     }
 
     @Override
-    public Children notLike(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, WILDCARD_QUERY, MUST_NOT, FieldUtils.getFieldName(column), val, boost);
+    public Children notLike(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, WILDCARD_QUERY, MUST_NOT, column, val, boost);
     }
 
     @Override
-    public Children likeLeft(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, WILDCARD_QUERY, LIKE_LEFT, FieldUtils.getFieldName(column), val, boost);
+    public Children likeLeft(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, WILDCARD_QUERY, LIKE_LEFT, column, val, boost);
     }
 
     @Override
-    public Children likeRight(boolean condition, R column, Object val, Float boost) {
-        return doIt(condition, WILDCARD_QUERY, LIKE_RIGHT, FieldUtils.getFieldName(column), val, boost);
+    public Children likeRight(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, WILDCARD_QUERY, LIKE_RIGHT, column, val, boost);
     }
 
     @Override
-    public Children highLight(boolean condition, String preTag, String postTag, R column) {
+    public Children highLight(boolean condition, String preTag, String postTag, String column) {
         if (condition) {
-            String fieldName = FieldUtils.getFieldName(column);
             List<String> fields = new ArrayList<>();
-            fields.add(fieldName);
+            fields.add(column);
             highLightParamList.add(new HighLightParam(preTag, postTag, fields));
         }
         return typedThis;
     }
 
-    @SafeVarargs
     @Override
-    public final Children highLight(boolean condition, String preTag, String postTag, R... columns) {
+    public final Children highLight(boolean condition, String preTag, String postTag, String... columns) {
         if (condition) {
-            List<String> fields = Arrays.stream(columns).map(FieldUtils::getFieldName).collect(Collectors.toList());
+            List<String> fields = Arrays.asList(columns);
             highLightParamList.add(new HighLightParam(preTag, postTag, fields));
         }
         return typedThis;
     }
 
-    @SafeVarargs
     @Override
-    public final Children orderBy(boolean condition, boolean isAsc, R... columns) {
+    public final Children orderBy(boolean condition, boolean isAsc, String... columns) {
         if (ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
 
         if (condition) {
-            List<String> fields = Arrays.stream(columns).map(FieldUtils::getFieldName).collect(Collectors.toList());
+            List<String> fields = Arrays.asList(columns);
             sortParamList.add(new SortParam(isAsc, fields));
         }
         return typedThis;
@@ -290,136 +306,132 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
-    public Children in(boolean condition, R column, Collection<?> coll, Float boost) {
+    public Children in(boolean condition, String column, Collection<?> coll, Float boost) {
         if (CollectionUtils.isEmpty(coll)) {
             return typedThis;
         }
-        return doIt(condition, EsAttachTypeEnum.IN, FieldUtils.getFieldName(column), new ArrayList<>(coll), boost);
+        return doIt(condition, EsAttachTypeEnum.IN, column, new ArrayList<>(coll), boost);
     }
 
     @Override
-    public Children notIn(boolean condition, R column, Collection<?> coll, Float boost) {
+    public Children notIn(boolean condition, String column, Collection<?> coll, Float boost) {
         if (CollectionUtils.isEmpty(coll)) {
             return typedThis;
         }
-        return doIt(condition, EsAttachTypeEnum.NOT_IN, FieldUtils.getFieldName(column), new ArrayList<>(coll), boost);
+        return doIt(condition, EsAttachTypeEnum.NOT_IN, column, new ArrayList<>(coll), boost);
     }
 
     @Override
-    public Children isNull(boolean condition, R column, Float boost) {
-        return doIt(condition, EsAttachTypeEnum.NOT_EXISTS, FieldUtils.getFieldName(column), boost);
+    public Children isNull(boolean condition, String column, Float boost) {
+        return doIt(condition, EsAttachTypeEnum.NOT_EXISTS, column, boost);
     }
 
     @Override
-    public Children isNotNull(boolean condition, R column, Float boost) {
-        return doIt(condition, EsAttachTypeEnum.EXISTS, FieldUtils.getFieldName(column), boost);
+    public Children isNotNull(boolean condition, String column, Float boost) {
+        return doIt(condition, EsAttachTypeEnum.EXISTS, column, boost);
     }
 
-    @SafeVarargs
     @Override
-    public final Children groupBy(boolean condition, boolean enablePipeline, R... columns) {
+    public final Children groupBy(boolean condition, boolean enablePipeline, String... columns) {
         if (ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
-        Arrays.stream(columns).forEach(column -> {
-            String returnName = FieldUtils.getFieldName(column);
-            doIt(condition, enablePipeline, AggregationTypeEnum.TERMS, returnName, column);
-        });
+        Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.TERMS, column, column));
         return typedThis;
     }
 
     @Override
-    public Children termsAggregation(boolean condition, boolean enablePipeline, String returnName, R column) {
+    public Children termsAggregation(boolean condition, boolean enablePipeline, String returnName, String column) {
         return doIt(condition, enablePipeline, AggregationTypeEnum.TERMS, returnName, column);
     }
 
     @Override
-    public Children avg(boolean condition, boolean enablePipeline, String returnName, R column) {
+    public Children avg(boolean condition, boolean enablePipeline, String returnName, String column) {
         return doIt(condition, enablePipeline, AggregationTypeEnum.AVG, returnName, column);
     }
 
     @Override
-    public Children min(boolean condition, boolean enablePipeline, String returnName, R column) {
+    public Children min(boolean condition, boolean enablePipeline, String returnName, String column) {
         return doIt(condition, enablePipeline, AggregationTypeEnum.MIN, returnName, column);
     }
 
     @Override
-    public Children max(boolean condition, boolean enablePipeline, String returnName, R column) {
+    public Children max(boolean condition, boolean enablePipeline, String returnName, String column) {
         return doIt(condition, enablePipeline, AggregationTypeEnum.MAX, returnName, column);
     }
 
     @Override
-    public Children sum(boolean condition, boolean enablePipeline, String returnName, R column) {
+    public Children sum(boolean condition, boolean enablePipeline, String returnName, String column) {
         return doIt(condition, enablePipeline, AggregationTypeEnum.SUM, returnName, column);
     }
 
     @Override
-    public Children distinct(boolean condition, R column) {
+    public Children distinct(boolean condition, String column) {
         if (condition) {
-            this.distinctField = FieldUtils.getFieldName(column);
+            this.distinctField = column;
         }
         return typedThis;
     }
 
     @Override
-    public Children geoBoundingBox(boolean condition, R column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), topLeft, bottomRight, boost, true);
+    public Children geoBoundingBox(boolean condition, String column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
+        return doIt(condition, column, topLeft, bottomRight, boost, true);
     }
 
     @Override
-    public Children notInGeoBoundingBox(boolean condition, R column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), topLeft, bottomRight, boost, false);
+    public Children notInGeoBoundingBox(boolean condition, String column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
+        return doIt(condition, column, topLeft, bottomRight, boost, false);
     }
 
     @Override
-    public Children geoDistance(boolean condition, R column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), distance, distanceUnit, centralGeoPoint, boost, true);
+    public Children geoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
+        return doIt(condition, column, distance, distanceUnit, centralGeoPoint, boost, true);
     }
 
     @Override
-    public Children notInGeoDistance(boolean condition, R column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), distance, distanceUnit, centralGeoPoint, boost, false);
+    public Children notInGeoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
+        return doIt(condition, column, distance, distanceUnit, centralGeoPoint, boost, false);
     }
 
     @Override
-    public Children geoDistance(boolean condition, R column, String distance, GeoPoint centralGeoPoint, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), distance, centralGeoPoint, boost, true);
+    public Children geoDistance(boolean condition, String column, String distance, GeoPoint centralGeoPoint, Float boost) {
+        return doIt(condition, column, distance, centralGeoPoint, boost, true);
     }
 
     @Override
-    public Children notInGeoDistance(boolean condition, R column, String distance, GeoPoint centralGeoPoint, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), distance, centralGeoPoint, boost, false);
+    public Children notInGeoDistance(boolean condition, String column, String distance, GeoPoint centralGeoPoint, Float boost) {
+        return doIt(condition, column, distance, centralGeoPoint, boost, false);
     }
 
     @Override
-    public Children geoPolygon(boolean condition, R column, List<GeoPoint> geoPoints, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), geoPoints, boost, true);
+    public Children geoPolygon(boolean condition, String column, List<GeoPoint> geoPoints, Float boost) {
+        return doIt(condition, column, geoPoints, boost, true);
     }
 
     @Override
-    public Children notInGeoPolygon(boolean condition, R column, Collection<GeoPoint> geoPoints, Float boost) {
+    public Children notInGeoPolygon(boolean condition, String column, Collection<GeoPoint> geoPoints, Float boost) {
         List<GeoPoint> geoPointList = new ArrayList<>(geoPoints);
-        return doIt(condition, FieldUtils.getFieldName(column), geoPointList, boost, false);
+        return doIt(condition, column, geoPointList, boost, false);
     }
 
     @Override
-    public Children geoShape(boolean condition, R column, String indexedShapeId, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), indexedShapeId, boost, true);
+    public Children geoShape(boolean condition, String column, String indexedShapeId, Float boost) {
+        return doIt(condition, column, indexedShapeId, boost, true);
     }
 
     @Override
-    public Children notInGeoShape(boolean condition, R column, String indexedShapeId, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), indexedShapeId, boost, false);
+    public Children notInGeoShape(boolean condition, String column, String indexedShapeId, Float boost) {
+        return doIt(condition, column, indexedShapeId, boost, false);
     }
 
     @Override
-    public Children geoShape(boolean condition, R column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), geometry, shapeRelation, boost, true);
+    public Children geoShape(boolean condition, String column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
+        return doIt(condition, column, geometry, shapeRelation, boost, true);
     }
 
     @Override
-    public Children notInGeoShape(boolean condition, R column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), geometry, shapeRelation, boost, false);
+    public Children notInGeoShape(boolean condition, String column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
+        return doIt(condition, column, geometry, shapeRelation, boost, false);
     }
 
     @Override
@@ -458,12 +470,12 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * @param column              列
      * @return 泛型
      */
-    private Children doIt(boolean condition, boolean enablePipeline, AggregationTypeEnum aggregationTypeEnum, String returnName, R column) {
+    private Children doIt(boolean condition, boolean enablePipeline, AggregationTypeEnum aggregationTypeEnum, String returnName, String column) {
         if (condition) {
             AggregationParam aggregationParam = new AggregationParam();
             aggregationParam.setEnablePipeline(enablePipeline);
             aggregationParam.setName(returnName);
-            aggregationParam.setField(FieldUtils.getFieldName(column));
+            aggregationParam.setField(column);
             aggregationParam.setAggregationType(aggregationTypeEnum);
             aggregationParamList.add(aggregationParam);
         }
@@ -638,10 +650,10 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * @return 泛型
      */
     private Children doIt(boolean condition, EsQueryTypeEnum queryTypeEnum, EsAttachTypeEnum attachTypeEnum, Object val,
-                          Operator operator, int minimumShouldMatch, Float boost, R... columns) {
+                          Operator operator, int minimumShouldMatch, Float boost, String... columns) {
         if (condition) {
             BaseEsParam baseEsParam = new BaseEsParam();
-            List<String> fields = Arrays.stream(columns).map(FieldUtils::getFieldName).collect(Collectors.toList());
+            List<String> fields = Arrays.asList(columns);
             BaseEsParam.FieldValueModel model =
                     BaseEsParam.FieldValueModel
                             .builder()
@@ -653,6 +665,29 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
                             .esQueryType(queryTypeEnum.getType())
                             .originalAttachType(attachTypeEnum.getType())
                             .build();
+            setModel(baseEsParam, model, attachTypeEnum);
+            baseEsParamList.add(baseEsParam);
+        }
+        return typedThis;
+    }
+
+    private Children doIt(boolean condition, EsQueryTypeEnum queryTypeEnum, EsAttachTypeEnum attachTypeEnum,
+                          JoinTypeEnum joinTypeEnum, String path, String column, Object val, Object scoreMode, Float boost) {
+        if (condition) {
+            BaseEsParam baseEsParam = new BaseEsParam();
+            BaseEsParam.FieldValueModel model =
+                    BaseEsParam.FieldValueModel
+                            .builder()
+                            .field(column)
+                            .path(path)
+                            .scoreMode(scoreMode)
+                            .value(val)
+                            .boost(boost)
+                            .ext(joinTypeEnum)
+                            .esQueryType(queryTypeEnum.getType())
+                            .originalAttachType(attachTypeEnum.getType())
+                            .build();
+
             setModel(baseEsParam, model, attachTypeEnum);
             baseEsParamList.add(baseEsParam);
         }

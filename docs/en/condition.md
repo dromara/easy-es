@@ -1,3 +1,8 @@
+> **Tips**
+>Wrapper支持两种方式创建:
+> - 直接new,例如 new LambdaEsQueryWrapper<>().
+> - 通过EsWrappers.lambdaQuery()创建,可支撑链式编程的场景,对标MP的Wrappers
+
 > **Instruction:**
 > - The first input parameter boolean condition that appears below indicates whether the condition is added to the last generated statement, for example: query.like(StringUtils.isNotBlank(name), Entity::getName, name) .eq(age!=null && age >= 0, Entity::getAge, age)
 > - The multiple methods in the following code block are all input parameters of individual boolean types from top to bottom, and the default is true

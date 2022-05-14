@@ -28,7 +28,7 @@ wrapper.avg();
 // 求和
 wrapper.sum();
 ```
-如果需要先groupBy,再根据grouBy聚合后桶中的数据进行求最值,均值之类的,也是支持的,会按照您在wrapper中指定的顺序,链式聚合(pipeline aggregation).
+如果需要先groupBy,再根据grouBy聚合后桶中的数据进行求最值,均值之类的,也是支持的,会按照您在wrapper中指定的顺序,管道聚合(pipeline aggregation).
 
 示例:
 
@@ -36,11 +36,25 @@ wrapper.sum();
     @Test
     public void testAgg() {
         // 根据创建者聚合,聚合完在该桶中再次根据点赞数聚合
-        // 注意:指定的多个聚合参数为链式聚合,就是第一个聚合参数聚合之后的结果,再根据第二个参数聚合,对应Pipeline聚合
+        // 注意:指定的多个聚合参数为管道聚合,就是第一个聚合参数聚合之后的结果,再根据第二个参数聚合,对应Pipeline聚合
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq(Document::getTitle, "老汉")
                 .groupBy(Document::getCreator)
                 .max(Document::getStarNum);
+        SearchResponse response = documentMapper.search(wrapper);
+        System.out.println(response);
+    }
+```
+
+> 在0.9.14+版本,我们进一步强化了聚合api,提供了可以配置是否开启管道聚合的参数,默认为开启,如果你想让多个字段聚合的结果出现在各自的桶中,那么你可以指定eanblePipeline参数为false即可.
+
+```java
+    @Test
+    public void testAggNotPipeline() {
+        // 对于下面两个字段,如果不想以pipeline管道聚合,各自聚合的结果在各自的桶中展示的话,我们也提供了支持
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        // 指定启用管道聚合为false
+        wrapper.groupBy(false, Document::getCreator, Document::getTitle);
         SearchResponse response = documentMapper.search(wrapper);
         System.out.println(response);
     }
