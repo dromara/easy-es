@@ -19,12 +19,6 @@ public class LambdaEsUpdateWrapper<T> extends AbstractLambdaUpdateWrapper<T, Lam
         implements Update<LambdaEsUpdateWrapper<T>, SFunction<T, ?>> {
 
     List<EsUpdateParam> updateParamList;
-
-    /**
-     * 更新操作作用的索引名
-     */
-    protected String indexName;
-
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
      */

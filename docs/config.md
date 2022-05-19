@@ -10,6 +10,7 @@ easy-es:
 **拓展配置:**<br />可缺省,为了提高生产性能,你可以进一步配置(0.9.4+版本才支持)
 ```yaml
 easy-es:
+  keep-alive-millis: 18000 # 心跳策略时间 单位:ms
   connectTimeout: 5000 # 连接超时时间 单位:ms
   socketTimeout: 5000 # 通信超时时间 单位:ms
   requestTimeout: 5000 # 请求超时时间 单位:ms
@@ -31,6 +32,7 @@ easy-es:
       field-strategy: not_empty # 字段更新策略 默认为not_null
       enable-track-total-hits: true # 查询超过1w条时可开启,默认为false
       refresh-policy: immediate # 数据刷新策略,默认为不刷新
+      enable-must2-filter: false # 是否全局开启must查询类型转换为filter查询类型 默认为false不转换 
 
 ```
 > **Tips:**

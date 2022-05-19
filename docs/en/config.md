@@ -14,6 +14,7 @@ easy-es:
 
 ```yaml
 easy-es:
+  keep-alive-millis: 18000 # Heartbeat strategy time unit: ms
   connectTimeout: 5000 # Connection timeout unit: ms
   socketTimeout: 5000 # Communication timeout unit: ms
   requestTimeout: 5000 # Request timeout unit: ms
@@ -36,6 +37,7 @@ easy-es:
       field-strategy: not_empty # The field update strategy defaults to not_null, and the field is updated only when the field value is not empty
       enable-track-total-hits: true # It can be turned on when the query exceeds 1w, the default is false
       refresh-policy: immediate # Data refresh strategy, the default is no refresh
+      enable-must2-filter: false # Whether to globally enable the conversion of the must query type to the filter query type The default is false and no conversion
 
 ```
 > **Tips:**

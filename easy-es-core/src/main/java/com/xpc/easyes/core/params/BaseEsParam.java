@@ -90,6 +90,10 @@ public class BaseEsParam {
      * 参数类型 参见: BaseEsParamTypeEnum
      */
     private Integer type;
+    /**
+     * must条件转filter
+     */
+    protected Boolean enableMust2Filter;
 
 
     /**

@@ -23,7 +23,7 @@ import java.util.List;
 @TableName(shardsNum = 3, replicasNum = 2, keepGlobalPrefix = true)
 public class Document {
     /**
-     * es中的唯一id,如果你想自定义es中的id为你提供的id,比如MySQL中的id,请将注解中的type指定为customize,如此id便支持任意数据类型)
+     * es中的唯一id,如果你想自定义es中的id为你提供的id,比如MySQL中的id,请将注解中的type指定为customize或直接在全局配置文件中指定,如此id便支持任意数据类型)
      */
     @TableId(type = IdType.CUSTOMIZE)
     private String id;

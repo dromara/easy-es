@@ -68,5 +68,9 @@ public class GlobalConfig {
          * data refresh policy 数据刷新策略,默认为NONE
          */
         private RefreshPolicy refreshPolicy = RefreshPolicy.NONE;
+        /**
+         * must convert to filter must by default, must 条件转filter 默认不转换
+         */
+        private boolean enableMust2Filter = false;
     }
 }

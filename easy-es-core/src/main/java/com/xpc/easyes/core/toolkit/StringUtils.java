@@ -113,4 +113,18 @@ public class StringUtils {
         }
         return sb.toString();
     }
+
+
+    /**
+     * 判断对象是否为空
+     *
+     * @param object ignore
+     * @return ignore
+     */
+    public static boolean checkValNotNull(Object object) {
+        if (object instanceof CharSequence) {
+            return isNotEmpty((CharSequence) object);
+        }
+        return object != null;
+    }
 }

@@ -46,7 +46,7 @@
         <dependency>
             <groupId>io.github.xpc1024</groupId>
             <artifactId>easy-es-boot-starter</artifactId>
-            <version>0.9.6</version>
+            <version>0.9.15</version>
         </dependency>
 
         <dependency>

@@ -14,10 +14,8 @@ import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 import static com.xpc.easyes.core.enums.BaseEsParamTypeEnum.*;
@@ -115,6 +113,40 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         highLightParamList = new ArrayList<>();
         sortParamList = new ArrayList<>();
         aggregationParamList = new ArrayList<>();
+    }
+
+    @Override
+    public <V> Children allEq(boolean condition, Map<String, V> params, boolean null2IsNull) {
+        if (condition && CollectionUtils.isNotEmpty(params)) {
+            params.forEach((k, v) -> {
+                if (StringUtils.checkValNotNull(v)) {
+                    eq(k, v);
+                } else {
+                    if (null2IsNull) {
+                        isNull(k);
+                    }
+                }
+            });
+        }
+        return typedThis;
+    }
+
+    @Override
+    public <V> Children allEq(boolean condition, BiPredicate<String, V> filter, Map<String, V> params, boolean null2IsNull) {
+        if (condition && CollectionUtils.isNotEmpty(params)) {
+            params.forEach((k, v) -> {
+                if (filter.test(k, v)) {
+                    if (StringUtils.checkValNotNull(v)) {
+                        eq(k, v);
+                    } else {
+                        if (null2IsNull) {
+                            isNull(k);
+                        }
+                    }
+                }
+            });
+        }
+        return typedThis;
     }
 
     @Override

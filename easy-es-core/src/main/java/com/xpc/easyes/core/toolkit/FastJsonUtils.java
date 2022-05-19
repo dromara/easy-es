@@ -21,6 +21,9 @@ public class FastJsonUtils {
      * @return 前置过滤器
      */
     public static SimplePropertyPreFilter getSimplePropertyPreFilter(Class<?> clazz, Set<String> fields) {
+        if (CollectionUtils.isEmpty(fields)) {
+            return null;
+        }
         SimplePropertyPreFilter simplePropertyPreFilter = new SimplePropertyPreFilter(clazz);
         fields.forEach(field -> simplePropertyPreFilter.getExcludes().add(field));
         return simplePropertyPreFilter;

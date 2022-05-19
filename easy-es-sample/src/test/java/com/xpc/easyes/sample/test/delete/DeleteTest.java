@@ -37,6 +37,13 @@ public class DeleteTest {
     }
 
     @Test
+    public void testDeleteById() {
+        int successCount = documentMapper.deleteById("7");
+        System.out.println(successCount);
+    }
+
+
+    @Test
     public void testDeleteBatchIds() throws IOException {
 //        List<String> ids = Arrays.asList("nsi4T30BUP1SGuceaaTf","n8i4T30BUP1SGuceaaTf","oMi4T30BUP1SGuceaaTf");
 //        int successCount = documentMapper.deleteBatchIds(ids);

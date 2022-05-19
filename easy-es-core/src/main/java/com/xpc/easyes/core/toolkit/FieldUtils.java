@@ -23,13 +23,29 @@ import java.util.stream.Collectors;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FieldUtils {
     /**
-     * 获取字段名称
+     * 获取字段名称,如果有id,则将id转为_id
      *
      * @param func 列函数
      * @param <R>  泛型
      * @return 泛型
      */
     public static <R> String getFieldName(R func) {
+        String fieldName = getFieldNameNotConvertId(func);
+        if (EntityInfoHelper.getDEFAULT_ID_NAME().equals(fieldName)) {
+            // id统一转为_id
+            fieldName = EntityInfoHelper.getDEFAULT_ES_ID_NAME();
+        }
+        return fieldName;
+    }
+
+    /**
+     * 获取字段名称,不转换id
+     *
+     * @param func 列函数
+     * @param <R>  泛型
+     * @return 泛型
+     */
+    public static <R> String getFieldNameNotConvertId(R func) {
         if (!(func instanceof SFunction)) {
             throw new RuntimeException("not support this type of column");
         }
@@ -41,16 +57,12 @@ public class FieldUtils {
             // 利用jdk的SerializedLambda 解析方法引用
             java.lang.invoke.SerializedLambda serializedLambda = (SerializedLambda) method.invoke(func);
             String getter = serializedLambda.getImplMethodName();
-            String fieldName = resolveFieldName(getter);
-            if (EntityInfoHelper.getDEFAULT_ID_NAME().equals(fieldName)) {
-                // id统一转为_id
-                fieldName = EntityInfoHelper.getDEFAULT_ES_ID_NAME();
-            }
-            return fieldName;
+            return resolveFieldName(getter);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
     }
+
 
     /**
      * 获取字段名
@@ -143,6 +155,28 @@ public class FieldUtils {
      * @return 实际字段名
      */
     public static String getRealField(String field, Map<String, String> mappingColumnMap, GlobalConfig.DbConfig dbConfig) {
+        String customField = mappingColumnMap.get(field);
+        if (Objects.nonNull(customField)) {
+            return EntityInfoHelper.getDEFAULT_ID_NAME().equals(customField) ? EntityInfoHelper.getDEFAULT_ES_ID_NAME() : customField;
+        } else {
+            if (dbConfig.isMapUnderscoreToCamelCase()) {
+                return StringUtils.camelToUnderline(field);
+            } else {
+                return field;
+            }
+        }
+    }
+
+
+    /**
+     * 获取实际字段名 不转换id
+     *
+     * @param field            原字段名
+     * @param mappingColumnMap 字段映射关系map
+     * @param dbConfig         配置
+     * @return 实际字段名
+     */
+    public static String getRealFieldNotConvertId(String field, Map<String, String> mappingColumnMap, GlobalConfig.DbConfig dbConfig) {
         String customField = mappingColumnMap.get(field);
         if (Objects.nonNull(customField)) {
             return customField;

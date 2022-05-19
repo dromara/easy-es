@@ -13,4 +13,14 @@ public abstract class Wrapper<T> {
      * @return 查询条件
      */
     protected abstract SearchRequest getSearchRequest();
+
+    /**
+     * 更新操作作用的索引名
+     */
+    protected String indexName;
+
+    /**
+     * must条件转filter
+     */
+    protected Boolean enableMust2Filter;
 }

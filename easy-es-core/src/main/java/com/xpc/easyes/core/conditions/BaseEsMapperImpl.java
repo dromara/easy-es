@@ -223,7 +223,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         } else {
             // 不去重,直接count获取,效率更高
             CountRequest countRequest = new CountRequest(getIndexName(wrapper.indexName));
-            BoolQueryBuilder boolQueryBuilder = initBoolQueryBuilder(wrapper.baseEsParamList, entityClass);
+            BoolQueryBuilder boolQueryBuilder = initBoolQueryBuilder(wrapper.baseEsParamList,
+                    wrapper.enableMust2Filter, entityClass);
             countRequest.query(boolQueryBuilder);
             CountResponse count;
             try {
@@ -406,7 +407,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 构建查询条件
         SearchRequest searchRequest = new SearchRequest(getIndexName(updateWrapper.indexName));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        BoolQueryBuilder boolQueryBuilder = initBoolQueryBuilder(updateWrapper.baseEsParamList, entityClass);
+        BoolQueryBuilder boolQueryBuilder = initBoolQueryBuilder(updateWrapper.baseEsParamList,
+                updateWrapper.enableMust2Filter, entityClass);
         searchSourceBuilder.query(boolQueryBuilder);
         searchRequest.source(searchSourceBuilder);
 
@@ -774,10 +776,13 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         });
 
         // 字段过滤器
-        List<SerializeFilter> serializeFilters = entityInfo.getClassSimplePropertyPreFilterMap().get(entityClass);
+        List<SerializeFilter> serializeFilters = new ArrayList<>();
+        Optional.ofNullable(entityInfo.getClassSimplePropertyPreFilterMap().get(entityClass))
+                .ifPresent(serializeFilters::addAll);
+
         // 主类中的字段策略过滤
         SimplePropertyPreFilter simplePropertyPreFilter = FastJsonUtils.getSimplePropertyPreFilter(entity.getClass(), excludeColumn);
-        serializeFilters.add(simplePropertyPreFilter);
+        Optional.ofNullable(simplePropertyPreFilter).ifPresent(serializeFilters::add);
 
         return JSON.toJSONString(entity, serializeFilters.toArray(new SerializeFilter[0]), SerializerFeature.WriteMapNullValue);
     }
@@ -791,7 +796,13 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private String buildJsonDoc(LambdaEsUpdateWrapper<T> updateWrapper) {
         List<EsUpdateParam> updateParamList = updateWrapper.updateParamList;
         JSONObject jsonObject = new JSONObject();
-        updateParamList.forEach(esUpdateParam -> jsonObject.put(esUpdateParam.getField(), esUpdateParam.getValue()));
+
+        updateParamList.forEach(esUpdateParam -> {
+            String realField = FieldUtils.getRealFieldNotConvertId(esUpdateParam.getField(),
+                    EntityInfoHelper.getEntityInfo(entityClass).getMappingColumnMap(),
+                    GlobalConfigCache.getGlobalConfig().getDbConfig());
+            jsonObject.put(realField, esUpdateParam.getValue());
+        });
         return JSON.toJSONString(jsonObject, SerializerFeature.WriteMapNullValue);
     }
 
@@ -806,6 +817,10 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         int totalSuccess = 0;
         try {
             BulkResponse bulkResponse = client.bulk(bulkRequest, requestOptions);
+            if (bulkResponse.hasFailures()) {
+                LogUtils.error(bulkResponse.buildFailureMessage());
+            }
+
             Iterator<BulkItemResponse> iterator = bulkResponse.iterator();
             while (iterator.hasNext()) {
                 if (Objects.equals(iterator.next().status(), RestStatus.OK)) {
@@ -813,8 +828,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException();
+            LogUtils.error("bulk request exception", JSON.toJSONString(e));
         }
         return totalSuccess;
     }
@@ -832,8 +846,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         try {
             BulkResponse bulkResponse = client.bulk(bulkRequest, requestOptions);
             if (bulkResponse.hasFailures()) {
-                throw ExceptionUtils.eee("bulkRequest has failures");
+                LogUtils.error(bulkResponse.buildFailureMessage());
             }
+
             Iterator<BulkItemResponse> iterator = bulkResponse.iterator();
             while (iterator.hasNext()) {
                 BulkItemResponse next = iterator.next();

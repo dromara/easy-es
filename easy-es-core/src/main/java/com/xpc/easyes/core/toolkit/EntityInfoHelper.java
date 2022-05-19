@@ -164,10 +164,14 @@ public class EntityInfoHelper {
     private static void addSimplePropertyPreFilter(EntityInfo entityInfo, Class<?> clazz) {
         // 字段是否序列化过滤 针对notExists字段及高亮字段等
         List<SerializeFilter> preFilters = new ArrayList<>();
-        SimplePropertyPreFilter entityClassPreFilter = FastJsonUtils.getSimplePropertyPreFilter(clazz, entityInfo.getNotSerializeField());
-        preFilters.add(entityClassPreFilter);
+        SimplePropertyPreFilter entityClassPreFilter =
+                FastJsonUtils.getSimplePropertyPreFilter(clazz, entityInfo.getNotSerializeField());
+        Optional.ofNullable(entityClassPreFilter).ifPresent(preFilters::add);
+
         // 嵌套类的字段序列化过滤器
-        entityInfo.getNestedNotSerializeField().forEach((k, v) -> preFilters.add(FastJsonUtils.getSimplePropertyPreFilter(k, v)));
+        entityInfo.getNestedNotSerializeField()
+                .forEach((k, v) -> Optional.ofNullable(FastJsonUtils.getSimplePropertyPreFilter(k, v))
+                        .ifPresent(preFilters::add));
 
         // 添加fastjson NameFilter 针对驼峰以及下划线转换
         addNameFilter(entityInfo, preFilters);
@@ -221,10 +225,6 @@ public class EntityInfoHelper {
         Map<Class<?>, Map<String, String>> nestedClassMappingColumnMap = entityInfo.getNestedClassMappingColumnMap();
         if (!mappingColumnMap.isEmpty()) {
             NameFilter nameFilter = (object, name, value) -> {
-                String mappingColumn = mappingColumnMap.get(name);
-                if (Objects.equals(mappingColumn, name)) {
-                    return name;
-                }
                 Map<String, String> nestedMappingColumnMap = nestedClassMappingColumnMap.get(object.getClass());
                 if (Objects.nonNull(nestedMappingColumnMap)) {
                     String nestedMappingColumn = nestedMappingColumnMap.get(name);
@@ -233,6 +233,10 @@ public class EntityInfoHelper {
                     } else {
                         return nestedMappingColumn;
                     }
+                }
+                String mappingColumn = mappingColumnMap.get(name);
+                if (Objects.equals(mappingColumn, name)) {
+                    return name;
                 }
                 return mappingColumn;
             };
@@ -296,7 +300,6 @@ public class EntityInfoHelper {
 
             } else {
                 entityInfo.getNotSerializeField().add(field.getName());
-
             }
             hasAnnotation = true;
         }
@@ -399,6 +402,8 @@ public class EntityInfoHelper {
                     .setIdClass(field.getType())
                     .setKeyProperty(field.getName());
 
+            entityInfo.getNotSerializeField().add(DEFAULT_ID_NAME);
+            entityInfo.getNotSerializeField().add(field.getName());
             entityInfo.getMappingColumnMap().putIfAbsent(field.getName(), DEFAULT_ID_NAME);
             return true;
         }
@@ -424,6 +429,8 @@ public class EntityInfoHelper {
                     .setKeyField(field)
                     .setIdClass(field.getType())
                     .setClazz(field.getDeclaringClass());
+            entityInfo.getNotSerializeField().add(DEFAULT_ID_NAME);
+            entityInfo.getNotSerializeField().add(field.getName());
             entityInfo.getMappingColumnMap().putIfAbsent(field.getName(), DEFAULT_ID_NAME);
             return true;
         }

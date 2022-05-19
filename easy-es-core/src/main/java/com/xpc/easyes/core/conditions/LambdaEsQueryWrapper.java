@@ -7,15 +7,11 @@ import com.xpc.easyes.core.params.AggregationParam;
 import com.xpc.easyes.core.params.BaseEsParam;
 import com.xpc.easyes.core.params.HighLightParam;
 import com.xpc.easyes.core.params.SortParam;
-import com.xpc.easyes.core.toolkit.ArrayUtils;
 import com.xpc.easyes.core.toolkit.EntityInfoHelper;
-import com.xpc.easyes.core.toolkit.FieldUtils;
 import org.elasticsearch.action.search.SearchRequest;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * 查询Lambda表达式
@@ -42,9 +38,9 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
      */
     protected Integer size;
     /**
-     * 查询索引名
+     * must条件转filter
      */
-    protected String indexName;
+    protected Boolean enableMust2Filter;
 
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
@@ -132,6 +128,14 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
     public LambdaEsQueryWrapper<T> index(boolean condition, String indexName) {
         if (condition) {
             this.indexName = indexName;
+        }
+        return typedThis;
+    }
+
+    @Override
+    public LambdaEsQueryWrapper<T> enableMust2Filter(boolean condition, boolean enable) {
+        if (condition) {
+            this.enableMust2Filter = enable;
         }
         return typedThis;
     }

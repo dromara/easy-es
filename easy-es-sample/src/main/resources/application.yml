@@ -4,15 +4,18 @@ easy-es:
   schema: http
   username: elastic
   password: WG7WVmuNMtM4GwNYkyWH
+  keep-alive-millis: 18000
   global-config:
     process-index-mode: smoothly
     async-process-index-blocking: true
     print-dsl: true
     db-config:
-      map-underscore-to-camel-case: false
+      map-underscore-to-camel-case: true
       #      table-prefix: dev_
       id-type: customize
       field-strategy: not_empty
       refresh-policy: immediate
       enable-track-total-hits: true
+      enable-must2-filter: false
+
 

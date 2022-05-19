@@ -1,7 +1,6 @@
 package com.xpc.easyes.sample.test.update;
 
 import com.xpc.easyes.core.conditions.LambdaEsUpdateWrapper;
-import com.xpc.easyes.core.toolkit.EsWrappers;
 import com.xpc.easyes.sample.EasyEsApplication;
 import com.xpc.easyes.sample.entity.Document;
 import com.xpc.easyes.sample.mapper.DocumentMapper;
@@ -35,7 +34,7 @@ public class UpdateTest {
     public void testUpdate() {
         // 测试更新 更新有两种情况 分别演示如下:
         // case1: 已知id, 根据id更新 (为了演示方便,此id是从上一步查询中复制过来的,实际业务可以自行查询)
-        String id = "OmEQCIAB0E2Rzy0qHFNV";
+        String id = "5";
         String title1 = "隔壁老王";
         Document document1 = new Document();
         document1.setId(id);

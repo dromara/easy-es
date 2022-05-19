@@ -13,7 +13,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 查询测试
@@ -42,6 +44,18 @@ public class SelectTest {
     }
 
     @Test
+    public void testAllEq() {
+        // 多字段批量查询 对标mp的allEq 直接在LambdaEsQueryWrapper中指定即可
+        Map<String, Object> map = new HashMap<>();
+        map.put("title", "老汉");
+        map.put("creator", "吃饭");
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.allEq(map);
+        List<Document> documents = documentMapper.selectList(wrapper);
+        System.out.println(documents);
+    }
+
+    @Test
     public void testLambdaSelect() {
         // 类似MP的lambda链式查询
         List<Document> documents = documentMapper.selectList(EsWrappers.lambdaQuery(Document.class).eq(Document::getTitle, "老汉"));
@@ -51,7 +65,7 @@ public class SelectTest {
     @Test
     public void testSelectById() {
         // 测试根据id查询
-        String id = "13";
+        String id = "5";
         Document document = documentMapper.selectById(id);
         System.out.println(document);
     }
@@ -59,7 +73,7 @@ public class SelectTest {
     @Test
     public void testSelectList() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        String title = "老王";
+        String title = "老汉";
         wrapper.eq(Document::getTitle, title);
         wrapper.select(Document::getCreator);
         wrapper.notSelect(Document::getContent, Document::getGmtCreate);

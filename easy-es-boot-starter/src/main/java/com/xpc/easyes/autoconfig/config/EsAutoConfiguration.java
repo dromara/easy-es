@@ -2,7 +2,6 @@ package com.xpc.easyes.autoconfig.config;
 
 import com.xpc.easyes.core.toolkit.ExceptionUtils;
 import com.xpc.easyes.core.toolkit.StringUtils;
-import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -70,10 +69,13 @@ public class EsAutoConfiguration {
         String password = easyEsConfigProperties.getPassword();
         Integer maxConnTotal = easyEsConfigProperties.getMaxConnTotal();
         Integer maxConnPerRoute = easyEsConfigProperties.getMaxConnPerRoute();
+        Integer keepAliveMillis = easyEsConfigProperties.getKeepAliveMillis();
         boolean needSetHttpClient = (StringUtils.isNotEmpty(username) && StringUtils.isNotEmpty(password))
-                || (Objects.nonNull(maxConnTotal) || Objects.nonNull(maxConnPerRoute));
+                || (Objects.nonNull(maxConnTotal) || Objects.nonNull(maxConnPerRoute)) || Objects.nonNull(keepAliveMillis);
         if (needSetHttpClient) {
             builder.setHttpClientConfigCallback(httpClientBuilder -> {
+                // 设置心跳时间等
+                Optional.ofNullable(keepAliveMillis).ifPresent(p -> httpClientBuilder.setKeepAliveStrategy((response, context) -> p));
                 Optional.ofNullable(maxConnTotal).ifPresent(httpClientBuilder::setMaxConnTotal);
                 Optional.ofNullable(maxConnPerRoute).ifPresent(httpClientBuilder::setMaxConnPerRoute);
                 if (StringUtils.isNotEmpty(username) && StringUtils.isNotEmpty(password)) {

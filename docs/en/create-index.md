@@ -9,9 +9,6 @@
         wrapper.mapping(Document::getTitle, FieldType.KEYWORD)
                 .mapping(Document::getContent, FieldType.TEXT);
 
-        // Version 0.9.8+ supports passing in field name String directly
-        wrapper.mapping("wu-la", FieldType.TEX);
-
         // If the above simple mapping cannot meet your business needs, you can customize the mapping
         // wrapper.mapping(Map);
 
@@ -31,6 +28,7 @@
     }
 ```
 > **Tips:**
+> In the entity class, the id field does not need to be indexed.
 > Due to the feature of automatic reconstruction of ES index changes, the mapping, settings, and alias information required to create the index are three-in-one during the design of this interface. Although each configuration can be defaulted, we still recommend that you create the index plan the above information in advance to avoid unnecessary trouble caused by subsequent modifications. If there are subsequent modifications, you can still modify it by alias migration (recommended, smooth transition), or delete the original index and recreate it. .
 > 
 

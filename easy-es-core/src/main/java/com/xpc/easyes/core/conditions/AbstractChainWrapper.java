@@ -13,6 +13,8 @@ import org.elasticsearch.search.sort.SortOrder;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 /**
@@ -39,6 +41,18 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
 
     public AbstractWrapper getWrapper() {
         return (AbstractWrapper) wrapperChildren;
+    }
+
+    @Override
+    public <V> Children allEq(boolean condition, Map<String, V> params, boolean null2IsNull) {
+        getWrapper().allEq(condition, params, null2IsNull);
+        return typedThis;
+    }
+
+    @Override
+    public <V> Children allEq(boolean condition, BiPredicate<String, V> filter, Map<String, V> params, boolean null2IsNull) {
+        getWrapper().allEq(condition, filter, params, null2IsNull);
+        return typedThis;
     }
 
     @Override
@@ -708,6 +722,18 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     @Override
     public Children notInGeoShape(boolean condition, String column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
         getWrapper().notInGeoShape(condition, column, geometry, shapeRelation, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children childMatch(boolean condition, String type, String column, Object val, ScoreMode scoreMode, Float boost) {
+        getWrapper().childMatch(condition, type, column, val, scoreMode, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children parentMatch(boolean condition, String type, String column, Object val, boolean score, Float boost) {
+        getWrapper().parentMatch(condition, type, column, val, score, boost);
         return typedThis;
     }
 }

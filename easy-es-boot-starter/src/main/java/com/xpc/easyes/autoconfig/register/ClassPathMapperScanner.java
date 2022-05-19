@@ -1,5 +1,7 @@
 package com.xpc.easyes.autoconfig.register;
 
+import com.xpc.easyes.core.conditions.interfaces.BaseEsMapper;
+import com.xpc.easyes.core.toolkit.ArrayUtils;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
@@ -23,7 +25,23 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
     public void registerFilters() {
         // default include filter that accepts all classes
-        addIncludeFilter((metadataReader, metadataReaderFactory) -> true);
+        addIncludeFilter((metadataReader, metadataReaderFactory) -> {
+            // 跳过非ee的mapper,比如瞎几把写的接口,没有继承BaseEsMapper
+            String className = metadataReader.getClassMetadata().getClassName();
+            try {
+                Class<?> clazz = Class.forName(className);
+                Class<?>[] interfaces = clazz.getInterfaces();
+                if (ArrayUtils.isNotEmpty(interfaces)) {
+                    boolean isEeMapper = Arrays.asList(interfaces).contains(BaseEsMapper.class);
+                    if (!isEeMapper) {
+                        return false;
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                logger.debug("mapper not found" + e);
+            }
+            return true;
+        });
 
         // exclude package-info.java
         addExcludeFilter((metadataReader, metadataReaderFactory) -> {

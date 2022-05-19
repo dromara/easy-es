@@ -43,7 +43,7 @@ public class WrapperProcessor {
      */
     public static SearchSourceBuilder buildSearchSourceBuilder(LambdaEsQueryWrapper<?> wrapper, Class<?> entityClass) {
         // 初始化boolQueryBuilder 参数
-        BoolQueryBuilder boolQueryBuilder = initBoolQueryBuilder(wrapper.baseEsParamList, entityClass);
+        BoolQueryBuilder boolQueryBuilder = initBoolQueryBuilder(wrapper.baseEsParamList, wrapper.enableMust2Filter, entityClass);
 
         // 初始化全表扫描查询参数
         Optional.ofNullable(wrapper.matchAllQuery).ifPresent(p -> boolQueryBuilder.must(QueryBuilders.matchAllQuery()));
@@ -62,11 +62,13 @@ public class WrapperProcessor {
     /**
      * 初始化BoolQueryBuilder 整个框架的核心
      *
-     * @param baseEsParamList 基础参数列表
-     * @param entityClass     实体类
+     * @param baseEsParamList   参数列表
+     * @param enableMust2Filter 是否开启must转换filter
+     * @param entityClass       实体类
      * @return BoolQueryBuilder
      */
-    public static BoolQueryBuilder initBoolQueryBuilder(List<BaseEsParam> baseEsParamList, Class<?> entityClass) {
+    public static BoolQueryBuilder initBoolQueryBuilder(List<BaseEsParam> baseEsParamList, Boolean enableMust2Filter,
+                                                        Class<?> entityClass) {
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
         GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
 
@@ -112,6 +114,7 @@ public class WrapperProcessor {
             }
 
             // 添加字段名称,值,查询类型等
+            Optional.ofNullable(enableMust2Filter).ifPresent(baseEsParam::setEnableMust2Filter);
             if (Objects.isNull(inner)) {
                 addQuery(baseEsParam, boolQueryBuilder, entityInfo, dbConfig);
             } else {
@@ -260,16 +263,16 @@ public class WrapperProcessor {
         geoParam.setField(realField);
 
         GeoBoundingBoxQueryBuilder geoBoundingBox = initGeoBoundingBoxQueryBuilder(geoParam);
-        doGeoSet(geoParam.isIn(), geoBoundingBox, boolQueryBuilder);
+        doGeoSet(geoParam.isIn(), geoBoundingBox, boolQueryBuilder, dbConfig);
 
         GeoDistanceQueryBuilder geoDistance = initGeoDistanceQueryBuilder(geoParam);
-        doGeoSet(geoParam.isIn(), geoDistance, boolQueryBuilder);
+        doGeoSet(geoParam.isIn(), geoDistance, boolQueryBuilder, dbConfig);
 
         GeoPolygonQueryBuilder geoPolygon = initGeoPolygonQueryBuilder(geoParam);
-        doGeoSet(geoParam.isIn(), geoPolygon, boolQueryBuilder);
+        doGeoSet(geoParam.isIn(), geoPolygon, boolQueryBuilder, dbConfig);
 
         GeoShapeQueryBuilder geoShape = initGeoShapeQueryBuilder(geoParam);
-        doGeoSet(geoParam.isIn(), geoShape, boolQueryBuilder);
+        doGeoSet(geoParam.isIn(), geoShape, boolQueryBuilder, dbConfig);
     }
 
     /**
@@ -279,11 +282,15 @@ public class WrapperProcessor {
      * @param queryBuilder
      * @param boolQueryBuilder
      */
-    private static void doGeoSet(Boolean isIn, QueryBuilder queryBuilder, BoolQueryBuilder boolQueryBuilder) {
+    private static void doGeoSet(Boolean isIn, QueryBuilder queryBuilder, BoolQueryBuilder boolQueryBuilder, GlobalConfig.DbConfig dbConfig) {
         Optional.ofNullable(queryBuilder)
                 .ifPresent(present -> {
                     if (isIn) {
-                        boolQueryBuilder.filter(present);
+                        if (dbConfig.isEnableMust2Filter()) {
+                            boolQueryBuilder.filter(present);
+                        } else {
+                            boolQueryBuilder.must(present);
+                        }
                     } else {
                         boolQueryBuilder.mustNot(present);
                     }
@@ -297,13 +304,19 @@ public class WrapperProcessor {
      * @param baseEsParam      基础参数
      * @param boolQueryBuilder es boolQueryBuilder
      */
-    private static void addQuery(BaseEsParam baseEsParam, BoolQueryBuilder boolQueryBuilder, EntityInfo entityInfo, GlobalConfig.DbConfig dbConfig) {
+    private static void addQuery(BaseEsParam baseEsParam, BoolQueryBuilder boolQueryBuilder, EntityInfo entityInfo,
+                                 GlobalConfig.DbConfig dbConfig) {
+        // 获取must是否转filter 默认不转,以wrapper中指定的优先级最高,全局次之
+        boolean enableMust2Filter = Objects.isNull(baseEsParam.getEnableMust2Filter()) ? dbConfig.isEnableMust2Filter() :
+                baseEsParam.getEnableMust2Filter();
+
+        int attachType = enableMust2Filter ? EsAttachTypeEnum.FILTER.getType() : EsAttachTypeEnum.MUST.getType();
         baseEsParam.getMustList().forEach(fieldValueModel -> EsQueryTypeUtil.addQueryByType(boolQueryBuilder,
-                EsAttachTypeEnum.MUST.getType(), fieldValueModel, entityInfo, dbConfig));
+                attachType, fieldValueModel, entityInfo, dbConfig));
 
         // 多字段情形
         baseEsParam.getMustMultiFieldList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.MUST.getType(),
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), attachType,
                         FieldUtils.getRealFields(fieldValueModel.getFields(), entityInfo.getMappingColumnMap()), fieldValueModel.getValue(),
                         fieldValueModel.getExt(), fieldValueModel.getMinimumShouldMatch(), fieldValueModel.getBoost()));
 
@@ -456,7 +469,7 @@ public class WrapperProcessor {
                 SortOrder sortOrder = sortParam.getIsAsc() ? SortOrder.ASC : SortOrder.DESC;
                 sortParam.getFields().forEach(field -> {
                     FieldSortBuilder fieldSortBuilder;
-                    String customField = mappingColumnMap.get(field);
+                    String customField = FieldUtils.getRealField(field, mappingColumnMap, dbConfig);
                     if (Objects.nonNull(customField)) {
                         fieldSortBuilder = new FieldSortBuilder(customField).order(sortOrder);
                     } else {
@@ -476,7 +489,7 @@ public class WrapperProcessor {
             wrapper.orderByParams.forEach(orderByParam -> {
                 // 设置排序字段
                 FieldSortBuilder fieldSortBuilder;
-                String customField = mappingColumnMap.get(orderByParam.getOrder());
+                String customField = FieldUtils.getRealField(orderByParam.getOrder(), mappingColumnMap, dbConfig);
                 if (Objects.nonNull(customField)) {
                     fieldSortBuilder = new FieldSortBuilder(customField);
                 } else {
@@ -518,11 +531,15 @@ public class WrapperProcessor {
      */
     private static void setAggregations(LambdaEsQueryWrapper<?> wrapper, Map<String, String> mappingColumnMap,
                                         SearchSourceBuilder searchSourceBuilder) {
+        // 获取配置
+        GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
+
         // 设置折叠(去重)字段
         Optional.ofNullable(wrapper.distinctField)
                 .ifPresent(distinctField -> {
-                    searchSourceBuilder.collapse(new CollapseBuilder(distinctField));
-                    searchSourceBuilder.aggregation(AggregationBuilders.cardinality(REPEAT_NUM_KEY).field(distinctField));
+                    String realField = FieldUtils.getRealField(distinctField, mappingColumnMap, dbConfig);
+                    searchSourceBuilder.collapse(new CollapseBuilder(realField));
+                    searchSourceBuilder.aggregation(AggregationBuilders.cardinality(REPEAT_NUM_KEY).field(realField));
                 });
 
         // 其它聚合
@@ -530,9 +547,6 @@ public class WrapperProcessor {
         if (CollectionUtils.isEmpty(aggregationParamList)) {
             return;
         }
-
-        // 获取配置
-        GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
 
         // 构建聚合树
         AggregationBuilder root = null;
