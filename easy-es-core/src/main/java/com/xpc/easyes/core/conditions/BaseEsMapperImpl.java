@@ -156,7 +156,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         SearchRequest searchRequest = new SearchRequest(getIndexName(wrapper.indexName));
         SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper, entityClass);
         searchRequest.source(searchSourceBuilder);
-        printDSL(wrapper);
+        printDSL(searchRequest);
         // 执行查询
         SearchResponse response;
         try {
@@ -201,7 +201,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         pageSize = pageSize == null || pageSize <= ZERO ? BaseEsConstants.PAGE_SIZE : pageSize;
 
         wrapper.from((pageNum - 1) * pageSize);
-        wrapper.size(pageNum * pageSize);
+        wrapper.size(pageSize);
 
         // 请求es获取数据
         SearchResponse response = getSearchResponse(wrapper);
@@ -228,7 +228,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             countRequest.query(boolQueryBuilder);
             CountResponse count;
             try {
-                printCountDSL(wrapper);
+                printCountDSL(countRequest);
                 count = client.count(countRequest, RequestOptions.DEFAULT);
             } catch (IOException e) {
                 throw ExceptionUtils.eee("selectCount exception", e);
@@ -721,7 +721,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         SearchRequest searchRequest = new SearchRequest(getIndexName(wrapper.indexName));
         SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper, entityClass);
         searchRequest.source(searchSourceBuilder);
-        printDSL(wrapper);
+        printDSL(searchRequest);
         SearchResponse response;
         try {
             response = client.search(searchRequest, RequestOptions.DEFAULT);
@@ -964,25 +964,14 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     }
 
     /**
-     * 根据全局配置决定是否控制台打印DSL语句
-     *
-     * @param wrapper
-     */
-    private void printDSL(LambdaEsQueryWrapper<T> wrapper) {
-        if (GlobalConfigCache.getGlobalConfig().isPrintDsl()) {
-            LogUtils.info(DSL_PREFIX + getSource(wrapper));
-        }
-
-    }
-
-    /**
      * 根据全局配置决定是否控制台打印CountDSL语句
      *
-     * @param wrapper 查询参数包装类
+     * @param countRequest 统计数量查询参数
      */
-    private void printCountDSL(LambdaEsQueryWrapper<T> wrapper) {
-        if (GlobalConfigCache.getGlobalConfig().isPrintDsl()) {
-            LogUtils.info(COUNT_DSL_PREFIX + getSource(wrapper));
+    private void printCountDSL(CountRequest countRequest) {
+        if (GlobalConfigCache.getGlobalConfig().isPrintDsl() && Objects.nonNull(countRequest)) {
+            Optional.ofNullable(countRequest.query())
+                    .ifPresent(source -> LogUtils.info(COUNT_DSL_PREFIX + source));
         }
     }
 

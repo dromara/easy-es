@@ -61,9 +61,9 @@ public class GlobalConfig {
          */
         private FieldStrategy fieldStrategy = FieldStrategy.NOT_NULL;
         /**
-         * enableTrackTotalHits default false,是否开启查询全部数据 默认关闭, 当指定size超过1万条时自动开启
+         * enableTrackTotalHits default true,是否开启查询全部数据 默认开启
          */
-        private boolean enableTrackTotalHits = false;
+        private boolean enableTrackTotalHits = true;
         /**
          * data refresh policy 数据刷新策略,默认为NONE
          */

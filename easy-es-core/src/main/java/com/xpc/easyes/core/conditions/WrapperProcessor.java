@@ -9,6 +9,7 @@ import com.xpc.easyes.core.enums.EsAttachTypeEnum;
 import com.xpc.easyes.core.params.AggregationParam;
 import com.xpc.easyes.core.params.BaseEsParam;
 import com.xpc.easyes.core.params.GeoParam;
+import com.xpc.easyes.core.params.OrCount;
 import com.xpc.easyes.core.toolkit.*;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -70,37 +71,80 @@ public class WrapperProcessor {
     public static BoolQueryBuilder initBoolQueryBuilder(List<BaseEsParam> baseEsParamList, Boolean enableMust2Filter,
                                                         Class<?> entityClass) {
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
-        GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
+        GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();;
 
+        // 此轮循环仅打桩,获取内层or和内外层or总数,用于处理是否有外层or 全部重置; 如果仅内层OR,只重置内层.
+//        int orCount = 0;
+//        int orInnerCount = 0;
+//        for (int i = 0; i< baseEsParamList.size();i++) {
+//            BaseEsParam baseEsParam = baseEsParamList.get(i);
+//            if (OR_ALL.getType().equals(baseEsParam.getType())){
+//                orCount++;
+//            }
+//            boolean hasLogicOperator = AND_LEFT_BRACKET.getType().equals(baseEsParam.getType())
+//                    || OR_LEFT_BRACKET.getType().equals(baseEsParam.getType());
+//            if (hasLogicOperator){
+//                for (int j = i; j < baseEsParamList.size(); j++) {
+//                    BaseEsParam andOr = baseEsParamList.get(j);
+//                    if (AND_RIGHT_BRACKET.getType().equals(andOr.getType()) || OR_RIGHT_BRACKET.getType().equals(andOr.getType())){
+//
+//                    }
+//                    if (OR_ALL.getType().equals(baseEsParamList.get(j).getType())){
+//                        orInnerCount++;
+//                        break;
+//                    }
+//                }
+//            }
+//        }
+//        setOrCount(orCount,orInnerCount,baseEsParamList);
+//        System.out.println(orCount);
+//        System.out.println(orInnerCount);
+        OrCount orCount = getOrCount(baseEsParamList);
+        // 根节点
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
         // 用于连接and,or条件内的多个查询条件,包装成boolQuery
         BoolQueryBuilder inner = null;
-        // 是否有外层or
-        boolean hasOuterOr = false;
+        //正式封装参数
+        int start = 0;
+        int end = 0;
+        int remainSetUp = orCount.getOrInnerCount();
+        boolean hasSetUp = false;
         for (int i = 0; i < baseEsParamList.size(); i++) {
             BaseEsParam baseEsParam = baseEsParamList.get(i);
-            boolean hasLogicOperator = Objects.equals(BaseEsParamTypeEnum.AND_LEFT_BRACKET.getType(), baseEsParam.getType())
-                    || Objects.equals(OR_LEFT_BRACKET.getType(), baseEsParam.getType());
-            if (hasLogicOperator) {
-                // 说明有and或者or
-                for (int j = i + 1; j < baseEsParamList.size(); j++) {
-                    if (Objects.equals(baseEsParamList.get(j).getType(), OR_ALL.getType())) {
-                        // 说明左括号内出现了内层or查询条件
-                        for (int k = i + 1; k < j; k++) {
-                            // 内层or只会出现在中间,此处将内层or之前的查询条件类型进行处理
-                            BaseEsParam.setUp(baseEsParamList.get(k));
+            if (orCount.getOrAllCount() > orCount.getOrInnerCount()){
+                // 存在外层or 统统重置
+                BaseEsParam.setUp(baseEsParam);
+            }else {
+                if (!hasSetUp){
+                    // 处理or在内层的情况,仅重置括号中的内容
+                    for (int j = i; j < baseEsParamList.size(); j++) {
+                        BaseEsParam andOr = baseEsParamList.get(j);
+                        if (AND_LEFT_BRACKET.getType().equals(andOr.getType()) || OR_LEFT_BRACKET.getType().equals(andOr.getType())) {
+                            // 找到了and/or的开始标志
+                            start = j;
+                        }
+
+                        if (AND_RIGHT_BRACKET.getType().equals(andOr.getType()) || OR_RIGHT_BRACKET.getType().equals(andOr.getType())){
+                            // 找到了and/or的结束标志
+                            end = j;
+                        }
+                        if (remainSetUp > 0 && end > start){
+                            // 重置内层or
+                            remainSetUp--;
+                            for (int k = start; k < end; k++) {
+                                BaseEsParam.setUp(baseEsParamList.get(k));
+                                hasSetUp = true;
+                            }
                         }
                     }
                 }
-                inner = QueryBuilders.boolQuery();
             }
 
-            // 此处处理所有内外层or后面的查询条件类型
-            if (Objects.equals(baseEsParam.getType(), OR_ALL.getType())) {
-                hasOuterOr = true;
-            }
-            if (hasOuterOr) {
-                BaseEsParam.setUp(baseEsParam);
+            boolean hasLogicOperator = AND_LEFT_BRACKET.getType().equals(baseEsParam.getType())
+                    || OR_LEFT_BRACKET.getType().equals(baseEsParam.getType());
+            if (hasLogicOperator) {
+                // 说明有and或者or 需要将括号中的内容置入新的boolQuery
+                inner = QueryBuilders.boolQuery();
             }
 
             // 处理括号中and和or的最终连接类型 and->must, or->should
@@ -122,6 +166,44 @@ public class WrapperProcessor {
             }
         }
         return boolQueryBuilder;
+    }
+
+    private static OrCount getOrCount(List<BaseEsParam> baseEsParamList){
+        OrCount orCount = new OrCount();
+        int start;
+        int end = 0;
+        int orAllCount = 0;
+        int orInnerCount = 0;
+        for (int i = 0; i< baseEsParamList.size();i++) {
+            BaseEsParam baseEsParam = baseEsParamList.get(i);
+            if (OR_ALL.getType().equals(baseEsParam.getType())){
+                orAllCount++;
+            }
+            boolean hasLogicOperator = AND_LEFT_BRACKET.getType().equals(baseEsParam.getType())
+                    || OR_LEFT_BRACKET.getType().equals(baseEsParam.getType());
+            if (hasLogicOperator){
+                start = i;
+                for (int j = i; j < baseEsParamList.size(); j++) {
+                    BaseEsParam andOr = baseEsParamList.get(j);
+                    if (AND_RIGHT_BRACKET.getType().equals(andOr.getType()) || OR_RIGHT_BRACKET.getType().equals(andOr.getType())){
+                        end = j;
+                    }
+
+                    if (start<end){
+                        for (int k = start; k < end; k++) {
+                            if (OR_ALL.getType().equals(baseEsParamList.get(k).getType())){
+                                orInnerCount++;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        orCount.setOrAllCount(orAllCount);
+        orCount.setOrInnerCount(orInnerCount);
+        return orCount;
     }
 
     /**
@@ -358,15 +440,11 @@ public class WrapperProcessor {
                         EsAttachTypeEnum.NOT_BETWEEN.getType(), entityInfo.getMappingColumn(fieldValueModel.getField()),
                         fieldValueModel.getLeftValue(), fieldValueModel.getRightValue(), fieldValueModel.getBoost()));
 
-        baseEsParam.getInList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.IN.getType(), entityInfo.getMappingColumn(fieldValueModel.getField()),
-                        fieldValueModel.getValues(), fieldValueModel.getBoost()));
+        baseEsParam.getInList().forEach(fieldValueModel -> EsQueryTypeUtil.addQueryByType(boolQueryBuilder,
+                EsAttachTypeEnum.IN.getType(), fieldValueModel, entityInfo, dbConfig));
 
-        baseEsParam.getNotInList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.NOT_IN.getType(), entityInfo.getMappingColumn(fieldValueModel.getField()),
-                        fieldValueModel.getValues(), fieldValueModel.getBoost()));
+        baseEsParam.getNotInList().forEach(fieldValueModel -> EsQueryTypeUtil.addQueryByType(boolQueryBuilder,
+                EsAttachTypeEnum.NOT_IN.getType(), fieldValueModel, entityInfo, dbConfig));
 
         baseEsParam.getIsNullList().forEach(fieldValueModel ->
                 EsQueryTypeUtil.addQueryByType(boolQueryBuilder, EsAttachTypeEnum.NOT_EXISTS.getType(), fieldValueModel, entityInfo, dbConfig));

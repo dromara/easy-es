@@ -17,5 +17,3 @@ easy-es:
       refresh-policy: immediate
       enable-track-total-hits: true
       enable-must2-filter: false
-
-

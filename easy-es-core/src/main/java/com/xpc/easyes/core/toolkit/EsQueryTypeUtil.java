@@ -54,8 +54,9 @@ public class EsQueryTypeUtil {
             TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery(field, value).boost(boost);
             setQueryBuilder(boolQueryBuilder, attachType, termQueryBuilder);
         } else if (Objects.equals(queryType, TERMS_QUERY.getType())) {
-            // 此处处理由or转入shouldList的in参数
-            TermsQueryBuilder termsQueryBuilder = QueryBuilders.termsQuery(field, (Collection<?>) value).boost(boost);
+            // 此处兼容由or转入shouldList的in参数
+            Collection<?> values = Objects.isNull(value) ? model.getValues() : (Collection<?>) value;
+            TermsQueryBuilder termsQueryBuilder = QueryBuilders.termsQuery(field, values).boost(boost);
             setQueryBuilder(boolQueryBuilder, attachType, termsQueryBuilder);
         } else if (Objects.equals(queryType, MATCH_PHASE.getType())) {
             // 封装模糊分词查询参数(分词必须按原关键词顺序)
@@ -121,22 +122,6 @@ public class EsQueryTypeUtil {
         }
     }
 
-    /**
-     * 添加查询类型 精确匹配 用于in 操作
-     *
-     * @param boolQueryBuilder 参数连接器
-     * @param queryType        查询类型
-     * @param attachType       连接类型
-     * @param field            字段
-     * @param values           值
-     * @param boost            权重
-     */
-    public static void addQueryByType(BoolQueryBuilder boolQueryBuilder, Integer queryType, Integer attachType, String field, Collection<?> values, Float boost) {
-        if (Objects.equals(queryType, TERMS_QUERY.getType())) {
-            TermsQueryBuilder termsQueryBuilder = QueryBuilders.termsQuery(field, values).boost(boost);
-            setQueryBuilder(boolQueryBuilder, attachType, termsQueryBuilder);
-        }
-    }
 
     /**
      * 添加查询类型 适用于多字段单值情形

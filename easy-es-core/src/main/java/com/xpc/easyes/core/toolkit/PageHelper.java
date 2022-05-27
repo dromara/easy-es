@@ -1,7 +1,6 @@
 package com.xpc.easyes.core.toolkit;
 
 import com.xpc.easyes.core.common.PageInfo;
-import com.xpc.easyes.core.constants.BaseEsConstants;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -27,6 +26,7 @@ public class PageHelper {
         pageInfo.setTotal(total);
         pageInfo.setPageNum(pageNum);
         pageInfo.setPageSize(pageSize);
+        pageInfo.setPages((int) (total % pageSize > 0 ? total / pageSize + 1 : total / pageSize));
         return pageInfo;
     }
 }

@@ -77,7 +77,7 @@ public class InsertTest {
 
         Document document1 = new Document();
         document1.setId("3");
-        document1.setTitle("老汉");
+        document1.setTitle("老王");
         document1.setContent("推*技术过硬");
         document1.setCreator("隔壁老王");
         document1.setGmtCreate(now);
