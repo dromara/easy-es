@@ -67,6 +67,10 @@ public class EntityInfo {
      */
     private String aliasName;
     /**
+     * 路由字段
+     */
+    private Field routingField;
+    /**
      * 表字段信息列表
      */
     private List<EntityFieldInfo> fieldList;

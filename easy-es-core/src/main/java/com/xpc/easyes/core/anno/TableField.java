@@ -73,4 +73,9 @@ public @interface TableField {
      * @return 默认嵌套类
      */
     Class<?> nestedClass() default DefaultNestedClass.class;
+
+    /**
+     * 该字段的值是否作为routing
+     */
+    boolean routing() default false;
 }

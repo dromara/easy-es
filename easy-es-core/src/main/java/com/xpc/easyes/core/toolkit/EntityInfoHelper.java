@@ -283,6 +283,9 @@ public class EntityInfoHelper {
                     entityFieldInfo.setDateFormat(tableField.dateFormat());
                 }
 
+                if (tableField.routing()) {
+                    entityInfo.setRoutingField(field);
+                }
                 // 其它
                 entityFieldInfo.setMappingColumn(mappingColumn);
                 entityFieldInfo.setAnalyzer(tableField.analyzer());
