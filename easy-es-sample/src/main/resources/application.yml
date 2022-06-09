@@ -8,7 +8,7 @@ easy-es:
   global-config:
     process-index-mode: smoothly
     async-process-index-blocking: true
-    print-dsl: true
+    print-dsl: false
     db-config:
       map-underscore-to-camel-case: true
       #      table-prefix: dev_

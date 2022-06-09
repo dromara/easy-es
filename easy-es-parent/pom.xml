@@ -4,13 +4,13 @@
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
 
-    <groupId>io.github.xpc1024</groupId>
+    <groupId>cn.easy-es</groupId>
     <artifactId>easy-es-parent</artifactId>
-    <version>0.9.20</version>
+    <version>0.9.30</version>
 
     <name>easy-es-parent</name>
     <description>easy use for elastic search</description>
-    <url>https://github.com/xpc1024/easy-es</url>
+    <url>https://github.com/dromara/easy-es</url>
 
     <licenses>
         <license>
@@ -20,9 +20,11 @@
     </licenses>
 
     <modules>
-        <module>../easy-es-core</module>
         <module>../easy-es-boot-starter</module>
+        <module>../easy-es-core</module>
         <module>../easy-es-extension</module>
+        <module>../easy-es-annotation</module>
+        <module>../easy-es-common</module>
     </modules>
 
     <properties>
@@ -37,6 +39,31 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>cn.easy-es</groupId>
+                <artifactId>easy-es-boot-starter</artifactId>
+                <version>${version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.easy-es</groupId>
+                <artifactId>easy-es-core</artifactId>
+                <version>${version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.easy-es</groupId>
+                <artifactId>easy-es-extension</artifactId>
+                <version>${version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.easy-es</groupId>
+                <artifactId>easy-es-common</artifactId>
+                <version>${version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.easy-es</groupId>
+                <artifactId>easy-es-annotation</artifactId>
+                <version>${version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
@@ -92,9 +119,9 @@
     </developers>
 
     <scm>
-        <connection>https://github.com/xpc1024/easy-es.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com:xpc1024/easy-es.git</developerConnection>
-        <url>https://github.com/xpc1024/easy-es</url>
+        <connection>https://github.com/dromara/easy-es.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:dromara/easy-es.git</developerConnection>
+        <url>https://github.com/dromara/easy-es</url>
     </scm>
 
 

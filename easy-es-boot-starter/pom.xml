@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>easy-es-parent</artifactId>
-        <groupId>io.github.xpc1024</groupId>
-        <version>0.9.20</version>
+        <groupId>cn.easy-es</groupId>
+        <version>0.9.30</version>
         <relativePath>../easy-es-parent</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -19,18 +19,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.github.xpc1024</groupId>
+            <groupId>cn.easy-es</groupId>
             <artifactId>easy-es-core</artifactId>
-            <version>0.9.20</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.xpc1024</groupId>
-            <artifactId>easy-es-extension</artifactId>
-            <version>0.9.20</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

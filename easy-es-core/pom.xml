@@ -5,15 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.github.xpc1024</groupId>
+        <groupId>cn.easy-es</groupId>
         <artifactId>easy-es-parent</artifactId>
-        <version>0.9.20</version>
+        <version>0.9.30</version>
         <relativePath>../easy-es-parent</relativePath>
     </parent>
 
-    <groupId>io.github.xpc1024</groupId>
     <artifactId>easy-es-core</artifactId>
-    <version>0.9.20</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -22,20 +20,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
+            <groupId>cn.easy-es</groupId>
+            <artifactId>easy-es-extension</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
