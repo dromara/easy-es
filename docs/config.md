@@ -28,13 +28,25 @@ easy-es:
     db-config:
       map-underscore-to-camel-case: false # 是否开启下划线转驼峰 默认为false(0.9.8+版本支持)
       table-prefix: daily_ # 索引前缀,可用于区分环境  默认为空 用法和MP一样
-      id-type: auto # id生成策略 默认为auto 
+      id-type: customize # id生成策略 customize为自定义,id值由用户生成,比如取MySQL中的数据id,如缺省此项配置,则id默认策略为es自动生成
       field-strategy: not_empty # 字段更新策略 默认为not_null
-      enable-track-total-hits: true # 查询超过1w条时可开启,默认为false
+      enable-track-total-hits: true # 默认开启,查询若指定了size超过1w条时也会自动开启,开启后查询所有匹配数据,若不开启,会导致无法获取数据总条数,其它功能不受影响.
       refresh-policy: immediate # 数据刷新策略,默认为不刷新
       enable-must2-filter: false # 是否全局开启must查询类型转换为filter查询类型 默认为false不转换 
 
 ```
+
+**其它配置:**
+```yaml
+logging:
+  level:
+   tracer: trace # 开启trace级别日志,在开发时可以开启此配置,则控制台可以打印es全部请求信息及DSL语句,为了避免重复,开启此项配置后,可以将EE的print-dsl设置为false.
+
+spring:
+  main:
+    banner-mode: off # 有用户反馈想关闭EE打印的Banner,由于EE的banner是直接覆盖springboot默认banner的,所以如需关闭,直接关闭springboot的banner即可关闭EE的banner.
+```
+
 > **Tips:**
 > - id-type支持3种类型:
 >     - auto: 由ES自动生成,是默认的配置,无需您额外配置 推荐

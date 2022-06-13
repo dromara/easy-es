@@ -1,49 +1,35 @@
-语法:
-```java
-// 不指定高亮标签,默认采用<em></em>返回高亮内容
-highLight(高亮字段);
-// 指定高亮标签
-highLight(高亮字段,开始标签,结束标签)
-```
-```java
-    @Test
-    public void testHighlight() throws IOException {
-        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        String keyword = "过硬";
-        wrapper.match(Document::getContent,keyword);
-        wrapper.highLight(Document::getContent);
-        SearchResponse response = documentMapper.search(wrapper);
-        System.out.println(response);
-    }
-```
-0.9.7+版本,根据用户反馈,对此写法做了进一步优化:
-
-- 不需要再使用半原生查询即可完成查询
-- 高亮返回的字段通过自定义注解@HighLightMappingField("content")在被查询实体类(Document)中来指定
-```java
-    @Test
-    public void testHighlight() throws IOException {
-        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        String keyword = "过硬";
-        wrapper.match(Document::getContent,keyword);
-        wrapper.highLight(Document::getContent);
-        List<Document> documents = documentMapper.selectList(wrapper);
-        System.out.println(documents);
-    }
-```
+- 高亮字段通过自定义注解@HighLight即可实现,将该注解添加在需要被高亮的字段上即可
 ```java
 public class Document{
     /**
-     * 高亮返回值被映射的字段
+     * 需要被高亮的字段
      */
-    @HighLightMappingField("content")
-    private String highlightContent;
+    @HighLight
+    private String content;
+    // 省略其它无关字段...
 }
 ```
 > **Tips:**
-> - 如果需要多字段高亮,则字段与字段之间可以用逗号隔开
-> - 必须使用SearchResponse接收,否则返回体中无高亮字段 0.9.7+版本可通过自定义注解实现.
+> - 如果你不想原来的字段值被高亮字段覆盖,那么你需要在@HighLight注解中指定mappingField,并将该字段添加至对应实体类中,这样配置以后,高亮内容在highlightContent字段中返回,原content字段的值依旧返回它本身的值.
 
+例如:
+```java
+public class Document{
+    /**
+     * 需要被高亮的字段
+     */
+    @HighLight(mappingField = "highlightContent")
+    private String content;
+    /**
+     * 高亮返回值被映射的字段
+     */
+    private String highlightContent;
+    // 省略其它无关字段...
+}
+```
+> **Tips:**
+> - 高亮注解支持设置高亮返回内容截取的长度fragmentSize,默认值为100
+> - 高亮注解支持设置高亮内容的标签,默认为<em></em>
 
 
 

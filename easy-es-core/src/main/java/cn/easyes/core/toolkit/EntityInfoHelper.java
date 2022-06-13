@@ -359,7 +359,8 @@ public class EntityInfoHelper {
         entityInfo.getHighlightFieldMap().putIfAbsent(realHighLightField, mappingField);
 
         // 封装高亮参数
-        HighLightParam highLightParam = new HighLightParam(highLight.preTag(), highLight.postTag(), realHighLightField);
+        HighLightParam highLightParam =
+                new HighLightParam(highLight.fragmentSize(),highLight.preTag(), highLight.postTag(), realHighLightField);
         entityInfo.getHighLightParams().add(highLightParam);
     }
 

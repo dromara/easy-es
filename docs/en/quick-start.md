@@ -30,14 +30,14 @@ Create an empty Spring Boot project
 **Maven:**
 ```xml
         <dependency>
-            <groupId>io.github.xpc1024</groupId>
+            <groupId>cn.easy-es</groupId>
             <artifactId>easy-es-boot-starter</artifactId>
             <version>Latest Version</version>
         </dependency>
 ```
 **Gradle:**
 ```groovy
-compile group: 'io.github.xpc1024', name: 'easy-es-boot-starter', version: 'Latest Version'
+compile group: 'cn.easy-es', name: 'easy-es-boot-starter', version: 'Latest Version'
 ```
 > **Tips:** Latest Version: [Click here to get the latest version](https://img.shields.io/github/v/release/xpc1024/easy-es?include_prereleases&logo=xpc&style=plastic)
 

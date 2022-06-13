@@ -1,4 +1,4 @@
-> This Demo demonstrates the use of Easy-Es in the Springboot project. It is recommended to download it first and run it directly on your local.
+> This Demo demonstrates the seamless integration between Easy-Es and the Springboot project. It is strongly recommended to download it first and run it directly in your local area to avoid stepping on the pit due to version compatibility issues such as springboot when integrating it yourself.
 > Demo download link: [Github](https://github.com/xpc1024/easy-es-springboot-demo-en)
 
 # Demo introduction

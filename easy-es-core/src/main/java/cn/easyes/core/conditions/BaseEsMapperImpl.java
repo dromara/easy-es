@@ -56,8 +56,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import static cn.easyes.common.constants.BaseEsConstants.DEFAULT_ES_ID_NAME;
-import static cn.easyes.common.constants.BaseEsConstants.PARENT;
+import static cn.easyes.common.constants.BaseEsConstants.*;
 
 /**
  * 核心 所有支持方法接口实现类
@@ -535,18 +534,21 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
     @Override
     public T selectOne(LambdaEsQueryWrapper<T> wrapper) {
-        long count = this.selectCount(wrapper);
-        if (count > BaseEsConstants.ONE && wrapper.size > BaseEsConstants.ONE) {
-            throw ExceptionUtils.eee("found more than one result: %d , please use limit function to limit 1", count);
+        // 请求es获取数据
+        SearchResponse searchResponse = getSearchResponse(wrapper);
+        long count = parseCount(searchResponse, Objects.nonNull(wrapper.distinctField));
+        boolean invalid = (count > ONE && (Objects.nonNull(wrapper.size) && wrapper.size > ONE))
+                || (count > ONE && Objects.isNull(wrapper.size));
+        if (invalid) {
+            LogUtils.error("found more than one result:" + count, "please use wrapper.limit to limit 1");
+            throw ExceptionUtils.eee("found more than one result: %d, please use wrapper.limit to limit 1", count);
         }
 
-        // 请求es获取数据
-        SearchHit[] searchHits = getSearchHitArray(wrapper);
+        // 解析数据
+        SearchHit[] searchHits = parseSearchHitArray(searchResponse);
         if (ArrayUtils.isEmpty(searchHits)) {
             return null;
         }
-
-        // 解析首条数据
         return parseOne(searchHits[0], wrapper);
     }
 

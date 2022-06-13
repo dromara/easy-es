@@ -60,6 +60,15 @@
 
 ~~[v0.9.12](https://gitee.com/dromara/easy-es/releases/V0.9.12)~~
 
+~~[v0.9.13](https://gitee.com/dromara/easy-es/releases/V0.9.13)~~
+
+~~[v0.9.14](https://gitee.com/dromara/easy-es/releases/V0.9.14)~~
+
+~~[v0.9.15](https://gitee.com/dromara/easy-es/releases/V0.9.15)~~
+
+~~[v0.9.16](https://gitee.com/dromara/easy-es/releases/V0.9.16)~~
+
+
 持续更新中...
 
 > **Tip**

@@ -36,9 +36,9 @@ Caused by: [daily_document] ElasticsearchStatusException[Elasticsearch exception
 ```
 
 4. 报错NoSuchMethod,错误信息大致如下:
-> com.xpc.easyes.core.exception.EasyEsException: no such method:
-	at com.xpc.easyes.core.toolkit.ExceptionUtils.eee(ExceptionUtils.java:36)
-	at com.xpc.easyes.core.cache.BaseCache.lambda$setterMethod$5(BaseCache.java:94)
+> EasyEsException: no such method:
+	at ExceptionUtils.eee(ExceptionUtils.java:36)
+	at BaseCache.lambda$setterMethod$5(BaseCache.java:94)
 	at java.util.Optional.orElseThrow(Optional.java:290)
 
 通常情况下是您实体类Model中无id字段,可复制我下面提供的示例,按需二选一,添加id字段即可,字段类型不限,但字段名称必须叫id.

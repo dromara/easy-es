@@ -1,3 +1,45 @@
+> 通过API手动创建索引,我们提供了两种方式
+-方式一:根据实体类及自定义注解一键创建(推荐),99.9%场景适用
+```java
+/**
+ * 实体类信息
+**/
+@Data
+@TableName(shardsNum = 3, replicasNum = 2, keepGlobalPrefix = true)
+public class Document {
+    /**
+     * es中的唯一id,如果你想自定义es中的id为你提供的id,比如MySQL中的id,请将注解中的type指定为customize或直接在全局配置文件中指定,如此id便支持任意数据类型)
+     */
+    @TableId(type = IdType.CUSTOMIZE)
+    private String id;
+    /**
+     * 文档标题,不指定类型默认被创建为keyword类型,可进行精确查询
+     */
+    private String title;
+    /**
+     * 文档内容,指定了类型及存储/查询分词器
+     */
+    @HighLight(mappingField = "highlightContent")
+    @TableField(fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART, searchAnalyzer = Analyzer.IK_MAX_WORD)
+    private String content;
+    // 省略其它字段...
+}
+
+```
+
+```java
+ @Test
+    public void testCreateIndexByEntity() {
+        // 然后通过该实体类的mapper直接一键创建,非常傻瓜级
+        documentMapper.createIndex();
+    }
+```
+
+>**Tips:** 实体类中的注解用法可参考注解章节
+
+
+-方式二:通过api创建,每个需要被索引的字段都需要处理,比较繁琐,但灵活性最好,支持所有es能支持的所有索引创建,供0.01%场景使用(不推荐)
+
 ```java
     @Test
     public void testCreatIndex() {

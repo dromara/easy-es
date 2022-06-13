@@ -9,7 +9,7 @@
     <parent>
         <artifactId>easy-es</artifactId>
         <groupId>cn.easy-es</groupId>
-        <version>0.9.30</version>
+        <version>0.9.40</version>
     </parent>
 
     <properties>

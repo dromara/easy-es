@@ -211,8 +211,8 @@ public interface BaseEsConstants {
      */
     String BOOST_KEY = "boost";
     /**
-     * 点
+     * 高亮截取默认长度
      */
-    String POINT = ".";
+    int DEFAULT_FRAGMENT_SIZE = 100;
 
 }

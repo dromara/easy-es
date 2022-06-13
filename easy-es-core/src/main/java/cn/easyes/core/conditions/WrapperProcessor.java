@@ -494,9 +494,9 @@ public class WrapperProcessor {
         highLightParams.forEach(highLightParam -> {
             if (StringUtils.isNotBlank(highLightParam.getHighLightField())) {
                 highlightBuilder.field(highLightParam.getHighLightField());
+                highlightBuilder.fragmentSize(highLightParam.getFragmentSize());
                 highlightBuilder.preTags(highLightParam.getPreTag());
                 highlightBuilder.postTags(highLightParam.getPostTag());
-
             }
         });
         searchSourceBuilder.highlighter(highlightBuilder);

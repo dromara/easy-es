@@ -39,7 +39,6 @@ public class SelectTest {
         wrapper.eq(Document::getTitle, title);
         // 字段名亦可指定为字符串,不推荐
 //        wrapper.eq("title",title);
-        wrapper.select(Document::getId);
         wrapper.limit(1);
         Document document = documentMapper.selectOne(wrapper);
         System.out.println(document);
@@ -104,7 +103,7 @@ public class SelectTest {
     public void testMatch() {
         // 会对输入做分词,只要所有分词中有一个词在内容中有匹配就会查询出该数据,无视分词顺序
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.match(Document::getContent, "技术");
+        wrapper.match(Document::getContent, "过硬");
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents.size());
     }

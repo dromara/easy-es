@@ -1,4 +1,4 @@
-> 本Demo演示Easy-Es与Springboot项目无缝集成,建议先下载,可直接在您本地运行.
+> 本Demo演示Easy-Es与Springboot项目无缝集成,强烈建议先下载,直接在您本地运行,避免自己集成时因springboot等版本兼容问题踩坑.
 
 > Demo下载地址: ✔[Gitee](https://gitee.com/easy-es/easy-es-springboot-demo) | ✔ [Github](https://github.com/xpc1024/easy-es-springboot-demo)
 
@@ -46,7 +46,7 @@
         <dependency>
             <groupId>io.github.xpc1024</groupId>
             <artifactId>easy-es-boot-starter</artifactId>
-            <version>0.9.15</version>
+            <version>0.9.20</version>
         </dependency>
 
         <dependency>

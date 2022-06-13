@@ -35,7 +35,7 @@ public class Document {
     /**
      * 文档内容,指定了类型及存储/查询分词器
      */
-    @HighLight(mappingField = "highlightContent")
+    @HighLight(mappingField = "highlightContent",fragmentSize = 2)
     @TableField(fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART, searchAnalyzer = Analyzer.IK_SMART)
     private String content;
     /**

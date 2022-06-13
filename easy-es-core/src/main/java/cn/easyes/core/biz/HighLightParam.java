@@ -12,6 +12,10 @@ import lombok.Data;
 @AllArgsConstructor
 public class HighLightParam {
     /**
+     * 高亮字段截取长度,默认为100
+     */
+    private int fragmentSize;
+    /**
      * 前置标签
      */
     private String preTag;
