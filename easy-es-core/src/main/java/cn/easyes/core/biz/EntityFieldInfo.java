@@ -1,6 +1,6 @@
 package cn.easyes.core.biz;
 
-import cn.easyes.annotation.TableField;
+import cn.easyes.annotation.IndexField;
 import cn.easyes.common.enums.FieldStrategy;
 import cn.easyes.common.enums.FieldType;
 import cn.easyes.core.config.GlobalConfig;
@@ -85,7 +85,7 @@ public class EntityFieldInfo {
      * @param field      字段
      * @param tableField 字段注解
      */
-    public EntityFieldInfo(GlobalConfig.DbConfig dbConfig, Field field, TableField tableField) {
+    public EntityFieldInfo(GlobalConfig.DbConfig dbConfig, Field field, IndexField tableField) {
         this.column = field.getName();
 
         // 优先使用单个字段注解，否则使用全局配置

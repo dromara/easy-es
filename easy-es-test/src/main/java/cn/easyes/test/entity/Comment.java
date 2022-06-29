@@ -1,7 +1,7 @@
 package cn.easyes.test.entity;
 
-import cn.easyes.annotation.TableField;
-import cn.easyes.annotation.TableName;
+import cn.easyes.annotation.IndexField;
+import cn.easyes.annotation.IndexName;
 import cn.easyes.common.constants.Analyzer;
 import cn.easyes.common.enums.FieldType;
 import cn.easyes.common.params.JoinField;
@@ -13,7 +13,7 @@ import lombok.Data;
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 @Data
-@TableName(child = true)
+@IndexName(child = true)
 public class Comment {
     /**
      * 评论id
@@ -22,11 +22,11 @@ public class Comment {
     /**
      * 评论内容
      */
-    @TableField(fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART, searchAnalyzer = Analyzer.IK_SMART)
+    @IndexField(fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART, searchAnalyzer = Analyzer.IK_SMART)
     private String commentContent;
     /**
      * 父子关系字段
      */
-    @TableField(fieldType = FieldType.JOIN)
+    @IndexField(fieldType = FieldType.JOIN)
     private JoinField joinField;
 }

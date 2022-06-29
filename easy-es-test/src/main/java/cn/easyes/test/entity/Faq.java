@@ -1,7 +1,7 @@
 package cn.easyes.test.entity;
 
-import cn.easyes.annotation.TableField;
-import cn.easyes.annotation.TableName;
+import cn.easyes.annotation.IndexField;
+import cn.easyes.annotation.IndexName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,9 +25,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("faq")
+@IndexName("faq")
 public class Faq {
-    @TableField("faq_name")
+    @IndexField("faq_name")
     private String faqName;
     private String faqAnswer;
 }

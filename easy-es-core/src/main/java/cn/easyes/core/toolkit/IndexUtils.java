@@ -368,7 +368,9 @@ public class IndexUtils {
             }
 
             // 设置分词器
-            if (FieldType.TEXT.getType().equals(indexParam.getFieldType())) {
+            boolean needAnalyzer = FieldType.TEXT.getType().equals(indexParam.getFieldType()) ||
+                    FieldType.KEYWORD_TEXT.getType().equals(indexParam.getFieldType());
+            if (needAnalyzer) {
                 Optional.ofNullable(indexParam.getAnalyzer())
                         .ifPresent(analyzer ->
                                 info.put(BaseEsConstants.ANALYZER, indexParam.getAnalyzer().toLowerCase()));

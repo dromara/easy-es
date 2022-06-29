@@ -305,7 +305,14 @@ public class WrapperProcessor {
             return null;
         }
 
-        GeoShapeQueryBuilder builder = QueryBuilders.geoShapeQuery(geoParam.getField(), geoParam.getGeometry());
+        // 构造查询参数
+        GeoShapeQueryBuilder builder;
+        if (StringUtils.isNotBlank(geoParam.getIndexedShapeId())) {
+            builder = QueryBuilders.geoShapeQuery(geoParam.getField(), geoParam.getIndexedShapeId());
+        } else {
+            builder = QueryBuilders.geoShapeQuery(geoParam.getField(), geoParam.getGeometry());
+        }
+
         Optional.ofNullable(geoParam.getShapeRelation()).ifPresent(builder::relation);
         Optional.ofNullable(geoParam.getBoost()).ifPresent(builder::boost);
         return builder;

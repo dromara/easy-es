@@ -1,9 +1,9 @@
 package cn.easyes.core.toolkit;
 
 import cn.easyes.annotation.HighLight;
-import cn.easyes.annotation.TableField;
-import cn.easyes.annotation.TableId;
-import cn.easyes.annotation.TableName;
+import cn.easyes.annotation.IndexField;
+import cn.easyes.annotation.IndexId;
+import cn.easyes.annotation.IndexName;
 import cn.easyes.common.enums.FieldType;
 import cn.easyes.common.enums.IdType;
 import cn.easyes.common.params.DefaultNestedClass;
@@ -21,7 +21,6 @@ import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
 import com.alibaba.fastjson.serializer.NameFilter;
 import com.alibaba.fastjson.serializer.SerializeFilter;
 import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
-import lombok.Getter;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -256,7 +255,7 @@ public class EntityInfoHelper {
         boolean hasAnnotation = false;
 
         // 初始化封装TableField注解信息
-        if (field.isAnnotationPresent(TableField.class)) {
+        if (field.isAnnotationPresent(IndexField.class)) {
             initTableFieldAnnotation(dbConfig, entityInfo, field, fieldList);
             hasAnnotation = true;
         }
@@ -281,7 +280,7 @@ public class EntityInfoHelper {
      */
     private static void initTableFieldAnnotation(GlobalConfig.DbConfig dbConfig, EntityInfo entityInfo,
                                                  Field field, List<EntityFieldInfo> fieldList) {
-        TableField tableField = field.getAnnotation(TableField.class);
+        IndexField tableField = field.getAnnotation(IndexField.class);
         if (tableField.exist()) {
             // 存在字段处理
             EntityFieldInfo entityFieldInfo = new EntityFieldInfo(dbConfig, field, tableField);
@@ -381,7 +380,7 @@ public class EntityInfoHelper {
         allFields.forEach(field -> {
             String mappingColumn;
             // 处理TableField注解
-            TableField tableField = field.getAnnotation(TableField.class);
+            IndexField tableField = field.getAnnotation(IndexField.class);
             if (Objects.isNull(tableField)) {
                 mappingColumn = getMappingColumn(dbConfig, field);
                 EntityFieldInfo entityFieldInfo = new EntityFieldInfo(dbConfig, field);
@@ -464,7 +463,7 @@ public class EntityInfoHelper {
      */
     private static boolean initTableIdWithAnnotation(GlobalConfig.DbConfig dbConfig, EntityInfo entityInfo,
                                                      Field field) {
-        TableId tableId = field.getAnnotation(TableId.class);
+        IndexId tableId = field.getAnnotation(IndexId.class);
         if (tableId != null) {
             // 主键策略（ 注解 > 全局 ）
             // 设置 Sequence 其他策略无效
@@ -523,7 +522,7 @@ public class EntityInfoHelper {
      */
     public static boolean isExistTableId(List<Field> list) {
         for (Field field : list) {
-            TableId tableId = field.getAnnotation(TableId.class);
+            IndexId tableId = field.getAnnotation(IndexId.class);
             if (tableId != null) {
                 return true;
             }
@@ -552,7 +551,7 @@ public class EntityInfoHelper {
     private static void initTableName(Class<?> clazz, GlobalConfig globalConfig, EntityInfo entityInfo) {
         // 数据库全局配置
         GlobalConfig.DbConfig dbConfig = globalConfig.getDbConfig();
-        TableName table = clazz.getAnnotation(TableName.class);
+        IndexName table = clazz.getAnnotation(IndexName.class);
         String tableName = clazz.getSimpleName().toLowerCase(Locale.ROOT);
         String tablePrefix = dbConfig.getTablePrefix();
 
