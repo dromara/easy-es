@@ -491,8 +491,10 @@ public class IndexUtils {
         boolean addChild = !DefaultChildClass.class.equals(entityInfo.getChildClass()) && !isNested;
         if (addChild) {
             // 追加子文档信息
-            EntityInfo childEntityInfo = EntityInfoHelper.getEntityInfo(entityInfo.getChildClass());
-            List<EntityFieldInfo> childFieldList = childEntityInfo.getFieldList();
+            List<EntityFieldInfo> childFieldList = Optional.ofNullable(entityInfo.getChildClass())
+                    .flatMap(childClass->Optional.ofNullable(EntityInfoHelper.getEntityInfo(childClass))
+                            .map(EntityInfo::getFieldList))
+                    .orElse(new ArrayList<>(0));
             if (!CollectionUtils.isEmpty(childFieldList)) {
                 childFieldList.forEach(child -> {
                     // 子文档仅支持match查询,所以如果用户未指定子文档索引类型,则将默认的keyword类型转换为text类型

@@ -24,6 +24,7 @@ import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Proxy;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 代理类
@@ -82,7 +83,9 @@ public class MapperFactoryBean<T> implements FactoryBean<T> {
 
                 // 将子文档索引激活为父文档索引
                 if (!DefaultChildClass.class.equals(entityInfo.getChildClass())) {
-                    EntityInfoHelper.getEntityInfo(entityInfo.getChildClass()).setIndexName(entityInfo.getIndexName());
+                  Optional.ofNullable(entityInfo.getChildClass())
+                          .flatMap(childClass -> Optional.ofNullable(EntityInfoHelper.getEntityInfo(childClass)))
+                          .ifPresent(childEntityInfo -> childEntityInfo.setIndexName(entityInfo.getIndexName()));
                 }
             }
         } else {
