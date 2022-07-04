@@ -19,23 +19,20 @@
 </p>
 
 ## What is Easy-Es?
----
 
 Easy-Es is a powerfully enhanced toolkit of RestHighLevelClient for simplify development. This toolkit provides some efficient, useful, out-of-the-box features for ElasticSearch. By using Easy-Es, you can use MySQL syntax to complete Es queries. Use it can effectively save your development time.
 
 ## Official website
----
 
 https://en.easy-es.cn/
 
 ## Links
----
+
 - [中文版](https://github.com/xpc1024/easy-es/blob/main/README-ZH.md)
 - [Samples](https://github.com/xpc1024/easy-es/tree/main/easy-es-sample)
 - [Demo in Springboot](https://en.easy-es.cn/pages/658abb/#_2-pom)
 
 ## Features
----
 
 -   Automatically create and update indexes, automatically migrate data, and process zero downtime
 -   Auto configuration on startup
@@ -47,7 +44,6 @@ https://en.easy-es.cn/
 -   ...
 
 ## Compare
----
 
 > Demand: Query all documents with title equals "Hi" and author equals "Guy"
 
@@ -126,11 +122,11 @@ String indexName = "document";
 > This showcase is just a small part of Easy-Es features. If you want to learn more, please refer to the [documentation](https://easy-es.cn/#/en/).
 
 ## Architecture
----
+
 ![Architecture](https://iknow.hs.net/27fb40b8-22d4-45c2-92e0-1471112d5102.jpg)
 
 ## Syntax comparison with MySQL
----
+
 |  MySQL   | Easy-Es  |
 |  ----  | ----  |
 | and  | and |
@@ -167,11 +163,10 @@ String indexName = "document";
 ---
 
 ## Donate
----
+
 [Donate Easy-Es](https://en.easy-es.cn/pages/fb291d/)
 
 
 ## License
----
 
 Easy-Es is under the Apache 2.0 license. See the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0) file for details.
