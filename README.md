@@ -77,8 +77,9 @@ String indexName = "document";
 ```
 
 > The above is just a simple query demonstration. The more complex the actual query scene, the better the effect, which can save 3-5 times the amount of code on average.
+
+
 ## Getting started
----
 
 -   Add Easy-Es dependency
     - Latest Version: [![Maven Central](https://img.shields.io/github/v/release/xpc1024/easy-es?include_prereleases&logo=xpc&style=plastic)](https://search.maven.org/search?q=g:io.github.xpc1024%20a:easy-*)
@@ -160,7 +161,6 @@ String indexName = "document";
 |- |highLight |
 | ... | ... |
 
----
 
 ## Donate
 
