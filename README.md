@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/xpc1024/easy-es">
+  <a href="https://github.com/dromara/easy-es/">
    <img alt="East-Es-Logo" src="https://iknow.hs.net/6361ec1d-edca-4358-98c1-e7a309e15a39.png">
   </a>
 </p>
@@ -83,14 +83,14 @@ try {
     - Maven:
       ```xml
       <dependency>
-        <groupId>io.github.xpc1024</groupId>
+        <groupId>cn.easy-es</groupId>
         <artifactId>easy-es-boot-starter</artifactId>
         <version>Latest Version</version>
       </dependency>
       ```
     - Gradle
       ```groovy
-      compile group: 'io.github.xpc1024', name: 'easy-es-boot-starter', version: 'Latest Version'
+      compile group: 'cn.easy-es', name: 'easy-es-boot-starter', version: 'Latest Version'
       ```
 -   Add mapper file extends BaseEsMapper interface
 
