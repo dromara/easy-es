@@ -10,6 +10,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -43,7 +44,7 @@ public class EsAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    public RestHighLevelClient restHighLevelClient() {
+    public RestHighLevelClient restHighLevelClient(ObjectProvider<RestHighLevelClientCustomizer> restHighLevelClientCustomConfig) {
         // 处理地址
         String address = easyEsConfigProperties.getAddress();
         if (StringUtils.isEmpty(address)) {
@@ -72,6 +73,11 @@ public class EsAutoConfiguration {
         Integer keepAliveMillis = easyEsConfigProperties.getKeepAliveMillis();
         boolean needSetHttpClient = (StringUtils.isNotEmpty(username) && StringUtils.isNotEmpty(password))
                 || (Objects.nonNull(maxConnTotal) || Objects.nonNull(maxConnPerRoute)) || Objects.nonNull(keepAliveMillis);
+
+        restHighLevelClientCustomConfig.ifAvailable(restHighLevelClientCustomizer -> {
+            restHighLevelClientCustomizer.customize(builder);
+        });
+
         if (needSetHttpClient) {
             builder.setHttpClientConfigCallback(httpClientBuilder -> {
                 // 设置心跳时间等
