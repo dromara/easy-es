@@ -2,7 +2,9 @@ package cn.easyes.test.high;
 
 import cn.easyes.core.biz.OrderByParam;
 import cn.easyes.core.biz.PageInfo;
+import cn.easyes.core.biz.SAPageInfo;
 import cn.easyes.core.conditions.LambdaEsQueryWrapper;
+import cn.easyes.core.toolkit.EsWrappers;
 import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Document;
 import cn.easyes.test.mapper.DocumentMapper;
@@ -11,10 +13,9 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.search.sort.ScriptSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -26,7 +27,7 @@ import java.util.Objects;
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
-@RunWith(SpringRunner.class)
+@Disabled
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class HighTest {
     @Resource
@@ -118,10 +119,27 @@ public class HighTest {
 
     @Test
     public void testPageQuery() {
+        // 浅分页,适合数据量少于1w的情况
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getTitle, "老汉");
         PageInfo<Document> documentPageInfo = documentMapper.pageQuery(wrapper, 1, 10);
         System.out.println(documentPageInfo);
+    }
+
+
+    @Test
+    public void testSearchAfter() {
+        // SearchAfter分页,适合大数据量以及有跳页的场景
+        LambdaEsQueryWrapper<Document> lambdaEsQueryWrapper = EsWrappers.lambdaQuery(Document.class);
+        lambdaEsQueryWrapper.size(10);
+        lambdaEsQueryWrapper.orderByDesc(Document::getEsId, Document::getStarNum);
+        SAPageInfo<Document> saPageInfo = documentMapper.searchAfterPage(lambdaEsQueryWrapper, null, 10);
+        //第一页
+        System.out.println(saPageInfo);
+        //获取下一页
+        List<Object> nextSearchAfter = saPageInfo.getNextSearchAfter();
+        SAPageInfo<Document> documentSAPageInfo = documentMapper.searchAfterPage(lambdaEsQueryWrapper, nextSearchAfter, 10);
+        System.out.println(documentSAPageInfo);
     }
 
     @Test

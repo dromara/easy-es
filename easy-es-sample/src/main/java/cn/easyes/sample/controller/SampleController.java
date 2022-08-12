@@ -31,6 +31,7 @@ public class SampleController {
     @GetMapping("insert")
     public Integer insert() {
         Document document = new Document();
+        document.setId("1");
         document.setTitle("测试1");
         document.setContent("测试内容1");
         document.setCreator("老汉");

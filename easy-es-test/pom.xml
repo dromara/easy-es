@@ -7,7 +7,7 @@
     <parent>
         <artifactId>easy-es</artifactId>
         <groupId>cn.easy-es</groupId>
-        <version>0.9.60</version>
+        <version>0.9.90</version>
     </parent>
 
     <artifactId>easy-es-test</artifactId>
@@ -32,8 +32,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

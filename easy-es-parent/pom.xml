@@ -6,7 +6,7 @@
 
     <groupId>cn.easy-es</groupId>
     <artifactId>easy-es-parent</artifactId>
-    <version>0.9.60</version>
+    <version>0.9.90</version>
 
     <name>easy-es-parent</name>
     <description>easy use for elastic search</description>
@@ -30,11 +30,11 @@
     <properties>
         <java.version>1.8</java.version>
         <lombok.version>1.18.12</lombok.version>
-        <es-rest-high-level-client.version>7.10.1</es-rest-high-level-client.version>
-        <es.version>7.10.1</es.version>
+        <es-rest-high-level-client.version>7.14.0</es-rest-high-level-client.version>
+        <es.version>7.14.0</es.version>
         <fastjson.version>1.2.83</fastjson.version>
-        <codec.version>1.6</codec.version>
-        <spring-boot.version>2.5.4</spring-boot.version>
+        <codec.version>1.13</codec.version>
+        <spring-boot.version>2.6.10</spring-boot.version>
     </properties>
 
     <dependencyManagement>
@@ -95,11 +95,6 @@
                 <groupId>com.alibaba</groupId>
                 <artifactId>fastjson</artifactId>
                 <version>${fastjson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>commons-codec</groupId>
-                <artifactId>commons-codec</artifactId>
-                <version>${codec.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

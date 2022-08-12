@@ -31,7 +31,7 @@ public class LockUtils {
     /**
      * 重试等待时间
      */
-    private final static Integer WAIT_SECONDS = 60;
+    private final static Integer WAIT_SECONDS = 1;
 
     /**
      * 尝试获取es分布式锁

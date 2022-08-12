@@ -117,8 +117,8 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children matchPhase(boolean condition, R column, Object val, Float boost) {
-        getWrapper().matchPhase(condition, column, val, boost);
+    public Children matchPhrase(boolean condition, R column, Object val, Float boost) {
+        getWrapper().matchPhrase(condition, column, val, boost);
         return typedThis;
     }
 
@@ -459,8 +459,8 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children matchPhase(boolean condition, String column, Object val, Float boost) {
-        getWrapper().matchPhase(condition, column, val, boost);
+    public Children matchPhrase(boolean condition, String column, Object val, Float boost) {
+        getWrapper().matchPhrase(condition, column, val, boost);
         return typedThis;
     }
 

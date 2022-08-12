@@ -101,6 +101,9 @@ public class AutoProcessIndexSmoothlyServiceImpl implements AutoProcessIndexServ
         // 用最新索引覆盖缓存中的老索引
         entityInfo.setIndexName(releaseIndexName);
 
+        // 将新索引名称记录至ee-distribute-lock索引中,以便在分布式环境下其它机器能够感知到
+        IndexUtils.saveReleaseIndex(releaseIndexName,client);
+
         // done.
         return Boolean.TRUE;
     }

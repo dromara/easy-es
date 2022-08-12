@@ -2,30 +2,25 @@ package cn.easyes.test.insert;
 
 import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Document;
-import cn.easyes.test.entity.Faq;
-import cn.easyes.test.entity.User;
 import cn.easyes.test.mapper.DocumentMapper;
 import org.elasticsearch.geometry.Point;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * 插入测试
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
-@RunWith(SpringRunner.class)
+@Disabled
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class InsertTest {
     @Resource
@@ -35,7 +30,7 @@ public class InsertTest {
     public void testInsert() {
         // 测试插入数据
         Document document = new Document();
-        document.setId("5");
+        document.setEsId("5");
         document.setTitle("老汉");
         document.setContent("人才");
         document.setCreator("吃饭");
@@ -46,7 +41,7 @@ public class InsertTest {
         document.setGeoLocation(point.toString());
         document.setStarNum(1);
         int successCount = documentMapper.insert(document);
-        Assert.assertEquals(successCount, 1);
+        Assertions.assertEquals(successCount, 1);
     }
 
     @Test
@@ -54,18 +49,17 @@ public class InsertTest {
         List<Document> documentList = new ArrayList<>();
         String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         Document document = new Document();
-        document.setId("2");
+        document.setEsId("2");
         document.setTitle("老汉");
         document.setContent("推*技术过硬");
         document.setCreator("隔壁老王");
-
 
         document.setGmtCreate(now);
         document.setCustomField("乌拉巴拉小魔仙");
         document.setLocation("40.17836693398477,116.64002551005981");
 
         Document document1 = new Document();
-        document1.setId("3");
+        document1.setEsId("3");
         document1.setTitle("老王");
         document1.setContent("推*技术过硬");
         document1.setCreator("隔壁老王");
@@ -75,7 +69,7 @@ public class InsertTest {
 
 
         Document document2 = new Document();
-        document2.setId("4");
+        document2.setEsId("4");
         document2.setTitle("老李");
         document2.setContent("推*技术过硬");
         document2.setCreator("大猪蹄子");
@@ -98,7 +92,7 @@ public class InsertTest {
         // 测试用户自行指定id新增,测试前必须先把注解@TableId中的type指定为IdType.CUSTOMIZE 或在配置文件yml中指定
         String id = "muscle";
         Document document = new Document();
-        document.setId(id);
+        document.setEsId(id);
         document.setTitle("测试用户自定义id");
         document.setContent("测试用户自己指定id,如果es中已存在该id就更新该数据,不存在时才新增");
         int successCount = documentMapper.insert(document);

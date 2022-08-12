@@ -8,11 +8,10 @@ import cn.easyes.core.toolkit.QueryUtils;
 import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Document;
 import cn.easyes.test.mapper.DocumentMapper;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
@@ -25,7 +24,7 @@ import java.util.Map;
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
-@RunWith(SpringRunner.class)
+@Disabled
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class SelectTest {
     @Resource
@@ -42,7 +41,7 @@ public class SelectTest {
         wrapper.limit(1);
         Document document = documentMapper.selectOne(wrapper);
         System.out.println(document);
-        Assert.assertEquals(title, document.getTitle());
+        Assertions.assertEquals(title, document.getTitle());
     }
 
     @Test
@@ -113,7 +112,7 @@ public class SelectTest {
         // 会对输入做分词，但是需要结果中也包含所有的分词，而且顺序要求一样,否则就无法查询出结果
         // 例如es中数据是 技术过硬,如果搜索关键词为过硬技术就无法查询出结果
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.matchPhase(Document::getContent, "技术");
+        wrapper.matchPhrase(Document::getContent, "技术");
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);
     }
@@ -188,7 +187,7 @@ public class SelectTest {
     @Test
     public void testIn() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.in(Document::getId, "2", "3");
+        wrapper.in(Document::getEsId, "2", "3");
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);
     }

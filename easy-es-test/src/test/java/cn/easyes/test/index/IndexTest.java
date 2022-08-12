@@ -7,11 +7,10 @@ import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Document;
 import cn.easyes.test.mapper.DocumentMapper;
 import org.elasticsearch.client.indices.GetIndexResponse;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
@@ -23,7 +22,7 @@ import java.util.Map;
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
-@RunWith(SpringRunner.class)
+@Disabled
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class IndexTest {
     @Resource
@@ -68,7 +67,7 @@ public class IndexTest {
 
         // 创建索引
         boolean isOk = documentMapper.createIndex(wrapper);
-        Assert.assertTrue(isOk);
+        Assertions.assertTrue(isOk);
     }
 
     @Test
@@ -76,7 +75,7 @@ public class IndexTest {
         // 测试是否存在指定名称的索引
         String indexName = Document.class.getSimpleName().toLowerCase();
         boolean existsIndex = documentMapper.existsIndex(indexName);
-        Assert.assertTrue(existsIndex);
+        Assertions.assertTrue(existsIndex);
     }
 
     @Test
@@ -96,7 +95,7 @@ public class IndexTest {
         wrapper.mapping(Document::getCreator, FieldType.KEYWORD);
         wrapper.mapping(Document::getGmtCreate, FieldType.DATE);
         boolean isOk = documentMapper.updateIndex(wrapper);
-        Assert.assertTrue(isOk);
+        Assertions.assertTrue(isOk);
     }
 
     @Test
@@ -105,7 +104,7 @@ public class IndexTest {
         // 指定要删除哪个索引
         String indexName = Document.class.getSimpleName().toLowerCase();
         boolean isOk = documentMapper.deleteIndex(indexName);
-        Assert.assertTrue(isOk);
+        Assertions.assertTrue(isOk);
     }
 
     @Test
@@ -122,6 +121,6 @@ public class IndexTest {
         map.put("properties", prop);
         wrapper.mapping(map);
         boolean isOk = documentMapper.createIndex(wrapper);
-        Assert.assertTrue(isOk);
+        Assertions.assertTrue(isOk);
     }
 }

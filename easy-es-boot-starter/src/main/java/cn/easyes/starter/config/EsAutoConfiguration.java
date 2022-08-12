@@ -1,6 +1,7 @@
 package cn.easyes.starter.config;
 
 import cn.easyes.common.utils.ExceptionUtils;
+import cn.easyes.common.utils.RestHighLevelClientBuilder;
 import cn.easyes.common.utils.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -106,7 +107,7 @@ public class EsAutoConfiguration {
             });
         }
 
-        return new RestHighLevelClient(builder);
+        return RestHighLevelClientBuilder.build(builder);
     }
 
 }

@@ -5,6 +5,7 @@ import cn.easyes.common.utils.*;
 import cn.easyes.core.biz.*;
 import cn.easyes.core.conditions.interfaces.*;
 import org.apache.lucene.search.join.ScoreMode;
+import org.elasticsearch.common.geo.GeoDistance;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.geo.ShapeRelation;
 import org.elasticsearch.common.unit.DistanceUnit;
@@ -64,6 +65,10 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * 排序参数列表
      */
     protected List<OrderByParam> orderByParams;
+    /**
+     * 距离排序参数
+     */
+    protected DistanceOrderByParam distanceOrderByParam;
     /**
      * 是否查询全部文档
      */
@@ -190,8 +195,8 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
-    public Children matchPhase(boolean condition, String column, Object val, Float boost) {
-        return doIt(condition, MATCH_PHASE, MUST, column, val, boost);
+    public Children matchPhrase(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, MATCH_PHRASE, MUST, column, val, boost);
     }
 
     @Override
@@ -314,6 +319,57 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     public Children orderBy(boolean condition, List<OrderByParam> orderByParams) {
         if (CollectionUtils.isNotEmpty(orderByParams)) {
             this.orderByParams = orderByParams;
+        }
+        return typedThis;
+    }
+
+    @Override
+    public Children orderByDistanceAsc(boolean condition, String column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints) {
+        if (ArrayUtils.isNotEmpty(geoPoints)) {
+            if (condition) {
+                this.distanceOrderByParam = DistanceOrderByParam.builder()
+                        .fieldName(column)
+                        .geoPoints(geoPoints)
+                        .unit(unit)
+                        .geoDistance(geoDistance)
+                        .sortOrder(SortOrder.ASC)
+                        .build();
+            }
+        }
+        return typedThis;
+    }
+
+    @Override
+    public Children orderByDistanceDesc(boolean condition, String column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints) {
+        if (ArrayUtils.isNotEmpty(geoPoints)) {
+            if (condition) {
+                this.distanceOrderByParam = DistanceOrderByParam.builder()
+                        .fieldName(column)
+                        .geoPoints(geoPoints)
+                        .unit(unit)
+                        .geoDistance(geoDistance)
+                        .sortOrder(SortOrder.DESC)
+                        .build();
+            }
+        }
+        return typedThis;
+    }
+
+    @Override
+    public Children sort(boolean condition, List<SortBuilder<?>> sortBuilders) {
+        if (CollectionUtils.isEmpty(sortBuilders)) {
+            return typedThis;
+        }
+        if (condition) {
+            this.sortBuilders = sortBuilders;
+        }
+        return typedThis;
+    }
+
+    @Override
+    public Children sortByScore(boolean condition, SortOrder sortOrder) {
+        if (condition) {
+            this.sortOrder = sortOrder;
         }
         return typedThis;
     }
@@ -445,25 +501,6 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     @Override
     public Children notInGeoShape(boolean condition, String column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
         return doIt(condition, column, geometry, shapeRelation, boost, false);
-    }
-
-    @Override
-    public Children sort(boolean condition, List<SortBuilder<?>> sortBuilders) {
-        if (CollectionUtils.isEmpty(sortBuilders)) {
-            return typedThis;
-        }
-        if (condition) {
-            this.sortBuilders = sortBuilders;
-        }
-        return typedThis;
-    }
-
-    @Override
-    public Children sortByScore(boolean condition, SortOrder sortOrder) {
-        if (condition) {
-            this.sortOrder = sortOrder;
-        }
-        return typedThis;
     }
 
     /**

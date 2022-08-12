@@ -164,6 +164,7 @@ public class BaseEsParam {
     public static void setUp(BaseEsParam baseEsParam) {
         // 获取原查询条件
         List<FieldValueModel> mustList = baseEsParam.getMustList();
+        List<FieldValueModel> mustNotList = baseEsParam.getMustNotList();
         List<FieldValueModel> mustMultiFieldList = baseEsParam.getMustMultiFieldList();
         List<FieldValueModel> filterList = baseEsParam.getFilterList();
         List<FieldValueModel> shouldList = baseEsParam.getShouldList();
@@ -180,6 +181,7 @@ public class BaseEsParam {
 
         // 把原来必须满足的条件转入should列表
         shouldList.addAll(mustList);
+        shouldList.addAll(mustNotList);
         shouldList.addAll(filterList);
         shouldList.addAll(gtList);
         shouldList.addAll(ltList);
@@ -195,6 +197,7 @@ public class BaseEsParam {
 
         // 置空原必须满足的条件列表
         baseEsParam.setMustList(Collections.EMPTY_LIST);
+        baseEsParam.setMustNotList(Collections.EMPTY_LIST);
         baseEsParam.setFilterList(Collections.EMPTY_LIST);
         baseEsParam.setGtList(Collections.EMPTY_LIST);
         baseEsParam.setLtList(Collections.EMPTY_LIST);

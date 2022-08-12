@@ -13,6 +13,7 @@ import cn.easyes.core.toolkit.EsQueryTypeUtil;
 import cn.easyes.core.toolkit.FieldUtils;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -20,6 +21,8 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.collapse.CollapseBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.GeoDistanceSortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
 import java.util.*;
@@ -388,9 +391,10 @@ public class WrapperProcessor {
 
         // 多字段情形
         baseEsParam.getMustMultiFieldList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), MUST.getType(), enableMust2Filter,
-                        FieldUtils.getRealFields(fieldValueModel.getFields(), entityInfo.getMappingColumnMap()), fieldValueModel.getValue(),
-                        fieldValueModel.getExt(), fieldValueModel.getMinimumShouldMatch(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), MUST.getType(),
+                        fieldValueModel.getOriginalAttachType(), enableMust2Filter, FieldUtils.getRealFields(fieldValueModel.getFields(),
+                                entityInfo.getMappingColumnMap()), fieldValueModel.getValue(), fieldValueModel.getExt(),
+                        fieldValueModel.getMinimumShouldMatch(), fieldValueModel.getBoost()));
 
         baseEsParam.getFilterList().forEach(fieldValueModel ->
                 EsQueryTypeUtil.addQueryByType(boolQueryBuilder, FILTER.getType(), enableMust2Filter, fieldValueModel, entityInfo, dbConfig));
@@ -400,7 +404,8 @@ public class WrapperProcessor {
 
         // 多字段情形
         baseEsParam.getShouldMultiFieldList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), SHOULD.getType(), enableMust2Filter,
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
+                        SHOULD.getType(), fieldValueModel.getOriginalAttachType(), enableMust2Filter,
                         FieldUtils.getRealFields(fieldValueModel.getFields(), entityInfo.getMappingColumnMap()), fieldValueModel.getValue(),
                         fieldValueModel.getExt(), fieldValueModel.getMinimumShouldMatch(), fieldValueModel.getBoost()));
 
@@ -421,13 +426,15 @@ public class WrapperProcessor {
 
         baseEsParam.getBetweenList().forEach(fieldValueModel ->
                 EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), BETWEEN.getType(),
-                        enableMust2Filter, entityInfo.getMappingColumn(fieldValueModel.getField()),
-                        fieldValueModel.getLeftValue(), fieldValueModel.getRightValue(), fieldValueModel.getBoost()));
+                        fieldValueModel.getOriginalAttachType(), enableMust2Filter,
+                        entityInfo.getMappingColumn(fieldValueModel.getField()), fieldValueModel.getLeftValue(),
+                        fieldValueModel.getRightValue(), fieldValueModel.getBoost()));
 
         baseEsParam.getNotBetweenList().forEach(fieldValueModel ->
                 EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), NOT_BETWEEN.getType(),
-                        enableMust2Filter, entityInfo.getMappingColumn(fieldValueModel.getField()),
-                        fieldValueModel.getLeftValue(), fieldValueModel.getRightValue(), fieldValueModel.getBoost()));
+                        fieldValueModel.getOriginalAttachType(), enableMust2Filter,
+                        entityInfo.getMappingColumn(fieldValueModel.getField()), fieldValueModel.getLeftValue(),
+                        fieldValueModel.getRightValue(), fieldValueModel.getBoost()));
 
         baseEsParam.getInList().forEach(fieldValueModel -> EsQueryTypeUtil.addQueryByType(boolQueryBuilder,
                 IN.getType(), enableMust2Filter, fieldValueModel, entityInfo, dbConfig));
@@ -594,6 +601,17 @@ public class WrapperProcessor {
         // 设置得分排序规则
         Optional.ofNullable(wrapper.sortOrder)
                 .ifPresent(sortOrder -> searchSourceBuilder.sort(SCORE_FIELD, sortOrder));
+
+        // 设置距离排序
+        Optional.ofNullable(wrapper.distanceOrderByParam)
+                .ifPresent(distanceOrderByParam -> {
+                    GeoDistanceSortBuilder geoDistanceSortBuilder =
+                            SortBuilders.geoDistanceSort(distanceOrderByParam.getFieldName(), distanceOrderByParam.getGeoPoints())
+                                    .order(distanceOrderByParam.getSortOrder())
+                                    .geoDistance(distanceOrderByParam.getGeoDistance())
+                                    .unit(distanceOrderByParam.getUnit());
+                    searchSourceBuilder.sort(geoDistanceSortBuilder);
+                });
     }
 
 

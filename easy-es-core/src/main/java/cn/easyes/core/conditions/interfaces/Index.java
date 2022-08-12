@@ -1,5 +1,6 @@
 package cn.easyes.core.conditions.interfaces;
 
+import cn.easyes.common.constants.BaseEsConstants;
 import cn.easyes.common.enums.FieldType;
 import cn.easyes.core.toolkit.FieldUtils;
 import org.elasticsearch.common.settings.Settings;
@@ -100,8 +101,8 @@ public interface Index<Children, R> extends Serializable {
         return mapping(column, fieldType, analyzer, null, null, null);
     }
 
-    default Children mapping(String column, FieldType fieldType, String analyzer, String dateFormat) {
-        return mapping(column, fieldType, analyzer, null, dateFormat, null);
+    default Children mapping(String column, FieldType fieldType, String analyzer, String searchAnalyzer) {
+        return mapping(column, fieldType, analyzer, searchAnalyzer, BaseEsConstants.DEFAULT_BOOST);
     }
 
     default Children mapping(String column, FieldType fieldType, String analyzer, String searchAnalyzer, Float boost) {

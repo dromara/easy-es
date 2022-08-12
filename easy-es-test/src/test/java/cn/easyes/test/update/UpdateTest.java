@@ -4,10 +4,9 @@ import cn.easyes.core.conditions.LambdaEsUpdateWrapper;
 import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Document;
 import cn.easyes.test.mapper.DocumentMapper;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -25,7 +24,7 @@ import java.util.List;
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
-@RunWith(SpringRunner.class)
+@Disabled
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class UpdateTest {
     @Resource
@@ -38,7 +37,7 @@ public class UpdateTest {
         String id = "5";
         String title1 = "隔壁老王";
         Document document1 = new Document();
-        document1.setId(id);
+        document1.setEsId(id);
         document1.setTitle(title1);
         document1.setCustomField("乌拉巴拉大魔仙");
         documentMapper.updateById(document1);
@@ -60,13 +59,13 @@ public class UpdateTest {
         List<Document> documentList = new ArrayList<>();
 
         Document document = new Document();
-        document.setId("O2EQCIAB0E2Rzy0qHFNV");
+        document.setEsId("O2EQCIAB0E2Rzy0qHFNV");
         document.setTitle("老王ba");
         document.setContent("推*技术过硬???");
         document.setCreator("老王ba");
 
         Document document1 = new Document();
-        document1.setId("OmEQCIAB0E2Rzy0qHFNV");
+        document1.setEsId("OmEQCIAB0E2Rzy0qHFNV");
         document1.setTitle("老李ba");
         document1.setContent("推*技术过硬???");
         document1.setCreator("老汉ba");

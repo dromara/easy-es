@@ -3,6 +3,9 @@ package cn.easyes.core.conditions.interfaces;
 import cn.easyes.common.constants.BaseEsConstants;
 import cn.easyes.core.biz.OrderByParam;
 import cn.easyes.core.toolkit.FieldUtils;
+import org.elasticsearch.common.geo.GeoDistance;
+import org.elasticsearch.common.geo.GeoPoint;
+import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
@@ -104,6 +107,159 @@ public interface Func<Children, R> extends Serializable {
      * @return 泛型
      */
     Children orderBy(boolean condition, List<OrderByParam> orderByParams);
+
+    default Children orderByDistanceAsc(R column, double lat, double lon) {
+        return orderByDistanceAsc(true, FieldUtils.getFieldName(column), DistanceUnit.KILOMETERS, GeoDistance.PLANE, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceAsc(R column, DistanceUnit unit, double lat, double lon) {
+        return orderByDistanceAsc(true, FieldUtils.getFieldName(column), unit, GeoDistance.PLANE, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceAsc(R column, GeoDistance geoDistance, double lat, double lon) {
+        return orderByDistanceAsc(true, FieldUtils.getFieldName(column), DistanceUnit.KILOMETERS, geoDistance, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceAsc(R column, DistanceUnit unit, GeoDistance geoDistance, double lat, double lon) {
+        return orderByDistanceAsc(true, FieldUtils.getFieldName(column), unit, geoDistance, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceAsc(R column, GeoPoint... geoPoints) {
+        return orderByDistanceAsc(true, FieldUtils.getFieldName(column), DistanceUnit.KILOMETERS, GeoDistance.PLANE, geoPoints);
+    }
+
+    default Children orderByDistanceAsc(R column, DistanceUnit unit, GeoPoint... geoPoints) {
+        return orderByDistanceAsc(true, FieldUtils.getFieldName(column), unit, GeoDistance.PLANE, geoPoints);
+    }
+
+    default Children orderByDistanceAsc(R column, GeoDistance geoDistance, GeoPoint... geoPoints) {
+        return orderByDistanceAsc(true, FieldUtils.getFieldName(column), DistanceUnit.KILOMETERS, geoDistance, geoPoints);
+    }
+
+    default Children orderByDistanceAsc(R column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints) {
+        return orderByDistanceAsc(true, FieldUtils.getFieldName(column), unit, geoDistance, geoPoints);
+    }
+
+    default Children orderByDistanceAsc(String column, double lat, double lon) {
+        return orderByDistanceAsc(true, FieldUtils.getFieldName(column), DistanceUnit.KILOMETERS, GeoDistance.PLANE, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceAsc(String column, DistanceUnit unit, double lat, double lon) {
+        return orderByDistanceAsc(true, FieldUtils.getFieldName(column), unit, GeoDistance.PLANE, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceAsc(String column, GeoDistance geoDistance, double lat, double lon) {
+        return orderByDistanceAsc(true, FieldUtils.getFieldName(column), DistanceUnit.KILOMETERS, geoDistance, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceAsc(String column, DistanceUnit unit, GeoDistance geoDistance, double lat, double lon) {
+        return orderByDistanceAsc(true, FieldUtils.getFieldName(column), unit, geoDistance, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceAsc(String column, GeoPoint... geoPoints) {
+        return orderByDistanceAsc(true, column, DistanceUnit.KILOMETERS, GeoDistance.PLANE, geoPoints);
+    }
+
+    default Children orderByDistanceAsc(String column, DistanceUnit unit, GeoPoint... geoPoints) {
+        return orderByDistanceAsc(true, column, unit, GeoDistance.PLANE, geoPoints);
+    }
+
+    default Children orderByDistanceAsc(String column, GeoDistance geoDistance, GeoPoint... geoPoints) {
+        return orderByDistanceAsc(true, column, DistanceUnit.KILOMETERS, geoDistance, geoPoints);
+    }
+
+    default Children orderByDistanceAsc(String column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints) {
+        return orderByDistanceAsc(true, column, unit, geoDistance, geoPoints);
+    }
+
+    /**
+     * 地理位置坐标点由近及远排序
+     *
+     * @param condition   条件
+     * @param column      列名
+     * @param unit        距离单位 默认km
+     * @param geoDistance 计算方式,默认为GeoDistance.PLANE
+     * @param geoPoints   坐标点
+     * @return 泛型
+     */
+    Children orderByDistanceAsc(boolean condition, String column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints);
+
+
+    default Children orderByDistanceDesc(R column, double lat, double lon) {
+        return orderByDistanceDesc(true, FieldUtils.getFieldName(column), DistanceUnit.KILOMETERS, GeoDistance.PLANE, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceDesc(R column, DistanceUnit unit, double lat, double lon) {
+        return orderByDistanceDesc(true, FieldUtils.getFieldName(column), unit, GeoDistance.PLANE, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceDesc(R column, GeoDistance geoDistance, double lat, double lon) {
+        return orderByDistanceDesc(true, FieldUtils.getFieldName(column), DistanceUnit.KILOMETERS, geoDistance, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceDesc(R column, DistanceUnit unit, GeoDistance geoDistance, double lat, double lon) {
+        return orderByDistanceDesc(true, FieldUtils.getFieldName(column), unit, geoDistance, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceDesc(R column, GeoPoint... geoPoints) {
+        return orderByDistanceDesc(true, FieldUtils.getFieldName(column), DistanceUnit.KILOMETERS, GeoDistance.PLANE, geoPoints);
+    }
+
+    default Children orderByDistanceDesc(R column, DistanceUnit unit, GeoPoint... geoPoints) {
+        return orderByDistanceDesc(true, FieldUtils.getFieldName(column), unit, GeoDistance.PLANE, geoPoints);
+    }
+
+    default Children orderByDistanceDesc(R column, GeoDistance geoDistance, GeoPoint... geoPoints) {
+        return orderByDistanceDesc(true, FieldUtils.getFieldName(column), DistanceUnit.KILOMETERS, geoDistance, geoPoints);
+    }
+
+    default Children orderByDistanceDesc(R column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints) {
+        return orderByDistanceDesc(true, FieldUtils.getFieldName(column), unit, geoDistance, geoPoints);
+    }
+
+    default Children orderByDistanceDesc(String column, double lat, double lon) {
+        return orderByDistanceDesc(true, FieldUtils.getFieldName(column), DistanceUnit.KILOMETERS, GeoDistance.PLANE, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceDesc(String column, DistanceUnit unit, double lat, double lon) {
+        return orderByDistanceDesc(true, FieldUtils.getFieldName(column), unit, GeoDistance.PLANE, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceDesc(String column, GeoDistance geoDistance, double lat, double lon) {
+        return orderByDistanceDesc(true, FieldUtils.getFieldName(column), DistanceUnit.KILOMETERS, geoDistance, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceDesc(String column, DistanceUnit unit, GeoDistance geoDistance, double lat, double lon) {
+        return orderByDistanceDesc(true, FieldUtils.getFieldName(column), unit, geoDistance, new GeoPoint(lat, lon));
+    }
+
+    default Children orderByDistanceDesc(String column, GeoPoint... geoPoints) {
+        return orderByDistanceDesc(true, column, DistanceUnit.KILOMETERS, GeoDistance.PLANE, geoPoints);
+    }
+
+    default Children orderByDistanceDesc(String column, DistanceUnit unit, GeoPoint... geoPoints) {
+        return orderByDistanceDesc(true, column, unit, GeoDistance.PLANE, geoPoints);
+    }
+
+    default Children orderByDistanceDesc(String column, GeoDistance geoDistance, GeoPoint... geoPoints) {
+        return orderByDistanceDesc(true, column, DistanceUnit.KILOMETERS, geoDistance, geoPoints);
+    }
+
+    default Children orderByDistanceDesc(String column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints) {
+        return orderByDistanceDesc(true, column, unit, geoDistance, geoPoints);
+    }
+
+    /**
+     * 地理位置坐标点由远及近排序
+     *
+     * @param condition   条件
+     * @param column      列名
+     * @param unit        距离单位 默认km
+     * @param geoDistance 计算方式,默认为GeoDistance.PLANE
+     * @param geoPoints   坐标点
+     * @return 泛型
+     */
+    Children orderByDistanceDesc(boolean condition, String column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints);
 
 
     default Children in(R column, Collection<?> coll) {

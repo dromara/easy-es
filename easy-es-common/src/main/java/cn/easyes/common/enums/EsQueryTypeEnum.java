@@ -45,7 +45,7 @@ public enum EsQueryTypeEnum {
     /**
      * 分词匹配 需要结果中也包含所有的分词，且顺序一样
      */
-    MATCH_PHASE(9),
+    MATCH_PHRASE(9),
     /**
      * 查询全部文档 相当于select all
      */

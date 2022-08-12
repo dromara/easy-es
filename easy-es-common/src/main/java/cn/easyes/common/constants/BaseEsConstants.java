@@ -27,6 +27,10 @@ public interface BaseEsConstants {
      */
     Integer ONE = 1;
     /**
+     * 数字-1
+     */
+    Integer MINUS_ONE = -1;
+    /**
      * 默认索引别名
      */
     String DEFAULT_ALIAS = "ee_default_alias";
@@ -51,10 +55,6 @@ public interface BaseEsConstants {
      */
     Float DEFAULT_BOOST = 1.0F;
     /**
-     * 默认索引字段boost权重
-     */
-    Integer DEFAULT_INDEX_BOOST = 1;
-    /**
      * 空字符串
      */
     String EMPTY_STR = "";
@@ -66,6 +66,14 @@ public interface BaseEsConstants {
      * ee内置es分布式锁索引名称
      */
     String LOCK_INDEX = "ee-distribute-lock";
+    /**
+     * 当前激活索引key
+     */
+    String ACTIVE_INDEX_KEY = "ee_active_index_key";
+    /**
+     * 索引更新时间key
+     */
+    String GMT_MODIFIED = "gmt_modified";
     /**
      * get 方法前缀
      */
@@ -173,7 +181,11 @@ public interface BaseEsConstants {
     /**
      * 获取/释放 分布式锁 最大失败重试次数
      */
-    Integer LOCK_MAX_RETRY = 5;
+    Integer LOCK_MAX_RETRY = 3;
+    /**
+     * 初始任务执行延迟
+     */
+    int INITIAL_DELAY = 30;
     /**
      * 默认分片数
      */

@@ -67,6 +67,26 @@ public class EntityInfo {
      */
     private String aliasName;
     /**
+     * 得分字段名
+     */
+    private String scoreField;
+    /**
+     * 得分保留小数位,默认不处理,保持es返回值,效率更高
+     */
+    private int scoreDecimalPlaces = 0;
+    /**
+     * 距离字段名
+     */
+    private String distanceField;
+    /**
+     * 距离保留小数位,默认不处理,保持es返回值,效率更高
+     */
+    private int distanceDecimalPlaces = 0;
+    /**
+     * 排序字段在sortBuilders中的位置, 默认为0
+     */
+    private int sortBuilderIndex = 0;
+    /**
      * join字段名称
      */
     private String joinFieldName;
