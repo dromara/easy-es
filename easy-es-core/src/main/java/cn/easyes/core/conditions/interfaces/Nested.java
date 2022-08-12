@@ -1,6 +1,7 @@
 package cn.easyes.core.conditions.interfaces;
 
 import java.io.Serializable;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -9,29 +10,29 @@ import java.util.function.Function;
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 public interface Nested<Param, Children> extends Serializable {
-    default Children and(Function<Param, Param> func) {
-        return and(true, func);
+    default Children and(Consumer<Param> consumer ) {
+        return and(true, consumer);
     }
 
     /**
      * AND 嵌套
      *
      * @param condition 条件
-     * @param func      条件函数
+     * @param consumer      条件函数
      * @return 泛型
      */
-    Children and(boolean condition, Function<Param, Param> func);
+    Children and(boolean condition, Consumer<Param> consumer);
 
-    default Children or(Function<Param, Param> func) {
-        return or(true, func);
+    default Children or(Consumer<Param> consumer ) {
+        return or(true, consumer);
     }
 
     /**
      * OR 嵌套
      *
      * @param condition 条件
-     * @param func      条件函数
+     * @param consumer      条件函数
      * @return 泛型
      */
-    Children or(boolean condition, Function<Param, Param> func);
+    Children or(boolean condition, Consumer<Param> consumer);
 }

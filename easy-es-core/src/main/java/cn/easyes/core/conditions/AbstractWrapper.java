@@ -16,6 +16,7 @@ import org.elasticsearch.search.sort.SortOrder;
 
 import java.util.*;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static cn.easyes.common.enums.BaseEsParamTypeEnum.*;
@@ -159,13 +160,13 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
-    public Children and(boolean condition, Function<Children, Children> func) {
-        return doIt(condition, func, AND_LEFT_BRACKET, AND_RIGHT_BRACKET);
+    public Children and(boolean condition, Consumer<Children> consumer) {
+        return doIt(condition, consumer, AND_LEFT_BRACKET, AND_RIGHT_BRACKET);
     }
 
     @Override
-    public Children or(boolean condition, Function<Children, Children> func) {
-        return doIt(condition, func, OR_LEFT_BRACKET, OR_RIGHT_BRACKET);
+    public Children or(boolean condition, Consumer<Children> consumer) {
+        return doIt(condition, consumer, OR_LEFT_BRACKET, OR_RIGHT_BRACKET);
     }
 
     @Override
@@ -536,17 +537,17 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * 封装查询参数(含AND,OR这种连接操作)
      *
      * @param condition 条件
-     * @param func      函数
+     * @param consumer      函数
      * @param open      左括号
      * @param close     右括号
      * @return 泛型
      */
-    private Children doIt(boolean condition, Function<Children, Children> func, BaseEsParamTypeEnum open, BaseEsParamTypeEnum close) {
+    private Children doIt(boolean condition, Consumer<Children> consumer, BaseEsParamTypeEnum open, BaseEsParamTypeEnum close) {
         if (condition) {
             BaseEsParam left = new BaseEsParam();
             left.setType(open.getType());
             baseEsParamList.add(left);
-            func.apply(instance());
+            consumer.accept(instance());
             BaseEsParam right = new BaseEsParam();
             right.setType(close.getType());
             baseEsParamList.add(right);
