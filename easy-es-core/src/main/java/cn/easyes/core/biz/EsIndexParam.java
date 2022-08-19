@@ -22,6 +22,10 @@ public class EsIndexParam {
      */
     private String fieldType;
     /**
+     * 对 text 字段进行聚合处理
+     */
+    private Boolean fieldData;
+    /**
      * 分词器
      */
     private String analyzer;

@@ -15,7 +15,7 @@ import java.io.IOException;
 public class EsVersionUtil {
 
     /**
-     * 支持的版本 目前支持版本为7.xx
+     * 支持的版本 目前支持版本为7.xx 推荐7.14.0
      */
     private final static String supportedVersion = "7";
 
@@ -68,7 +68,7 @@ public class EsVersionUtil {
         }
         if (!jarVersion.equals(clientVersion)) {
             // 提示jar包与客户端版本不对应，es官方推荐jar包版本对应客户端版本
-            LogUtils.formatError("Elasticsearch clientVersion:%s not equals jarVersion:%s", clientVersion, jarVersion);
+            LogUtils.formatWarn("Elasticsearch clientVersion:%s not equals jarVersion:%s", clientVersion, jarVersion);
         }
     }
 }

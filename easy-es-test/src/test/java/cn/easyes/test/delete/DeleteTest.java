@@ -4,6 +4,7 @@ import cn.easyes.core.conditions.LambdaEsQueryWrapper;
 import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Document;
 import cn.easyes.test.mapper.DocumentMapper;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -50,5 +51,28 @@ public class DeleteTest {
                 .and(w -> w.match(Document::getCustomField, "乌拉").or().eq(Document::getCustomField, "魔鬼"));
         int successCount = documentMapper.delete(wrapper);
         System.out.println(successCount);
+    }
+
+    @Test
+    public void testDeleteMany() {
+        // 测试通过条件删除 大批量数据,超过1w条的情况
+
+        // 1. 造数据 3w条 耗时比较久 需等待
+        int total = 30000;
+        int success = 0;
+        for (int i = 0; i < total; i++) {
+            Document document = new Document();
+            document.setEsId(Integer.toString(i));
+            document.setTitle("测试标题" + i);
+            document.setContent("测试内容" + i);
+            success += documentMapper.insert(document);
+        }
+        Assertions.assertEquals(total, success);
+
+        // 2. 根据条件删除
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.match(Document::getContent, "内容");
+        int count = documentMapper.delete(wrapper);
+        Assertions.assertEquals(total, count);
     }
 }

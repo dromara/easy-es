@@ -6,7 +6,7 @@
 
     <groupId>cn.easy-es</groupId>
     <artifactId>easy-es-parent</artifactId>
-    <version>0.9.90</version>
+    <version>1.0.0</version>
 
     <name>easy-es-parent</name>
     <description>easy use for elastic search</description>

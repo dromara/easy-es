@@ -41,6 +41,13 @@ public @interface IndexField {
     FieldType fieldType() default FieldType.NONE;
 
     /**
+     * 设置text、keyword_text 可以进行聚合操作
+     *
+     * @return 是否设置可聚合
+     */
+    boolean fieldData() default false;
+
+    /**
      * 索引文档时用的分词器
      *
      * @return 分词器

@@ -226,5 +226,9 @@ public interface BaseEsConstants {
      * 高亮截取默认长度
      */
     int DEFAULT_FRAGMENT_SIZE = 100;
+    /**
+     * 针对text进行聚合
+     */
+    String FIELD_DATA = "fielddata";
 
 }

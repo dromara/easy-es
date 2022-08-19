@@ -15,6 +15,8 @@ import java.lang.annotation.Target;
 public @interface Score {
     /**
      * 保留小数位,默认不处理,不处理es得分,效率更高
+     *
+     * @return 保留小数位
      */
     int decimalPlaces() default 0;
 }

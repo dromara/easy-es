@@ -320,6 +320,7 @@ public class EntityInfoHelper {
             entityFieldInfo.setAnalyzer(tableField.analyzer());
             entityFieldInfo.setSearchAnalyzer(tableField.searchAnalyzer());
             entityFieldInfo.setFieldType(tableField.fieldType());
+            entityFieldInfo.setFieldData(tableField.fieldData());
             entityFieldInfo.setColumnType(field.getType().getSimpleName());
 
             // 父子类型
@@ -422,6 +423,7 @@ public class EntityInfoHelper {
                     entityFieldInfo.setMappingColumn(mappingColumn);
                     FieldType fieldType = FieldType.NESTED.equals(tableField.fieldType()) ? FieldType.NESTED : FieldType.TEXT;
                     entityFieldInfo.setFieldType(fieldType);
+                    entityFieldInfo.setFieldData(tableField.fieldData());
                     entityFieldInfo.setColumnType(fieldType.getType());
                     entityFieldInfo.setAnalyzer(tableField.analyzer());
                     entityFieldInfo.setSearchAnalyzer(tableField.searchAnalyzer());

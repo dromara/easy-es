@@ -15,11 +15,15 @@ import java.lang.annotation.Target;
 public @interface Distance {
     /**
      * 保留小数位,默认不处理,不处理es返回距离,效率更高
+     *
+     * @return 保留小数位
      */
     int decimalPlaces() default 0;
 
     /**
      * 排序字段在sortBuilders中的位置, 默认为0
+     *
+     * @return 排序字段在sortBuilders数组中的index位置
      */
     int sortBuilderIndex() default 0;
 }

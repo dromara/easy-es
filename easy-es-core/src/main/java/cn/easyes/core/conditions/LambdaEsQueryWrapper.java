@@ -8,6 +8,7 @@ import cn.easyes.core.biz.SortParam;
 import cn.easyes.core.conditions.interfaces.Query;
 import cn.easyes.core.toolkit.EntityInfoHelper;
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -40,6 +41,10 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
      * must条件转filter
      */
     protected Boolean enableMust2Filter;
+    /**
+     * 用户自定义的searchSourceBuilder 用于混合查询
+     */
+    protected SearchSourceBuilder searchSourceBuilder;
 
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
@@ -139,8 +144,16 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
     }
 
     @Override
+    public LambdaEsQueryWrapper<T> setSearchSourceBuilder(boolean condition, SearchSourceBuilder searchSourceBuilder) {
+        if (condition) {
+            this.searchSourceBuilder = searchSourceBuilder;
+        }
+        return typedThis;
+    }
+
+    @Override
     protected SearchRequest getSearchRequest() {
-        // TODO 待优化
+        // TODO 待优化 v1.0+
         return null;
     }
 

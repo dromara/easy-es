@@ -41,6 +41,8 @@ import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -351,39 +353,17 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
     @Override
     public Integer delete(LambdaEsQueryWrapper<T> wrapper) {
-        // 只查id列,节省内存
-        wrapper.select(EntityInfoHelper.getEntityInfo(entityClass).getKeyProperty());
-
-        List<T> list = this.selectList(wrapper);
-        if (CollectionUtils.isEmpty(list)) {
-            return BaseEsConstants.ZERO;
+        DeleteByQueryRequest request = new DeleteByQueryRequest(getIndexName(wrapper.indexName));
+        BoolQueryBuilder boolQueryBuilder = WrapperProcessor.initBoolQueryBuilder(wrapper.baseEsParamList, wrapper.enableMust2Filter, entityClass);
+        request.setQuery(boolQueryBuilder);
+        BulkByScrollResponse bulkResponse;
+        try {
+            bulkResponse = client.deleteByQuery(request, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw ExceptionUtils.eee("delete error, dsl:%s", e, boolQueryBuilder.toString());
         }
-
-        BulkRequest bulkRequest = new BulkRequest();
-        bulkRequest.setRefreshPolicy(getRefreshPolicy());
-        Method getId = BaseCache.getterMethod(entityClass, getRealIdFieldName());
-        EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
-        list.forEach(item -> {
-            try {
-                Object id = getId.invoke(item);
-                if (Objects.nonNull(id)) {
-                    DeleteRequest deleteRequest = new DeleteRequest();
-                    deleteRequest.id(id.toString());
-
-                    // 父子类型-子文档,追加其路由,否则无法删除
-                    if (entityInfo.isChild()) {
-                        String routing = getRouting(item, entityInfo.getJoinFieldClass());
-                        deleteRequest.routing(routing);
-                    }
-
-                    deleteRequest.index(getIndexName(wrapper.indexName));
-                    bulkRequest.add(deleteRequest);
-                }
-            } catch (Exception e) {
-                throw ExceptionUtils.eee("delete exception", e);
-            }
-        });
-        return doBulkRequest(bulkRequest, RequestOptions.DEFAULT);
+        // 单次删除通常不会超过21亿, 这里为了兼容老API设计,仍转为int 2.0版本将调整为long
+        return (int) bulkResponse.getDeleted();
     }
 
     @Override
@@ -606,12 +586,15 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @return es返回体
      */
     private SearchResponse getSearchResponse(LambdaEsQueryWrapper<T> wrapper, Object[] searchAfter) {
-        // 构建es restHighLevel 查询参数
+        // 构建es restHighLevelClient 查询参数
         SearchRequest searchRequest = new SearchRequest(getIndexName(wrapper.indexName));
-        SearchSourceBuilder searchSourceBuilder = WrapperProcessor.buildSearchSourceBuilder(wrapper, entityClass);
+        // 用户在wrapper中指定的混合查询条件优先级最高
+        SearchSourceBuilder searchSourceBuilder = Objects.isNull(wrapper.searchSourceBuilder) ?
+                WrapperProcessor.buildSearchSourceBuilder(wrapper, entityClass) : wrapper.searchSourceBuilder;
         searchRequest.source(searchSourceBuilder);
         Optional.ofNullable(searchAfter).ifPresent(searchSourceBuilder::searchAfter);
         printDSL(searchRequest);
+
         // 执行查询
         SearchResponse response;
         try {
@@ -649,15 +632,27 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private List<T> selectListByUpdateWrapper(LambdaEsUpdateWrapper<T> wrapper) {
         // 构建查询条件
         SearchRequest searchRequest = new SearchRequest(getIndexName(wrapper.indexName));
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        // 只查id列,节省内存
-        searchSourceBuilder.fetchSource(DEFAULT_ES_ID_NAME, null);
-        searchSourceBuilder.trackTotalHits(true);
-        searchSourceBuilder.size(GlobalConfigCache.getGlobalConfig().getDbConfig().getBatchUpdateThreshold());
-        BoolQueryBuilder boolQueryBuilder = WrapperProcessor.initBoolQueryBuilder(wrapper.baseEsParamList,
-                wrapper.enableMust2Filter, entityClass);
-        Optional.ofNullable(wrapper.geoParam).ifPresent(geoParam -> WrapperProcessor.setGeoQuery(geoParam, boolQueryBuilder, entityClass));
-        searchSourceBuilder.query(boolQueryBuilder);
+        SearchSourceBuilder searchSourceBuilder;
+        if (Objects.isNull(wrapper.searchSourceBuilder)) {
+            searchSourceBuilder = new SearchSourceBuilder();
+            // 只查id列,节省内存
+            String[] includes = {DEFAULT_ES_ID_NAME};
+            EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
+            if (Objects.nonNull(entityInfo) && entityInfo.isChild()) {
+                // 父子类型,须追加joinField 否则无法获取其路由
+                Arrays.fill(includes, entityInfo.getJoinFieldName());
+            }
+            searchSourceBuilder.fetchSource(includes, null);
+            searchSourceBuilder.trackTotalHits(true);
+            searchSourceBuilder.size(GlobalConfigCache.getGlobalConfig().getDbConfig().getBatchUpdateThreshold());
+            BoolQueryBuilder boolQueryBuilder = WrapperProcessor.initBoolQueryBuilder(wrapper.baseEsParamList,
+                    wrapper.enableMust2Filter, entityClass);
+            Optional.ofNullable(wrapper.geoParam).ifPresent(geoParam -> WrapperProcessor.setGeoQuery(geoParam, boolQueryBuilder, entityClass));
+            searchSourceBuilder.query(boolQueryBuilder);
+        } else {
+            // 用户在wrapper中指定的混合查询条件优先级最高
+            searchSourceBuilder = wrapper.searchSourceBuilder;
+        }
         searchRequest.source(searchSourceBuilder);
         printDSL(searchRequest);
         try {
@@ -902,7 +897,10 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     private SearchHit[] getSearchHitArray(LambdaEsQueryWrapper<T> wrapper) {
         SearchRequest searchRequest = new SearchRequest(getIndexName(wrapper.indexName));
-        SearchSourceBuilder searchSourceBuilder = WrapperProcessor.buildSearchSourceBuilder(wrapper, entityClass);
+
+        // 用户在wrapper中指定的混合查询条件优先级最高
+        SearchSourceBuilder searchSourceBuilder = Objects.isNull(wrapper.searchSourceBuilder) ?
+                WrapperProcessor.buildSearchSourceBuilder(wrapper, entityClass) : wrapper.searchSourceBuilder;
         searchRequest.source(searchSourceBuilder);
         printDSL(searchRequest);
         SearchResponse response;
@@ -1100,7 +1098,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             Method invokeMethod = BaseCache.setterMethod(entityClass, highlightField);
             invokeMethod.invoke(entity, value);
         } catch (Throwable e) {
-            LogUtils.error("setHighlightValue error,entity:{},highlightField:{},value:{},e:{}",
+            LogUtils.formatError("setHighlightValue error,entity:{},highlightField:{},value:{},e:{}",
                     entity.toString(), highlightField, value, e.toString());
         }
     }

@@ -32,6 +32,7 @@ public class InsertTest {
         Document document = new Document();
         document.setEsId("5");
         document.setTitle("老汉");
+        document.setSubTitle("毛子");
         document.setContent("人才");
         document.setCreator("吃饭");
         document.setLocation("40.171975,116.587105");
@@ -39,7 +40,7 @@ public class InsertTest {
         document.setCustomField("俄罗斯方块");
         Point point = new Point(13.400544, 52.530286);
         document.setGeoLocation(point.toString());
-        document.setStarNum(1);
+        document.setStarNum(0);
         int successCount = documentMapper.insert(document);
         Assertions.assertEquals(successCount, 1);
     }
@@ -51,8 +52,10 @@ public class InsertTest {
         Document document = new Document();
         document.setEsId("2");
         document.setTitle("老汉");
+        document.setSubTitle("毛子");
         document.setContent("推*技术过硬");
         document.setCreator("隔壁老王");
+        document.setStarNum(1);
 
         document.setGmtCreate(now);
         document.setCustomField("乌拉巴拉小魔仙");
@@ -61,9 +64,11 @@ public class InsertTest {
         Document document1 = new Document();
         document1.setEsId("3");
         document1.setTitle("老王");
+        document1.setSubTitle("大毛子");
         document1.setContent("推*技术过硬");
         document1.setCreator("隔壁老王");
         document1.setGmtCreate(now);
+        document1.setStarNum(2);
         document1.setCustomField("魔鬼的步伐");
         document1.setLocation("40.19103839805197,116.5624013764374");
 
@@ -71,9 +76,11 @@ public class InsertTest {
         Document document2 = new Document();
         document2.setEsId("4");
         document2.setTitle("老李");
+        document2.setSubTitle("小毛子");
         document2.setContent("推*技术过硬");
         document2.setCreator("大猪蹄子");
         document2.setGmtCreate(now);
+        document2.setStarNum(3);
         document2.setCustomField("锤子科技");
         document2.setLocation("40.13933715136454,116.63441990026217");
 

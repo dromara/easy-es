@@ -17,6 +17,7 @@ import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.collapse.CollapseBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
@@ -654,7 +655,10 @@ public class WrapperProcessor {
                     cursor = root;
                 } else {
                     cursor.subAggregation(builder);
-                    cursor = builder;
+                    // 解决max、min、avg和sum聚合函数不支持sub-aggregations的问题
+                    if (builder instanceof TermsAggregationBuilder) {
+                        cursor = builder;
+                    }
                 }
             } else {
                 // 非管道聚合
@@ -675,6 +679,8 @@ public class WrapperProcessor {
      */
     private static AggregationBuilder getRealAggregationBuilder(AggregationTypeEnum aggType, String name, String realField) {
         AggregationBuilder aggregationBuilder;
+        // 解决同一个字段聚合多次，如min(starNum), max(starNum) 字段名重复问题
+        name += aggType.getValue();
         switch (aggType) {
             case AVG:
                 aggregationBuilder = AggregationBuilders.avg(name).field(realField);

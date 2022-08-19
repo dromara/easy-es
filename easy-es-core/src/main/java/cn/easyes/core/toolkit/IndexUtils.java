@@ -381,16 +381,21 @@ public class IndexUtils {
                 info.put(BaseEsConstants.TYPE, indexParam.getFieldType());
             }
 
-            // 设置分词器
-            boolean needAnalyzer = FieldType.TEXT.getType().equals(indexParam.getFieldType()) ||
+            // 是否text类型或keyword_text类型
+            boolean containsTextType = FieldType.TEXT.getType().equals(indexParam.getFieldType()) ||
                     FieldType.KEYWORD_TEXT.getType().equals(indexParam.getFieldType());
-            if (needAnalyzer) {
+            if (containsTextType) {
+                // 设置分词器
                 Optional.ofNullable(indexParam.getAnalyzer())
                         .ifPresent(analyzer ->
                                 info.put(BaseEsConstants.ANALYZER, indexParam.getAnalyzer().toLowerCase()));
                 Optional.ofNullable(indexParam.getSearchAnalyzer())
                         .ifPresent(searchAnalyzer ->
                                 info.put(BaseEsConstants.SEARCH_ANALYZER, indexParam.getSearchAnalyzer().toLowerCase()));
+
+                // 设置是否对text类型进行聚合处理
+                Optional.ofNullable(indexParam.getFieldData())
+                        .ifPresent(fieldData -> info.put(FIELD_DATA, indexParam.getFieldData()));
             }
 
             // 设置权重
@@ -529,6 +534,7 @@ public class IndexUtils {
                 EsIndexParam esIndexParam = new EsIndexParam();
                 String esFieldType = IndexUtils.getEsFieldType(field.getFieldType(), field.getColumnType());
                 esIndexParam.setFieldType(esFieldType);
+                esIndexParam.setFieldData(field.isFieldData());
                 esIndexParam.setFieldName(field.getMappingColumn());
                 esIndexParam.setDateFormat(field.getDateFormat());
                 if (FieldType.NESTED.equals(field.getFieldType())) {

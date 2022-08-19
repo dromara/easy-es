@@ -8,8 +8,10 @@ import cn.easyes.core.config.GlobalConfig;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.SerializedLambda;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -77,10 +79,20 @@ public class FieldUtils {
      */
     public static <T> String val(SFunction<T, ?> func) {
         try {
-            Method method = func.getClass().getDeclaredMethod("writeReplace");
-            method.setAccessible(Boolean.TRUE);
-            SerializedLambda serializedLambda = (SerializedLambda) method.invoke(func);
-            String getter = serializedLambda.getImplMethodName();
+            String getter;
+            if (func instanceof Proxy) {
+                InvocationHandler handler = Proxy.getInvocationHandler(func);
+                Field field = handler.getClass().getDeclaredField("val$target");
+                field.setAccessible(Boolean.TRUE);
+                MethodHandle dmh = (MethodHandle) field.get(handler);
+                Executable executable = MethodHandles.reflectAs(Executable.class, dmh);
+                getter = executable.getName();
+            } else {
+                Method method = func.getClass().getDeclaredMethod("writeReplace");
+                method.setAccessible(Boolean.TRUE);
+                SerializedLambda serializedLambda = (SerializedLambda) method.invoke(func);
+                getter = serializedLambda.getImplMethodName();
+            }
             return resolveFieldName(getter);
         } catch (ReflectiveOperationException e) {
             e.printStackTrace();
