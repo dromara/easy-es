@@ -1,7 +1,7 @@
 package cn.easyes.test.entity;
 
 import cn.easyes.annotation.IndexField;
-import cn.easyes.annotation.IndexName;
+import cn.easyes.common.enums.FieldType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,9 +25,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@IndexName("faq")
 public class Faq {
-    @IndexField("faq_name")
+    @IndexField(value = "faq_name",fieldType = FieldType.TEXT)
     private String faqName;
     private String faqAnswer;
 }

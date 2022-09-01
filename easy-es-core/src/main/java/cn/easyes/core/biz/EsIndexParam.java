@@ -24,7 +24,7 @@ public class EsIndexParam {
     /**
      * 对 text 字段进行聚合处理
      */
-    private Boolean fieldData;
+    private boolean fieldData;
     /**
      * 分词器
      */

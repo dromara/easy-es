@@ -128,6 +128,11 @@ public class EsQueryTypeUtil {
             }
             WildcardQueryBuilder wildcardQueryBuilder = QueryBuilders.wildcardQuery(field, query).boost(boost);
             setQueryBuilder(boolQueryBuilder, attachType, originalAttachType, enableMust2Filter, wildcardQueryBuilder);
+        } else if (Objects.equals(queryType, EsQueryTypeEnum.INTERVAL_QUERY.getType())) {
+            // 封装between及notBetween
+            RangeQueryBuilder rangeQueryBuilder = QueryBuilders.rangeQuery(field).boost(boost);
+            rangeQueryBuilder.gte(model.getLeftValue()).lte(model.getRightValue());
+            setQueryBuilder(boolQueryBuilder, attachType, originalAttachType, enableMust2Filter, rangeQueryBuilder);
         }
     }
 
@@ -159,28 +164,6 @@ public class EsQueryTypeUtil {
         }
     }
 
-    /**
-     * 添加查询类型 精确匹配 用于between 操作
-     *
-     * @param boolQueryBuilder   参数连接器
-     * @param queryType          查询类型
-     * @param attachType         连接类型
-     * @param originalAttachType 初始连接类型
-     * @param enableMust2Filter  must是否转filter
-     * @param field              字段
-     * @param leftValue          左值
-     * @param rightValue         右值
-     * @param boost              权重
-     */
-    public static void addQueryByType(BoolQueryBuilder boolQueryBuilder, Integer queryType, Integer attachType, Integer originalAttachType,
-                                      boolean enableMust2Filter, String field, Object leftValue, Object rightValue, Float boost) {
-        if (Objects.equals(queryType, EsQueryTypeEnum.INTERVAL_QUERY.getType())) {
-            RangeQueryBuilder rangeQueryBuilder = QueryBuilders.rangeQuery(field).boost(boost);
-            rangeQueryBuilder.gte(leftValue).lte(rightValue);
-            setQueryBuilder(boolQueryBuilder, attachType, originalAttachType, enableMust2Filter, rangeQueryBuilder);
-        }
-    }
-
 
     /**
      * 设置连接类型 must,filter,should,must not 对应mysql中的and,and,or,!= 丶 not like...
@@ -208,7 +191,11 @@ public class EsQueryTypeUtil {
             boolQueryBuilder.filter(queryBuilder);
         } else if (Objects.equals(attachType, EsAttachTypeEnum.SHOULD.getType())) {
             // 针对or()转换过的should需要保留其原始类型
-            if (Objects.equals(originalAttachType, EsAttachTypeEnum.MUST_NOT.getType())) {
+            boolean keepOriginal = Objects.equals(originalAttachType, EsAttachTypeEnum.MUST_NOT.getType())
+                    || Objects.equals(originalAttachType, EsAttachTypeEnum.NOT_EXISTS.getType())
+                    || Objects.equals(originalAttachType, EsAttachTypeEnum.NOT_BETWEEN.getType())
+                    || Objects.equals(originalAttachType, EsAttachTypeEnum.NOT_IN.getType());
+            if (keepOriginal) {
                 BoolQueryBuilder not = QueryBuilders.boolQuery().mustNot(queryBuilder);
                 boolQueryBuilder.should(not);
             } else {

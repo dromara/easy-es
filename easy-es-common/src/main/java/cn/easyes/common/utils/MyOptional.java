@@ -1,6 +1,7 @@
 package cn.easyes.common.utils;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -40,6 +41,14 @@ public final class MyOptional<T> {
         return value != null;
     }
 
+    public void ifTrue(Consumer<? super T> consumer) {
+        if (value != null && value instanceof Boolean) {
+            boolean condition = (boolean) (Object) value;
+            if (condition) {
+                consumer.accept(value);
+            }
+        }
+    }
 
     public <U> MyOptional<U> ifPresent(Function<? super T, ? extends U> present, T otherValue) {
         Objects.requireNonNull(present);

@@ -374,7 +374,7 @@ public class EntityInfoHelper {
 
         // 封装高亮参数
         HighLightParam highLightParam =
-                new HighLightParam(highLight.fragmentSize(), highLight.preTag(), highLight.postTag(), realHighLightField);
+                new HighLightParam(highLight.fragmentSize(), highLight.preTag(), highLight.postTag(), realHighLightField, highLight.highLightType());
         entityInfo.getHighLightParams().add(highLightParam);
     }
 
@@ -420,8 +420,8 @@ public class EntityInfoHelper {
 
                     // 设置实体字段信息
                     EntityFieldInfo entityFieldInfo = new EntityFieldInfo(dbConfig, field, tableField);
+                    FieldType fieldType = FieldType.NONE.equals(tableField.fieldType()) ? FieldType.KEYWORD : tableField.fieldType();
                     entityFieldInfo.setMappingColumn(mappingColumn);
-                    FieldType fieldType = FieldType.NESTED.equals(tableField.fieldType()) ? FieldType.NESTED : FieldType.TEXT;
                     entityFieldInfo.setFieldType(fieldType);
                     entityFieldInfo.setFieldData(tableField.fieldData());
                     entityFieldInfo.setColumnType(fieldType.getType());

@@ -10,10 +10,7 @@ import cn.easyes.core.toolkit.FieldUtils;
 import org.elasticsearch.client.RestHighLevelClient;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -106,7 +103,14 @@ public class BaseCache {
      */
     public static Method getterMethod(Class<?> entityClass, String methodName) {
         return Optional.ofNullable(BaseCache.baseEsEntityMethodMap.get(entityClass))
-                .map(b -> b.get(BaseEsConstants.GET_FUNC_PREFIX + FieldUtils.firstToUpperCase(methodName)))
+                .map(b -> {
+                    Method method = b.get(BaseEsConstants.GET_FUNC_PREFIX + FieldUtils.firstToUpperCase(methodName));
+                    if (Objects.isNull(method)) {
+                        // 兼容基本数据类型boolean
+                        method = b.get(BaseEsConstants.IS_FUNC_PREFIX + FieldUtils.firstToUpperCase(methodName));
+                    }
+                    return method;
+                })
                 .orElseThrow(() -> ExceptionUtils.eee("no such method:", entityClass, methodName));
     }
 

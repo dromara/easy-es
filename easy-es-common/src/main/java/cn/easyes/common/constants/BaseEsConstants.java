@@ -11,6 +11,10 @@ public interface BaseEsConstants {
      */
     String ENABLE_PREFIX = "easy-es.enable";
     /**
+     * 是否打印本框架Banner
+     */
+    String ENABLE_BANNER = "easy-es.banner";
+    /**
      * 默认主键名称
      */
     String DEFAULT_ID_NAME = "id";
@@ -85,7 +89,7 @@ public interface BaseEsConstants {
     /**
      * 基本数据类型的get方法前缀
      */
-    String IS_FUNC_PREFIX = "Is";
+    String IS_FUNC_PREFIX = "is";
     /**
      * 分片数量字段
      */

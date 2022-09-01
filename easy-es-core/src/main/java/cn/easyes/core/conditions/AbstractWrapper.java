@@ -930,6 +930,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
                 break;
             case NOT_BETWEEN:
                 baseEsParam.getNotBetweenList().add(model);
+                break;
             case LIKE_LEFT:
                 baseEsParam.getLikeLeftList().add(model);
                 break;

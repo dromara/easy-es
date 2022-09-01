@@ -174,7 +174,10 @@ public class BaseEsParam {
         List<FieldValueModel> geList = baseEsParam.getGeList();
         List<FieldValueModel> leList = baseEsParam.getLeList();
         List<FieldValueModel> betweenList = baseEsParam.getBetweenList();
+        List<FieldValueModel> notBetweenList = baseEsParam.getNotBetweenList();
         List<FieldValueModel> inList = baseEsParam.getInList();
+        List<FieldValueModel> notInList = baseEsParam.getNotInList();
+        List<FieldValueModel> isNullList = baseEsParam.getIsNullList();
         List<FieldValueModel> notNullList = baseEsParam.getNotNullList();
         List<FieldValueModel> likeLeftList = baseEsParam.getLikeLeftList();
         List<FieldValueModel> likeRightList = baseEsParam.getLikeRightList();
@@ -188,7 +191,10 @@ public class BaseEsParam {
         shouldList.addAll(geList);
         shouldList.addAll(leList);
         shouldList.addAll(betweenList);
+        shouldList.addAll(notBetweenList);
         shouldList.addAll(inList);
+        shouldList.addAll(notInList);
+        shouldList.addAll(isNullList);
         shouldList.addAll(notNullList);
         shouldList.addAll(likeLeftList);
         shouldList.addAll(likeRightList);
@@ -204,7 +210,10 @@ public class BaseEsParam {
         baseEsParam.setGeList(Collections.EMPTY_LIST);
         baseEsParam.setLeList(Collections.EMPTY_LIST);
         baseEsParam.setBetweenList(Collections.EMPTY_LIST);
+        baseEsParam.setNotBetweenList(Collections.EMPTY_LIST);
         baseEsParam.setInList(Collections.EMPTY_LIST);
+        baseEsParam.setNotInList(Collections.EMPTY_LIST);
+        baseEsParam.setIsNullList(Collections.EMPTY_LIST);
         baseEsParam.setNotNullList(Collections.EMPTY_LIST);
         baseEsParam.setLikeLeftList(Collections.EMPTY_LIST);
         baseEsParam.setLikeRightList(Collections.EMPTY_LIST);

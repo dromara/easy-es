@@ -11,6 +11,7 @@ public interface Analyzer {
      */
     String NONE = "none";
 
+    //-----------------内置分词器，直接可以使用----------------
     /**
      * 标准分词器
      */
@@ -39,12 +40,15 @@ public interface Analyzer {
     String PATTERN = "pattern";
     /**
      * 语言分词器
+     * 如：english、french、chinese
      */
     String LANGUAGE = "language";
     /**
      * 雪球分词器
      */
     String SNOWBALL = "snowball";
+
+    //-------------三方分词，需要另外安装配置，否则无法使用-------------
     /**
      * ik智能分词器
      */

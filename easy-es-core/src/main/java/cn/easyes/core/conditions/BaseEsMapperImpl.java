@@ -1,6 +1,7 @@
 package cn.easyes.core.conditions;
 
 import cn.easyes.common.constants.BaseEsConstants;
+import cn.easyes.common.enums.EsQueryTypeEnum;
 import cn.easyes.common.enums.FieldStrategy;
 import cn.easyes.common.enums.IdType;
 import cn.easyes.common.utils.*;
@@ -8,10 +9,7 @@ import cn.easyes.core.biz.*;
 import cn.easyes.core.cache.BaseCache;
 import cn.easyes.core.cache.GlobalConfigCache;
 import cn.easyes.core.conditions.interfaces.BaseEsMapper;
-import cn.easyes.core.toolkit.EntityInfoHelper;
-import cn.easyes.core.toolkit.FieldUtils;
-import cn.easyes.core.toolkit.IndexUtils;
-import cn.easyes.core.toolkit.PageHelper;
+import cn.easyes.core.toolkit.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializeFilter;
@@ -63,6 +61,12 @@ import static cn.easyes.common.constants.BaseEsConstants.*;
 /**
  * 核心 所有支持方法接口实现类
  * <p>
+ * 内部实现:
+ * 核心网络请求类：{@link RestHighLevelClient}、
+ * 动态封装request类：{@link WrapperProcessor}、
+ * 查询参数封装：{@link EsQueryTypeUtil}、
+ * 查询类型枚举：{@link EsQueryTypeEnum}、
+ * </p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
@@ -176,12 +180,16 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     @Override
     public SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions) throws IOException {
         printDSL(searchRequest);
-        return client.search(searchRequest, requestOptions);
+        SearchResponse response = client.search(searchRequest, requestOptions);
+        printResponseErrors(response);
+        return response;
     }
 
     @Override
     public SearchResponse scroll(SearchScrollRequest searchScrollRequest, RequestOptions requestOptions) throws IOException {
-        return client.scroll(searchScrollRequest, requestOptions);
+        SearchResponse response = client.scroll(searchScrollRequest, requestOptions);
+        printResponseErrors(response);
+        return response;
     }
 
     @Override
@@ -602,6 +610,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         } catch (IOException e) {
             throw ExceptionUtils.eee("search exception", e);
         }
+        printResponseErrors(response);
         return response;
     }
 
@@ -657,8 +666,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         printDSL(searchRequest);
         try {
             //  查询数据明细
-            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            SearchHit[] searchHits = parseSearchHitArray(searchResponse);
+            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+            printResponseErrors(response);
+            SearchHit[] searchHits = parseSearchHitArray(response);
             return Arrays.stream(searchHits)
                     .map(this::parseOne)
                     .collect(Collectors.toList());
@@ -879,13 +889,14 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     private SearchHit[] getSearchHitArray(SearchRequest searchRequest) {
         printDSL(searchRequest);
-        SearchResponse searchResponse;
+        SearchResponse response;
         try {
-            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            response = client.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
             throw ExceptionUtils.eee("getSearchHitArray exception,searchRequest:%s", e, searchRequest.toString());
         }
-        return parseSearchHitArray(searchResponse);
+        printResponseErrors(response);
+        return parseSearchHitArray(response);
     }
 
 
@@ -909,6 +920,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         } catch (IOException e) {
             throw ExceptionUtils.eee("getSearchHitArray IOException, searchRequest:%s", e, searchRequest.toString());
         }
+        printResponseErrors(response);
         return parseSearchHitArray(response);
     }
 
@@ -1150,7 +1162,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private void printCountDSL(CountRequest countRequest) {
         if (GlobalConfigCache.getGlobalConfig().isPrintDsl() && Objects.nonNull(countRequest)) {
             Optional.ofNullable(countRequest.query())
-                    .ifPresent(source -> LogUtils.info(BaseEsConstants.COUNT_DSL_PREFIX + source));
+                    .ifPresent(source -> LogUtils.info(BaseEsConstants.COUNT_DSL_PREFIX
+                            + "\nindex-name: " + org.springframework.util.StringUtils.arrayToCommaDelimitedString(countRequest.indices())
+                            + "\nDSL：" + source));
         }
     }
 
@@ -1162,7 +1176,26 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private void printDSL(SearchRequest searchRequest) {
         if (GlobalConfigCache.getGlobalConfig().isPrintDsl() && Objects.nonNull(searchRequest)) {
             Optional.ofNullable(searchRequest.source())
-                    .ifPresent(source -> LogUtils.info(BaseEsConstants.DSL_PREFIX + source));
+                    .ifPresent(source -> LogUtils.info(BaseEsConstants.DSL_PREFIX
+                            + "\nindex-name: " + org.springframework.util.StringUtils.arrayToCommaDelimitedString(searchRequest.indices())
+                            + "\nDSL：" + source));
+        }
+    }
+
+    /**
+     * 对响应结构进行判断，如果有错误，则抛出异常
+     *
+     * <p>如下，client方法都需要判定</p>
+     * client.search
+     * client.scroll
+     * client.explain 等等
+     */
+    private void printResponseErrors(SearchResponse searchResponse) {
+        if (Objects.nonNull(searchResponse)
+                && searchResponse.getShardFailures() != null
+                && searchResponse.getShardFailures().length > ZERO) {
+            String errorMsg = searchResponse.getShardFailures()[0].toString();
+            throw ExceptionUtils.eee("es响应出错，search response failed ,failedShards: " + errorMsg);
         }
     }
 
@@ -1191,7 +1224,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             Object parent = getParentMethod.invoke(joinField);
             return parent.toString();
         } catch (Throwable e) {
-            LogUtils.error("build IndexRequest: child routing invoke error, joinFieldClass:{},entity:{},e:{}",
+            LogUtils.formatError("build IndexRequest: child routing invoke error, joinFieldClass:{},entity:{},e:{}",
                     joinFieldClass.toString(), entity.toString(), e.toString());
             throw ExceptionUtils.eee("getRouting error", e);
         }

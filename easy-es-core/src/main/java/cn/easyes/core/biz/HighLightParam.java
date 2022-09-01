@@ -1,5 +1,6 @@
 package cn.easyes.core.biz;
 
+import cn.easyes.common.enums.HighLightTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -27,4 +28,8 @@ public class HighLightParam {
      * 高亮字段列表
      */
     private String highLightField;
+    /**
+     * 高亮字段类型
+     */
+    private HighLightTypeEnum highLightType;
 }

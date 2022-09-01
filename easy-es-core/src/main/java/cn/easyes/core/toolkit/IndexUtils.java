@@ -6,10 +6,7 @@ import cn.easyes.common.enums.FieldType;
 import cn.easyes.common.enums.JdkDataTypeEnum;
 import cn.easyes.common.enums.ProcessIndexStrategyEnum;
 import cn.easyes.common.params.DefaultChildClass;
-import cn.easyes.common.utils.CollectionUtils;
-import cn.easyes.common.utils.ExceptionUtils;
-import cn.easyes.common.utils.LogUtils;
-import cn.easyes.common.utils.StringUtils;
+import cn.easyes.common.utils.*;
 import cn.easyes.core.biz.*;
 import cn.easyes.core.cache.GlobalConfigCache;
 import cn.easyes.core.config.GlobalConfig;
@@ -394,8 +391,7 @@ public class IndexUtils {
                                 info.put(BaseEsConstants.SEARCH_ANALYZER, indexParam.getSearchAnalyzer().toLowerCase()));
 
                 // 设置是否对text类型进行聚合处理
-                Optional.ofNullable(indexParam.getFieldData())
-                        .ifPresent(fieldData -> info.put(FIELD_DATA, indexParam.getFieldData()));
+                MyOptional.of(indexParam.isFieldData()).ifTrue(isFieldData -> info.put(FIELD_DATA, isFieldData));
             }
 
             // 设置权重
@@ -516,10 +512,6 @@ public class IndexUtils {
                     .orElse(new ArrayList<>(0));
             if (!CollectionUtils.isEmpty(childFieldList)) {
                 childFieldList.forEach(child -> {
-                    // 子文档仅支持match查询,所以如果用户未指定子文档索引类型,则将默认的keyword类型转换为text类型
-                    if (FieldType.KEYWORD.equals(child.getFieldType())) {
-                        child.setFieldType(FieldType.TEXT);
-                    }
                     // 添加子文档中除JoinField以外的字段
                     if (!entityInfo.getJoinFieldName().equals(child.getMappingColumn())) {
                         copyFieldList.add(child);
@@ -534,7 +526,9 @@ public class IndexUtils {
                 EsIndexParam esIndexParam = new EsIndexParam();
                 String esFieldType = IndexUtils.getEsFieldType(field.getFieldType(), field.getColumnType());
                 esIndexParam.setFieldType(esFieldType);
-                esIndexParam.setFieldData(field.isFieldData());
+                if (field.isFieldData()) {
+                    esIndexParam.setFieldData(field.isFieldData());
+                }
                 esIndexParam.setFieldName(field.getMappingColumn());
                 esIndexParam.setDateFormat(field.getDateFormat());
                 if (FieldType.NESTED.equals(field.getFieldType())) {
@@ -638,7 +632,7 @@ public class IndexUtils {
         try {
             client.index(indexRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
-            LogUtils.error("saveReleaseIndex error, releaseIndexName:{}, e:{}", releaseIndexName, e.toString());
+            LogUtils.formatError("saveReleaseIndex error, releaseIndexName:{}, e:{}", releaseIndexName, e.toString());
         }
     }
 
