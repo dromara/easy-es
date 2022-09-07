@@ -2,6 +2,7 @@ package cn.easyes.core.conditions.interfaces;
 
 import cn.easyes.core.biz.EntityFieldInfo;
 import cn.easyes.core.toolkit.FieldUtils;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -123,5 +124,18 @@ public interface Query<Children, T, R> extends Serializable {
      * @return 泛型
      */
     Children enableMust2Filter(boolean condition, boolean enable);
+
+    default Children setSearchSourceBuilder(SearchSourceBuilder searchSourceBuilder) {
+        return setSearchSourceBuilder(true, searchSourceBuilder);
+    }
+
+    /**
+     * 用户自定义SearchSourceBuilder 用于混合查询
+     *
+     * @param condition           条件
+     * @param searchSourceBuilder 用户自定义的SearchSourceBuilder
+     * @return 泛型
+     */
+    Children setSearchSourceBuilder(boolean condition, SearchSourceBuilder searchSourceBuilder);
 
 }

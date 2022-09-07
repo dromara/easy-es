@@ -40,6 +40,10 @@ public class EntityFieldInfo {
      */
     private FieldType fieldType;
     /**
+     * 设置text、keyword_text 可以进行聚合操作
+     */
+    private boolean fieldData;
+    /**
      * 分词器
      */
     private String analyzer;

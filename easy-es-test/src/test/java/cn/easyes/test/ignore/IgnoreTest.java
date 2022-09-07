@@ -1,11 +1,14 @@
 package cn.easyes.test.ignore;
 
+import org.junit.jupiter.api.Disabled;
+
 /**
  * 框架开发过程中的一些测试 请忽略
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 @Deprecated
+@Disabled
 //@RunWith(SpringRunner.class)
 //@SpringBootTest(classes = TestEasyEsApplication.class)
 public class IgnoreTest {

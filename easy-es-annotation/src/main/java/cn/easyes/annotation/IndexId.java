@@ -16,13 +16,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface IndexId {
     /**
-     * 字段值
-     *
-     * @return es默认_id
-     */
-    String value() default "_id";
-
-    /**
      * 主键ID
      *
      * @return 默认为未设置

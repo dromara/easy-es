@@ -164,6 +164,7 @@ public class BaseEsParam {
     public static void setUp(BaseEsParam baseEsParam) {
         // 获取原查询条件
         List<FieldValueModel> mustList = baseEsParam.getMustList();
+        List<FieldValueModel> mustNotList = baseEsParam.getMustNotList();
         List<FieldValueModel> mustMultiFieldList = baseEsParam.getMustMultiFieldList();
         List<FieldValueModel> filterList = baseEsParam.getFilterList();
         List<FieldValueModel> shouldList = baseEsParam.getShouldList();
@@ -173,20 +174,27 @@ public class BaseEsParam {
         List<FieldValueModel> geList = baseEsParam.getGeList();
         List<FieldValueModel> leList = baseEsParam.getLeList();
         List<FieldValueModel> betweenList = baseEsParam.getBetweenList();
+        List<FieldValueModel> notBetweenList = baseEsParam.getNotBetweenList();
         List<FieldValueModel> inList = baseEsParam.getInList();
+        List<FieldValueModel> notInList = baseEsParam.getNotInList();
+        List<FieldValueModel> isNullList = baseEsParam.getIsNullList();
         List<FieldValueModel> notNullList = baseEsParam.getNotNullList();
         List<FieldValueModel> likeLeftList = baseEsParam.getLikeLeftList();
         List<FieldValueModel> likeRightList = baseEsParam.getLikeRightList();
 
         // 把原来必须满足的条件转入should列表
         shouldList.addAll(mustList);
+        shouldList.addAll(mustNotList);
         shouldList.addAll(filterList);
         shouldList.addAll(gtList);
         shouldList.addAll(ltList);
         shouldList.addAll(geList);
         shouldList.addAll(leList);
         shouldList.addAll(betweenList);
+        shouldList.addAll(notBetweenList);
         shouldList.addAll(inList);
+        shouldList.addAll(notInList);
+        shouldList.addAll(isNullList);
         shouldList.addAll(notNullList);
         shouldList.addAll(likeLeftList);
         shouldList.addAll(likeRightList);
@@ -195,13 +203,17 @@ public class BaseEsParam {
 
         // 置空原必须满足的条件列表
         baseEsParam.setMustList(Collections.EMPTY_LIST);
+        baseEsParam.setMustNotList(Collections.EMPTY_LIST);
         baseEsParam.setFilterList(Collections.EMPTY_LIST);
         baseEsParam.setGtList(Collections.EMPTY_LIST);
         baseEsParam.setLtList(Collections.EMPTY_LIST);
         baseEsParam.setGeList(Collections.EMPTY_LIST);
         baseEsParam.setLeList(Collections.EMPTY_LIST);
         baseEsParam.setBetweenList(Collections.EMPTY_LIST);
+        baseEsParam.setNotBetweenList(Collections.EMPTY_LIST);
         baseEsParam.setInList(Collections.EMPTY_LIST);
+        baseEsParam.setNotInList(Collections.EMPTY_LIST);
+        baseEsParam.setIsNullList(Collections.EMPTY_LIST);
         baseEsParam.setNotNullList(Collections.EMPTY_LIST);
         baseEsParam.setLikeLeftList(Collections.EMPTY_LIST);
         baseEsParam.setLikeRightList(Collections.EMPTY_LIST);

@@ -1,6 +1,7 @@
 package cn.easyes.core.conditions;
 
 import cn.easyes.common.constants.BaseEsConstants;
+import cn.easyes.common.enums.EsQueryTypeEnum;
 import cn.easyes.common.enums.FieldStrategy;
 import cn.easyes.common.enums.IdType;
 import cn.easyes.common.utils.*;
@@ -8,10 +9,7 @@ import cn.easyes.core.biz.*;
 import cn.easyes.core.cache.BaseCache;
 import cn.easyes.core.cache.GlobalConfigCache;
 import cn.easyes.core.conditions.interfaces.BaseEsMapper;
-import cn.easyes.core.toolkit.EntityInfoHelper;
-import cn.easyes.core.toolkit.FieldUtils;
-import cn.easyes.core.toolkit.IndexUtils;
-import cn.easyes.core.toolkit.PageHelper;
+import cn.easyes.core.toolkit.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializeFilter;
@@ -41,6 +39,8 @@ import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -61,6 +61,12 @@ import static cn.easyes.common.constants.BaseEsConstants.*;
 /**
  * 核心 所有支持方法接口实现类
  * <p>
+ * 内部实现:
+ * 核心网络请求类：{@link RestHighLevelClient}、
+ * 动态封装request类：{@link WrapperProcessor}、
+ * 查询参数封装：{@link EsQueryTypeUtil}、
+ * 查询类型枚举：{@link EsQueryTypeEnum}、
+ * </p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
@@ -167,30 +173,23 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
     @Override
     public SearchResponse search(LambdaEsQueryWrapper<T> wrapper) {
-        // 构建es restHighLevel 查询参数
-        SearchRequest searchRequest = new SearchRequest(getIndexName(wrapper.indexName));
-        SearchSourceBuilder searchSourceBuilder = WrapperProcessor.buildSearchSourceBuilder(wrapper, entityClass);
-        searchRequest.source(searchSourceBuilder);
-        printDSL(searchRequest);
-        // 执行查询
-        SearchResponse response;
-        try {
-            response = client.search(searchRequest, RequestOptions.DEFAULT);
-        } catch (IOException e) {
-            throw ExceptionUtils.eee("search exception", e);
-        }
-        return response;
+        // 执行普通混合查询, 不含searchAfter分页
+        return getSearchResponse(wrapper, null);
     }
 
     @Override
     public SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions) throws IOException {
         printDSL(searchRequest);
-        return client.search(searchRequest, requestOptions);
+        SearchResponse response = client.search(searchRequest, requestOptions);
+        printResponseErrors(response);
+        return response;
     }
 
     @Override
     public SearchResponse scroll(SearchScrollRequest searchScrollRequest, RequestOptions requestOptions) throws IOException {
-        return client.scroll(searchScrollRequest, requestOptions);
+        SearchResponse response = client.scroll(searchScrollRequest, requestOptions);
+        printResponseErrors(response);
+        return response;
     }
 
     @Override
@@ -227,6 +226,40 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                 .collect(Collectors.toList());
         long count = parseCount(response, Objects.nonNull(wrapper.distinctField));
         return PageHelper.getPageInfo(dataList, count, pageNum, pageSize);
+    }
+
+    @Override
+    public SAPageInfo<T> searchAfterPage(LambdaEsQueryWrapper<T> wrapper, List<Object> searchAfter, Integer pageSize) {
+        // searchAfter语法规定 或from只允许为0或-1或不传,否则es会报错, 推荐不指定, 直接传null即可
+        boolean illegalArg = Objects.nonNull(wrapper.from) && (!wrapper.from.equals(ZERO) || !wrapper.from.equals(MINUS_ONE));
+        if (illegalArg) {
+            throw ExceptionUtils.eee("The wrapper.from in searchAfter must be 0 or -1 or null, null is recommended");
+        }
+
+        // searchAfter必须要进行排序，不排序无法进行分页
+        if (CollectionUtils.isEmpty(wrapper.sortParamList)) {
+            throw ExceptionUtils.eee("sortParamList cannot be empty");
+        }
+
+        // 兼容分页参数
+        pageSize = pageSize == null || pageSize <= BaseEsConstants.ZERO ? BaseEsConstants.PAGE_SIZE : pageSize;
+        wrapper.size(pageSize);
+
+        // 请求es获取数据
+        SearchResponse response =
+                CollectionUtils.isEmpty(searchAfter) ? getSearchResponse(wrapper) : getSearchResponse(wrapper, searchAfter.toArray());
+
+        // 解析数据
+        SearchHit[] searchHits = parseSearchHitArray(response);
+        List<T> dataList = Arrays.stream(searchHits).map(searchHit -> parseOne(searchHit, wrapper))
+                .collect(Collectors.toList());
+        Object[] nextSearchAfter = Arrays.stream(searchHits)
+                .map(SearchHit::getSortValues)
+                .reduce((first, second) -> second)
+                .orElse(null);
+        long count = parseCount(response, Objects.nonNull(wrapper.distinctField));
+        return PageHelper.getSAPageInfo(dataList, count, searchAfter,
+                nextSearchAfter == null ? null : Arrays.asList(nextSearchAfter), pageSize);
     }
 
     @Override
@@ -328,39 +361,17 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
     @Override
     public Integer delete(LambdaEsQueryWrapper<T> wrapper) {
-        // 只查id列,节省内存
-        wrapper.select(EntityInfoHelper.getEntityInfo(entityClass).getKeyProperty());
-
-        List<T> list = this.selectList(wrapper);
-        if (CollectionUtils.isEmpty(list)) {
-            return BaseEsConstants.ZERO;
+        DeleteByQueryRequest request = new DeleteByQueryRequest(getIndexName(wrapper.indexName));
+        BoolQueryBuilder boolQueryBuilder = WrapperProcessor.initBoolQueryBuilder(wrapper.baseEsParamList, wrapper.enableMust2Filter, entityClass);
+        request.setQuery(boolQueryBuilder);
+        BulkByScrollResponse bulkResponse;
+        try {
+            bulkResponse = client.deleteByQuery(request, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw ExceptionUtils.eee("delete error, dsl:%s", e, boolQueryBuilder.toString());
         }
-
-        BulkRequest bulkRequest = new BulkRequest();
-        bulkRequest.setRefreshPolicy(getRefreshPolicy());
-        Method getId = BaseCache.getterMethod(entityClass, getRealIdFieldName());
-        EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
-        list.forEach(item -> {
-            try {
-                Object id = getId.invoke(item);
-                if (Objects.nonNull(id)) {
-                    DeleteRequest deleteRequest = new DeleteRequest();
-                    deleteRequest.id(id.toString());
-
-                    // 父子类型-子文档,追加其路由,否则无法删除
-                    if (entityInfo.isChild()) {
-                        String routing = getRouting(item, entityInfo.getJoinFieldClass());
-                        deleteRequest.routing(routing);
-                    }
-
-                    deleteRequest.index(getIndexName(wrapper.indexName));
-                    bulkRequest.add(deleteRequest);
-                }
-            } catch (Exception e) {
-                throw ExceptionUtils.eee("delete exception", e);
-            }
-        });
-        return doBulkRequest(bulkRequest, RequestOptions.DEFAULT);
+        // 单次删除通常不会超过21亿, 这里为了兼容老API设计,仍转为int 2.0版本将调整为long
+        return (int) bulkResponse.getDeleted();
     }
 
     @Override
@@ -518,6 +529,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         SearchRequest searchRequest = new SearchRequest(getIndexName(indexName));
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         sourceBuilder.query(QueryBuilders.termsQuery(DEFAULT_ES_ID_NAME, stringIdList));
+        sourceBuilder.size(idList.size());
         searchRequest.source(sourceBuilder);
 
         // 请求es获取数据
@@ -574,6 +586,34 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         return Boolean.TRUE;
     }
 
+    /**
+     * 获取es查询结果返回体
+     *
+     * @param wrapper     条件
+     * @param searchAfter searchAfter参数
+     * @return es返回体
+     */
+    private SearchResponse getSearchResponse(LambdaEsQueryWrapper<T> wrapper, Object[] searchAfter) {
+        // 构建es restHighLevelClient 查询参数
+        SearchRequest searchRequest = new SearchRequest(getIndexName(wrapper.indexName));
+        // 用户在wrapper中指定的混合查询条件优先级最高
+        SearchSourceBuilder searchSourceBuilder = Objects.isNull(wrapper.searchSourceBuilder) ?
+                WrapperProcessor.buildSearchSourceBuilder(wrapper, entityClass) : wrapper.searchSourceBuilder;
+        searchRequest.source(searchSourceBuilder);
+        Optional.ofNullable(searchAfter).ifPresent(searchSourceBuilder::searchAfter);
+        printDSL(searchRequest);
+
+        // 执行查询
+        SearchResponse response;
+        try {
+            response = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw ExceptionUtils.eee("search exception", e);
+        }
+        printResponseErrors(response);
+        return response;
+    }
+
 
     /**
      * 生成DelRequest请求参数
@@ -601,19 +641,34 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private List<T> selectListByUpdateWrapper(LambdaEsUpdateWrapper<T> wrapper) {
         // 构建查询条件
         SearchRequest searchRequest = new SearchRequest(getIndexName(wrapper.indexName));
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        // 只查id列,节省内存
-        searchSourceBuilder.fetchSource(DEFAULT_ES_ID_NAME, null);
-        BoolQueryBuilder boolQueryBuilder = WrapperProcessor.initBoolQueryBuilder(wrapper.baseEsParamList,
-                wrapper.enableMust2Filter, entityClass);
-        Optional.ofNullable(wrapper.geoParam).ifPresent(geoParam -> WrapperProcessor.setGeoQuery(geoParam, boolQueryBuilder, entityClass));
-        searchSourceBuilder.query(boolQueryBuilder);
+        SearchSourceBuilder searchSourceBuilder;
+        if (Objects.isNull(wrapper.searchSourceBuilder)) {
+            searchSourceBuilder = new SearchSourceBuilder();
+            // 只查id列,节省内存
+            String[] includes = {DEFAULT_ES_ID_NAME};
+            EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
+            if (Objects.nonNull(entityInfo) && entityInfo.isChild()) {
+                // 父子类型,须追加joinField 否则无法获取其路由
+                Arrays.fill(includes, entityInfo.getJoinFieldName());
+            }
+            searchSourceBuilder.fetchSource(includes, null);
+            searchSourceBuilder.trackTotalHits(true);
+            searchSourceBuilder.size(GlobalConfigCache.getGlobalConfig().getDbConfig().getBatchUpdateThreshold());
+            BoolQueryBuilder boolQueryBuilder = WrapperProcessor.initBoolQueryBuilder(wrapper.baseEsParamList,
+                    wrapper.enableMust2Filter, entityClass);
+            Optional.ofNullable(wrapper.geoParam).ifPresent(geoParam -> WrapperProcessor.setGeoQuery(geoParam, boolQueryBuilder, entityClass));
+            searchSourceBuilder.query(boolQueryBuilder);
+        } else {
+            // 用户在wrapper中指定的混合查询条件优先级最高
+            searchSourceBuilder = wrapper.searchSourceBuilder;
+        }
         searchRequest.source(searchSourceBuilder);
         printDSL(searchRequest);
         try {
             //  查询数据明细
-            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            SearchHit[] searchHits = parseSearchHitArray(searchResponse);
+            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+            printResponseErrors(response);
+            SearchHit[] searchHits = parseSearchHitArray(response);
             return Arrays.stream(searchHits)
                     .map(this::parseOne)
                     .collect(Collectors.toList());
@@ -704,10 +759,17 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @return 实际想要的数据
      */
     private T parseOne(SearchHit searchHit) {
-        T entity = JSON.parseObject(searchHit.getSourceAsString(), entityClass,
-                EntityInfoHelper.getEntityInfo(entityClass).getExtraProcessor());
+        EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
+        T entity = JSON.parseObject(searchHit.getSourceAsString(), entityClass, entityInfo.getExtraProcessor());
 
+        // id字段处理
         setId(entity, searchHit.getId());
+
+        // 得分字段处理
+        setScore(entity, searchHit.getScore(), entityInfo);
+
+        // 距离字段处理
+        setDistance(entity, searchHit.getSortValues(), entityInfo);
 
         return entity;
     }
@@ -734,6 +796,12 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             });
         }
 
+        // 得分字段处理
+        setScore(entity, searchHit.getScore(), entityInfo);
+
+        // 距离字段处理
+        setDistance(entity, searchHit.getSortValues(), entityInfo);
+
         // id处理
         boolean includeId = WrapperProcessor.includeId(getRealIdFieldName(), wrapper);
         if (includeId) {
@@ -741,6 +809,66 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
 
         return entity;
+    }
+
+    /**
+     * 设置距离
+     *
+     * @param entity     实体对象
+     * @param sortValues 排序值(含距离)
+     * @param entityInfo 实体信息
+     */
+    private void setDistance(T entity, Object[] sortValues, EntityInfo entityInfo) {
+        String distanceField = entityInfo.getDistanceField();
+        if (Objects.isNull(distanceField) || ArrayUtils.isEmpty(sortValues)) {
+            return;
+        }
+
+        try {
+            // 有多个排序字段时,index为距离排序在sortBuilders中的位置
+            Object sortValue = sortValues[entityInfo.getSortBuilderIndex()];
+            if (!(sortValue instanceof Double)) {
+                return;
+            }
+            double distance = (double) sortValue;
+            if (Double.isNaN(distance)) {
+                return;
+            }
+            if (entityInfo.getScoreDecimalPlaces() > ZERO) {
+                distance = NumericUtils.setDecimalPlaces(distance, entityInfo.getDistanceDecimalPlaces());
+            }
+            Method invokeMethod = BaseCache.setterMethod(entity.getClass(), distanceField);
+            invokeMethod.invoke(entity, distance);
+        } catch (Throwable e) {
+            // 遇到异常只提示, 不阻断流程 distance未设置不影核心业务
+            LogUtils.formatError("set distance error, entity:{},sortValues:{},distanceField:{},e:{}", entity, JSON.toJSONString(sortValues), distanceField, e);
+        }
+    }
+
+    /**
+     * 设置查询得分
+     *
+     * @param entity     实体对象
+     * @param score      得分
+     * @param entityInfo 实体信息
+     */
+    private void setScore(T entity, float score, EntityInfo entityInfo) {
+        String scoreField = entityInfo.getScoreField();
+        if (Objects.isNull(scoreField) || Float.isNaN(score)) {
+            return;
+        }
+
+        if (entityInfo.getScoreDecimalPlaces() > ZERO) {
+            score = NumericUtils.setDecimalPlaces(score, entityInfo.getScoreDecimalPlaces());
+        }
+
+        try {
+            Method invokeMethod = BaseCache.setterMethod(entity.getClass(), scoreField);
+            invokeMethod.invoke(entity, score);
+        } catch (Throwable e) {
+            // 遇到异常只提示, 不阻断流程 score未设置不影核心业务
+            LogUtils.formatError("set score error, entity:{},score:{},scoreField:{},e:{}", entity, score, scoreField, e);
+        }
     }
 
     /**
@@ -761,13 +889,14 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     private SearchHit[] getSearchHitArray(SearchRequest searchRequest) {
         printDSL(searchRequest);
-        SearchResponse searchResponse;
+        SearchResponse response;
         try {
-            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            response = client.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
             throw ExceptionUtils.eee("getSearchHitArray exception,searchRequest:%s", e, searchRequest.toString());
         }
-        return parseSearchHitArray(searchResponse);
+        printResponseErrors(response);
+        return parseSearchHitArray(response);
     }
 
 
@@ -779,7 +908,10 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     private SearchHit[] getSearchHitArray(LambdaEsQueryWrapper<T> wrapper) {
         SearchRequest searchRequest = new SearchRequest(getIndexName(wrapper.indexName));
-        SearchSourceBuilder searchSourceBuilder = WrapperProcessor.buildSearchSourceBuilder(wrapper, entityClass);
+
+        // 用户在wrapper中指定的混合查询条件优先级最高
+        SearchSourceBuilder searchSourceBuilder = Objects.isNull(wrapper.searchSourceBuilder) ?
+                WrapperProcessor.buildSearchSourceBuilder(wrapper, entityClass) : wrapper.searchSourceBuilder;
         searchRequest.source(searchSourceBuilder);
         printDSL(searchRequest);
         SearchResponse response;
@@ -788,6 +920,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         } catch (IOException e) {
             throw ExceptionUtils.eee("getSearchHitArray IOException, searchRequest:%s", e, searchRequest.toString());
         }
+        printResponseErrors(response);
         return parseSearchHitArray(response);
     }
 
@@ -977,7 +1110,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             Method invokeMethod = BaseCache.setterMethod(entityClass, highlightField);
             invokeMethod.invoke(entity, value);
         } catch (Throwable e) {
-            LogUtils.error("setHighlightValue error,entity:{},highlightField:{},value:{},e:{}",
+            LogUtils.formatError("setHighlightValue error,entity:{},highlightField:{},value:{},e:{}",
                     entity.toString(), highlightField, value, e.toString());
         }
     }
@@ -1029,7 +1162,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private void printCountDSL(CountRequest countRequest) {
         if (GlobalConfigCache.getGlobalConfig().isPrintDsl() && Objects.nonNull(countRequest)) {
             Optional.ofNullable(countRequest.query())
-                    .ifPresent(source -> LogUtils.info(BaseEsConstants.COUNT_DSL_PREFIX + source));
+                    .ifPresent(source -> LogUtils.info(BaseEsConstants.COUNT_DSL_PREFIX
+                            + "\nindex-name: " + org.springframework.util.StringUtils.arrayToCommaDelimitedString(countRequest.indices())
+                            + "\nDSL：" + source));
         }
     }
 
@@ -1041,7 +1176,26 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private void printDSL(SearchRequest searchRequest) {
         if (GlobalConfigCache.getGlobalConfig().isPrintDsl() && Objects.nonNull(searchRequest)) {
             Optional.ofNullable(searchRequest.source())
-                    .ifPresent(source -> LogUtils.info(BaseEsConstants.DSL_PREFIX + source));
+                    .ifPresent(source -> LogUtils.info(BaseEsConstants.DSL_PREFIX
+                            + "\nindex-name: " + org.springframework.util.StringUtils.arrayToCommaDelimitedString(searchRequest.indices())
+                            + "\nDSL：" + source));
+        }
+    }
+
+    /**
+     * 对响应结构进行判断，如果有错误，则抛出异常
+     *
+     * <p>如下，client方法都需要判定</p>
+     * client.search
+     * client.scroll
+     * client.explain 等等
+     */
+    private void printResponseErrors(SearchResponse searchResponse) {
+        if (Objects.nonNull(searchResponse)
+                && searchResponse.getShardFailures() != null
+                && searchResponse.getShardFailures().length > ZERO) {
+            String errorMsg = searchResponse.getShardFailures()[0].toString();
+            throw ExceptionUtils.eee("es响应出错，search response failed ,failedShards: " + errorMsg);
         }
     }
 
@@ -1070,7 +1224,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             Object parent = getParentMethod.invoke(joinField);
             return parent.toString();
         } catch (Throwable e) {
-            LogUtils.error("build IndexRequest: child routing invoke error, joinFieldClass:{},entity:{},e:{}",
+            LogUtils.formatError("build IndexRequest: child routing invoke error, joinFieldClass:{},entity:{},e:{}",
                     joinFieldClass.toString(), entity.toString(), e.toString());
             throw ExceptionUtils.eee("getRouting error", e);
         }

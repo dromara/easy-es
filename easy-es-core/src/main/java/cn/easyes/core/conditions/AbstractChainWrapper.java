@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -117,8 +118,8 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children matchPhase(boolean condition, R column, Object val, Float boost) {
-        getWrapper().matchPhase(condition, column, val, boost);
+    public Children matchPhrase(boolean condition, R column, Object val, Float boost) {
+        getWrapper().matchPhrase(condition, column, val, boost);
         return typedThis;
     }
 
@@ -261,7 +262,7 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children or(boolean condition, Function<Param, Param> func) {
+    public Children or(boolean condition, Consumer<Param> consumer) {
         return null;
     }
 
@@ -272,8 +273,8 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children and(boolean condition, Function<Param, Param> func) {
-        getWrapper().and(condition, func);
+    public Children and(boolean condition, Consumer<Param> consumer) {
+        getWrapper().and(condition, consumer);
         return typedThis;
     }
 
@@ -459,8 +460,8 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children matchPhase(boolean condition, String column, Object val, Float boost) {
-        getWrapper().matchPhase(condition, column, val, boost);
+    public Children matchPhrase(boolean condition, String column, Object val, Float boost) {
+        getWrapper().matchPhrase(condition, column, val, boost);
         return typedThis;
     }
 

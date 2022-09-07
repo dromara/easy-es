@@ -16,10 +16,13 @@ import lombok.SneakyThrows;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.collapse.CollapseBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.GeoDistanceSortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
 import java.util.*;
@@ -388,9 +391,10 @@ public class WrapperProcessor {
 
         // 多字段情形
         baseEsParam.getMustMultiFieldList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), MUST.getType(), enableMust2Filter,
-                        FieldUtils.getRealFields(fieldValueModel.getFields(), entityInfo.getMappingColumnMap()), fieldValueModel.getValue(),
-                        fieldValueModel.getExt(), fieldValueModel.getMinimumShouldMatch(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), MUST.getType(),
+                        fieldValueModel.getOriginalAttachType(), enableMust2Filter, FieldUtils.getRealFields(fieldValueModel.getFields(),
+                                entityInfo.getMappingColumnMap()), fieldValueModel.getValue(), fieldValueModel.getExt(),
+                        fieldValueModel.getMinimumShouldMatch(), fieldValueModel.getBoost()));
 
         baseEsParam.getFilterList().forEach(fieldValueModel ->
                 EsQueryTypeUtil.addQueryByType(boolQueryBuilder, FILTER.getType(), enableMust2Filter, fieldValueModel, entityInfo, dbConfig));
@@ -400,7 +404,8 @@ public class WrapperProcessor {
 
         // 多字段情形
         baseEsParam.getShouldMultiFieldList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), SHOULD.getType(), enableMust2Filter,
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
+                        SHOULD.getType(), fieldValueModel.getOriginalAttachType(), enableMust2Filter,
                         FieldUtils.getRealFields(fieldValueModel.getFields(), entityInfo.getMappingColumnMap()), fieldValueModel.getValue(),
                         fieldValueModel.getExt(), fieldValueModel.getMinimumShouldMatch(), fieldValueModel.getBoost()));
 
@@ -420,14 +425,10 @@ public class WrapperProcessor {
                 EsQueryTypeUtil.addQueryByType(boolQueryBuilder, LE.getType(), enableMust2Filter, fieldValueModel, entityInfo, dbConfig));
 
         baseEsParam.getBetweenList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), BETWEEN.getType(),
-                        enableMust2Filter, entityInfo.getMappingColumn(fieldValueModel.getField()),
-                        fieldValueModel.getLeftValue(), fieldValueModel.getRightValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, BETWEEN.getType(), enableMust2Filter, fieldValueModel, entityInfo, dbConfig));
 
         baseEsParam.getNotBetweenList().forEach(fieldValueModel ->
-                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), NOT_BETWEEN.getType(),
-                        enableMust2Filter, entityInfo.getMappingColumn(fieldValueModel.getField()),
-                        fieldValueModel.getLeftValue(), fieldValueModel.getRightValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtil.addQueryByType(boolQueryBuilder, NOT_BETWEEN.getType(), enableMust2Filter, fieldValueModel, entityInfo, dbConfig));
 
         baseEsParam.getInList().forEach(fieldValueModel -> EsQueryTypeUtil.addQueryByType(boolQueryBuilder,
                 IN.getType(), enableMust2Filter, fieldValueModel, entityInfo, dbConfig));
@@ -500,7 +501,12 @@ public class WrapperProcessor {
         HighlightBuilder highlightBuilder = new HighlightBuilder();
         highLightParams.forEach(highLightParam -> {
             if (StringUtils.isNotBlank(highLightParam.getHighLightField())) {
-                highlightBuilder.field(highLightParam.getHighLightField());
+
+                //field
+                HighlightBuilder.Field field = new HighlightBuilder.Field(highLightParam.getHighLightField());
+                field.highlighterType(highLightParam.getHighLightType().getValue());
+                highlightBuilder.field(field);
+
                 highlightBuilder.fragmentSize(highLightParam.getFragmentSize());
                 highlightBuilder.preTags(highLightParam.getPreTag());
                 highlightBuilder.postTags(highLightParam.getPostTag());
@@ -519,6 +525,11 @@ public class WrapperProcessor {
         if (!CollectionUtils.isEmpty(highLightParamList)) {
             highLightParamList.forEach(highLightParam -> {
                 if (StringUtils.isNotBlank(highLightParam.getHighLightField())) {
+                    //field
+                    HighlightBuilder.Field field = new HighlightBuilder.Field(highLightParam.getHighLightField());
+                    field.highlighterType(highLightParam.getHighLightType().getValue());
+                    highlightBuilder.field(field);
+
                     highlightBuilder.field(highLightParam.getHighLightField());
                     highlightBuilder.preTags(highLightParam.getPreTag());
                     highlightBuilder.postTags(highLightParam.getPostTag());
@@ -594,6 +605,17 @@ public class WrapperProcessor {
         // 设置得分排序规则
         Optional.ofNullable(wrapper.sortOrder)
                 .ifPresent(sortOrder -> searchSourceBuilder.sort(SCORE_FIELD, sortOrder));
+
+        // 设置距离排序
+        Optional.ofNullable(wrapper.distanceOrderByParam)
+                .ifPresent(distanceOrderByParam -> {
+                    GeoDistanceSortBuilder geoDistanceSortBuilder =
+                            SortBuilders.geoDistanceSort(distanceOrderByParam.getFieldName(), distanceOrderByParam.getGeoPoints())
+                                    .order(distanceOrderByParam.getSortOrder())
+                                    .geoDistance(distanceOrderByParam.getGeoDistance())
+                                    .unit(distanceOrderByParam.getUnit());
+                    searchSourceBuilder.sort(geoDistanceSortBuilder);
+                });
     }
 
 
@@ -636,7 +658,10 @@ public class WrapperProcessor {
                     cursor = root;
                 } else {
                     cursor.subAggregation(builder);
-                    cursor = builder;
+                    // 解决max、min、avg和sum聚合函数不支持sub-aggregations的问题
+                    if (builder instanceof TermsAggregationBuilder) {
+                        cursor = builder;
+                    }
                 }
             } else {
                 // 非管道聚合
@@ -657,6 +682,8 @@ public class WrapperProcessor {
      */
     private static AggregationBuilder getRealAggregationBuilder(AggregationTypeEnum aggType, String name, String realField) {
         AggregationBuilder aggregationBuilder;
+        // 解决同一个字段聚合多次，如min(starNum), max(starNum) 字段名重复问题
+        name += aggType.getValue();
         switch (aggType) {
             case AVG:
                 aggregationBuilder = AggregationBuilders.avg(name).field(realField);

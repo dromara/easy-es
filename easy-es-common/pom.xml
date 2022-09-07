@@ -6,7 +6,7 @@
     <parent>
         <groupId>cn.easy-es</groupId>
         <artifactId>easy-es-parent</artifactId>
-        <version>0.9.60</version>
+        <version>1.0.1</version>
         <relativePath>../easy-es-parent</relativePath>
     </parent>
 
@@ -29,10 +29,6 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

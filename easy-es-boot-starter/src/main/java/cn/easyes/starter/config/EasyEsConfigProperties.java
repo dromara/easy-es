@@ -22,6 +22,10 @@ public class EasyEsConfigProperties {
      */
     private boolean enable = true;
     /**
+     * 是否开启easy-es LOGO BANNER的打印
+     */
+    private boolean banner = true;
+    /**
      * es client address es客户端地址
      */
     private String address = "127.0.0.1:9200";

@@ -20,10 +20,9 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -42,8 +41,8 @@ import static cn.easyes.common.constants.BaseEsConstants.DEFAULT_SIZE;
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
+@Disabled
 @Slf4j
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class PerformanceTest {
     @Resource
@@ -154,7 +153,7 @@ public class PerformanceTest {
     public void testUpdateByEE() {
         StopWatch stopWatch = StopWatch.createStarted();
         Document document = new Document();
-        document.setId("PmF0SH8B0E2Rzy0qcFBz");
+        document.setEsId("PmF0SH8B0E2Rzy0qcFBz");
         document.setTitle("哈哈哈");
         document.setContent("嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿嘿");
         documentMapper.updateById(document);

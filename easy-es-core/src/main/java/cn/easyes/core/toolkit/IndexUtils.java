@@ -4,20 +4,22 @@ import cn.easyes.common.constants.Analyzer;
 import cn.easyes.common.constants.BaseEsConstants;
 import cn.easyes.common.enums.FieldType;
 import cn.easyes.common.enums.JdkDataTypeEnum;
+import cn.easyes.common.enums.ProcessIndexStrategyEnum;
 import cn.easyes.common.params.DefaultChildClass;
-import cn.easyes.common.utils.CollectionUtils;
-import cn.easyes.common.utils.ExceptionUtils;
-import cn.easyes.common.utils.LogUtils;
-import cn.easyes.common.utils.StringUtils;
+import cn.easyes.common.utils.*;
 import cn.easyes.core.biz.*;
 import cn.easyes.core.cache.GlobalConfigCache;
 import cn.easyes.core.config.GlobalConfig;
+import com.alibaba.fastjson.JSONObject;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -27,12 +29,20 @@ import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.GetIndexResponse;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.ReindexRequest;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 
 import static cn.easyes.common.constants.BaseEsConstants.*;
@@ -209,6 +219,7 @@ public class IndexUtils {
         reindexRequest.setDestOpType(BaseEsConstants.DEFAULT_DEST_OP_TYPE);
         reindexRequest.setConflicts(BaseEsConstants.DEFAULT_CONFLICTS);
         reindexRequest.setRefresh(Boolean.TRUE);
+        reindexRequest.setTimeout(TimeValue.MAX_VALUE);
         try {
             BulkByScrollResponse response = client.reindex(reindexRequest, RequestOptions.DEFAULT);
             List<BulkItemResponse.Failure> bulkFailures = response.getBulkFailures();
@@ -367,16 +378,20 @@ public class IndexUtils {
                 info.put(BaseEsConstants.TYPE, indexParam.getFieldType());
             }
 
-            // 设置分词器
-            boolean needAnalyzer = FieldType.TEXT.getType().equals(indexParam.getFieldType()) ||
+            // 是否text类型或keyword_text类型
+            boolean containsTextType = FieldType.TEXT.getType().equals(indexParam.getFieldType()) ||
                     FieldType.KEYWORD_TEXT.getType().equals(indexParam.getFieldType());
-            if (needAnalyzer) {
+            if (containsTextType) {
+                // 设置分词器
                 Optional.ofNullable(indexParam.getAnalyzer())
                         .ifPresent(analyzer ->
                                 info.put(BaseEsConstants.ANALYZER, indexParam.getAnalyzer().toLowerCase()));
                 Optional.ofNullable(indexParam.getSearchAnalyzer())
                         .ifPresent(searchAnalyzer ->
                                 info.put(BaseEsConstants.SEARCH_ANALYZER, indexParam.getSearchAnalyzer().toLowerCase()));
+
+                // 设置是否对text类型进行聚合处理
+                MyOptional.of(indexParam.isFieldData()).ifTrue(isFieldData -> info.put(FIELD_DATA, isFieldData));
             }
 
             // 设置权重
@@ -492,15 +507,11 @@ public class IndexUtils {
         if (addChild) {
             // 追加子文档信息
             List<EntityFieldInfo> childFieldList = Optional.ofNullable(entityInfo.getChildClass())
-                    .flatMap(childClass->Optional.ofNullable(EntityInfoHelper.getEntityInfo(childClass))
+                    .flatMap(childClass -> Optional.ofNullable(EntityInfoHelper.getEntityInfo(childClass))
                             .map(EntityInfo::getFieldList))
                     .orElse(new ArrayList<>(0));
             if (!CollectionUtils.isEmpty(childFieldList)) {
                 childFieldList.forEach(child -> {
-                    // 子文档仅支持match查询,所以如果用户未指定子文档索引类型,则将默认的keyword类型转换为text类型
-                    if (FieldType.KEYWORD.equals(child.getFieldType())) {
-                        child.setFieldType(FieldType.TEXT);
-                    }
                     // 添加子文档中除JoinField以外的字段
                     if (!entityInfo.getJoinFieldName().equals(child.getMappingColumn())) {
                         copyFieldList.add(child);
@@ -515,6 +526,9 @@ public class IndexUtils {
                 EsIndexParam esIndexParam = new EsIndexParam();
                 String esFieldType = IndexUtils.getEsFieldType(field.getFieldType(), field.getColumnType());
                 esIndexParam.setFieldType(esFieldType);
+                if (field.isFieldData()) {
+                    esIndexParam.setFieldData(field.isFieldData());
+                }
                 esIndexParam.setFieldName(field.getMappingColumn());
                 esIndexParam.setDateFormat(field.getDateFormat());
                 if (FieldType.NESTED.equals(field.getFieldType())) {
@@ -602,6 +616,76 @@ public class IndexUtils {
         return exists;
     }
 
+
+    /**
+     * 保存最新索引
+     *
+     * @param releaseIndexName 最新索引名称
+     * @param client           RestHighLevelClient
+     */
+    public static void saveReleaseIndex(String releaseIndexName, RestHighLevelClient client) {
+        IndexRequest indexRequest = new IndexRequest(LOCK_INDEX);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(ACTIVE_INDEX_KEY, releaseIndexName);
+        jsonObject.put(GMT_MODIFIED, System.currentTimeMillis());
+        indexRequest.source(jsonObject.toJSONString(), XContentType.JSON);
+        try {
+            client.index(indexRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            LogUtils.formatError("saveReleaseIndex error, releaseIndexName:{}, e:{}", releaseIndexName, e.toString());
+        }
+    }
+
+    /**
+     * 激活最新索引
+     *
+     * @param client      RestHighLevelClient
+     * @param entityClass 实体类
+     * @param maxRetry    重试次数
+     */
+    public static void activeReleaseIndex(RestHighLevelClient client, Class<?> entityClass, int maxRetry) {
+        // 请求并获取最新的一条索引
+        SearchRequest searchRequest = new SearchRequest(LOCK_INDEX);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.fetchField(ACTIVE_INDEX_KEY);
+        searchSourceBuilder.sort(GMT_MODIFIED, SortOrder.DESC);
+        searchSourceBuilder.size(ONE);
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse response = null;
+        try {
+            response = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (Throwable e) {
+            LogUtils.warn("Active failed, The machine that acquired lock is migrating, will try again later");
+        }
+
+        // 激活当前客户端的索引为最新索引
+        AtomicBoolean activated = new AtomicBoolean(false);
+        Optional.ofNullable(response)
+                .ifPresent(r -> Arrays.stream(r.getHits().getHits())
+                        .forEach(searchHit -> {
+                            Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
+                            Optional.ofNullable(sourceAsMap.get(ACTIVE_INDEX_KEY))
+                                    .ifPresent(indexName -> {
+                                        if (indexName instanceof String) {
+                                            EntityInfoHelper.getEntityInfo(entityClass).setIndexName((String) indexName);
+                                            activated.set(Boolean.TRUE);
+                                        }
+                                    });
+                        }));
+
+        // 达到最大重试次数仍未成功,则终止流程,避免浪费资源
+        int activeReleaseIndexMaxRetry = GlobalConfigCache.getGlobalConfig().getActiveReleaseIndexMaxRetry();
+        if (maxRetry >= activeReleaseIndexMaxRetry) {
+            if (activated.get()) {
+                LogUtils.info("Current client index has been successfully activated");
+            } else {
+                LogUtils.error("Active release index failed after max number of retry, Please check whether the indexing of the first got lock client is successful");
+            }
+            throw new RuntimeException();
+        }
+
+    }
+
     /**
      * 异步执行索引托管操作
      *
@@ -620,6 +704,13 @@ public class IndexUtils {
                 // 尝试获取分布式锁
                 boolean lock = LockUtils.tryLock(client, entityClass.getSimpleName().toLowerCase(), BaseEsConstants.LOCK_MAX_RETRY);
                 if (!lock) {
+                    // 未获取到分布式锁的机器,需要等待获取到锁的机器完成索引由旧到新的迁移,期间会不断重试并激活该新索引
+                    AtomicInteger maxTry = new AtomicInteger(ZERO);
+                    if (ProcessIndexStrategyEnum.SMOOTHLY.equals(globalConfig.getProcessIndexMode())) {
+                        // 平滑模式下,需要将未获取到锁的客户端的索引延迟激活为最新索引
+                        Executors.newSingleThreadScheduledExecutor()
+                                .scheduleWithFixedDelay(() -> activeReleaseIndex(client, entityClass, maxTry.addAndGet(ONE)), INITIAL_DELAY, globalConfig.getActiveReleaseIndexFixedDelay(), TimeUnit.SECONDS);
+                    }
                     LogUtils.warn("retry get distribute lock failed, please check whether other resources have been preempted or deadlocked");
                     return Boolean.FALSE;
                 }
@@ -629,23 +720,20 @@ public class IndexUtils {
             }
         }).exceptionally((throwable) -> {
             Optional.ofNullable(throwable).ifPresent(e -> LogUtils.error("process index exception", e.toString()));
-            // 异常,需清除新创建的索引,避免新旧索引同时存在 同时也清除分布式锁索引,避免用户未正确使用时可能出现的死锁
-            deleteIndex(client, EntityInfoHelper.getEntityInfo(entityClass).getReleaseIndexName());
-            deleteIndex(client, LOCK_INDEX);
             return Boolean.FALSE;
         }).whenCompleteAsync((success, throwable) -> {
             if (success) {
                 LogUtils.info("===> Congratulations auto process index by Easy-Es is done !");
             } else {
                 LogUtils.warn("===> Unfortunately, auto process index by Easy-Es failed, please check your configuration");
-                // 未成功完成迁移,需清除新创建的索引,避免新旧索引同时存在 同时也清除分布式锁索引,避免用户未正确使用时可能出现的死锁
-                deleteIndex(client, EntityInfoHelper.getEntityInfo(entityClass).getReleaseIndexName());
-                deleteIndex(client, LOCK_INDEX);
+                // 未成功完成迁移,需清除新创建的索引,避免新旧索引同时存在
+                Optional.ofNullable(EntityInfoHelper.getEntityInfo(entityClass).getReleaseIndexName())
+                        .ifPresent(releaseIndexName -> deleteIndex(client, releaseIndexName));
             }
         });
 
         // 是否开启阻塞 默认开启 运行测试模块时建议开启阻塞,否则测试用例跑完后,主线程退出,但异步线程可能还没跑完,可能出现死锁
-        // 生产环境或迁移数据量比较大的情况下,可以配置开启非阻塞,这样服务启动更快
+        // 生产环境或迁移数据量比较大的情况下,可以配置开启非阻塞,这样服务启动更快 数据迁移异步进行
         GlobalConfig globalConfig = GlobalConfigCache.getGlobalConfig();
         if (globalConfig.isAsyncProcessIndexBlocking()) {
             completableFuture.join();

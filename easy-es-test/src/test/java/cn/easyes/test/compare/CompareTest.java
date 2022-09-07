@@ -13,11 +13,10 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -28,7 +27,7 @@ import java.util.List;
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
-@RunWith(SpringRunner.class)
+@Disabled
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class CompareTest {
     @Resource

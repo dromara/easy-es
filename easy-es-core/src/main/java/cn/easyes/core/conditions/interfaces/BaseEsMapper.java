@@ -1,6 +1,7 @@
 package cn.easyes.core.conditions.interfaces;
 
 import cn.easyes.core.biz.PageInfo;
+import cn.easyes.core.biz.SAPageInfo;
 import cn.easyes.core.conditions.LambdaEsIndexWrapper;
 import cn.easyes.core.conditions.LambdaEsQueryWrapper;
 import cn.easyes.core.conditions.LambdaEsUpdateWrapper;
@@ -129,6 +130,16 @@ public interface BaseEsMapper<T> {
      * @return 指定的返回类型
      */
     PageInfo<T> pageQuery(LambdaEsQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
+
+    /**
+     * searchAfter类型分页
+     *
+     * @param wrapper     条件
+     * @param searchAfter 当前页 第一页时为null
+     * @param pageSize    每页条数
+     * @return 指定的返回类型
+     */
+    SAPageInfo<T> searchAfterPage(LambdaEsQueryWrapper<T> wrapper, List<Object> searchAfter, Integer pageSize);
 
     /**
      * 获取总数 默认根据折叠参数去重

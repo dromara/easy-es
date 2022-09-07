@@ -48,27 +48,35 @@ public interface Index<Children, R> extends Serializable {
 
 
     default Children mapping(R column, FieldType fieldType) {
-        return mapping(column, fieldType, null, null, null, null);
+        return mapping(column, fieldType, null, null, null, null, null);
+    }
+
+    default Children mapping(R column, FieldType fieldType, Boolean fieldData) {
+        return mapping(column, fieldType, null, null, null, fieldData, null);
     }
 
     default Children mapping(R column, FieldType fieldType, Float boost) {
-        return mapping(column, fieldType, null, null, null, boost);
+        return mapping(column, fieldType, null, null, null, null, boost);
+    }
+
+    default Children mapping(R column, FieldType fieldType, Boolean fieldData, Float boost) {
+        return mapping(column, fieldType, null, null, null, fieldData, boost);
     }
 
     default Children mapping(R column, FieldType fieldType, String dateFormat) {
-        return mapping(column, fieldType, null, null, dateFormat, null);
+        return mapping(column, fieldType, null, null, dateFormat, null, null);
     }
 
     default Children mapping(R column, FieldType fieldType, String analyzer, String searchAnalyzer) {
-        return mapping(column, fieldType, analyzer, searchAnalyzer, null, null);
+        return mapping(column, fieldType, analyzer, searchAnalyzer, null, null, null);
     }
 
     default Children mapping(R column, FieldType fieldType, String analyzer, String searchAnalyzer, String dateFormat) {
-        return mapping(column, fieldType, analyzer, searchAnalyzer, dateFormat, null);
+        return mapping(column, fieldType, analyzer, searchAnalyzer, dateFormat, null, null);
     }
 
     default Children mapping(R column, FieldType fieldType, String analyzer, String searchAnalyzer, Float boost) {
-        return mapping(column, fieldType, analyzer, searchAnalyzer, null, boost);
+        return mapping(column, fieldType, analyzer, searchAnalyzer, null, null, boost);
     }
 
     /**
@@ -79,16 +87,21 @@ public interface Index<Children, R> extends Serializable {
      * @param analyzer       分词器类型
      * @param searchAnalyzer 查询分词器类型
      * @param dateFormat     日期格式
+     * @param fieldData      是否支持text字段聚合
      * @param boost          权重值
      * @return 泛型
      */
-    default Children mapping(R column, FieldType fieldType, String analyzer, String searchAnalyzer, String dateFormat, Float boost) {
-        return mapping(FieldUtils.getFieldName(column), fieldType, analyzer, searchAnalyzer, dateFormat, boost);
+    default Children mapping(R column, FieldType fieldType, String analyzer, String searchAnalyzer, String dateFormat, Boolean fieldData, Float boost) {
+        return mapping(FieldUtils.getFieldName(column), fieldType, analyzer, searchAnalyzer, dateFormat, fieldData, boost);
     }
 
 
     default Children mapping(String column, FieldType fieldType) {
-        return mapping(column, fieldType, null, null, null, null);
+        return mapping(column, fieldType, null, null, null);
+    }
+
+    default Children mapping(String column, FieldType fieldType, Boolean fieldData) {
+        return mapping(column, fieldType, null, null, fieldData, null);
     }
 
     default Children mapping(String column, FieldType fieldType, Float boost) {
@@ -97,16 +110,21 @@ public interface Index<Children, R> extends Serializable {
 
 
     default Children mapping(String column, FieldType fieldType, String analyzer) {
-        return mapping(column, fieldType, analyzer, null, null, null);
+        return mapping(column, fieldType, analyzer, null, null);
     }
 
-    default Children mapping(String column, FieldType fieldType, String analyzer, String dateFormat) {
-        return mapping(column, fieldType, analyzer, null, dateFormat, null);
+    default Children mapping(String column, FieldType fieldType, String analyzer, String searchAnalyzer) {
+        return mapping(column, fieldType, analyzer, searchAnalyzer, null);
     }
 
-    default Children mapping(String column, FieldType fieldType, String analyzer, String searchAnalyzer, Float boost) {
-        return mapping(column, fieldType, analyzer, searchAnalyzer, null, boost);
+    default Children mapping(String column, FieldType fieldType, String analyzer, String searchAnalyzer, Boolean fieldData) {
+        return mapping(column, fieldType, analyzer, searchAnalyzer, fieldData, null);
     }
+
+    default Children mapping(String column, FieldType fieldType, String analyzer, String searchAnalyzer, Boolean fieldData, Float boost) {
+        return mapping(column, fieldType, analyzer, searchAnalyzer, null, fieldData, boost);
+    }
+
 
     /**
      * 设置mapping信息
@@ -116,10 +134,11 @@ public interface Index<Children, R> extends Serializable {
      * @param analyzer       分词器类型
      * @param searchAnalyzer 查询分词器类型
      * @param dateFormat     日期格式
+     * @param fieldData      是否支持text字段聚合
      * @param boost          字段权重值
      * @return 泛型
      */
-    Children mapping(String column, FieldType fieldType, String analyzer, String searchAnalyzer, String dateFormat, Float boost);
+    Children mapping(String column, FieldType fieldType, String analyzer, String searchAnalyzer, String dateFormat, Boolean fieldData, Float boost);
 
     /**
      * 设置创建别名信息

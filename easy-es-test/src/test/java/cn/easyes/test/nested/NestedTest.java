@@ -8,11 +8,10 @@ import cn.easyes.test.entity.Faq;
 import cn.easyes.test.entity.User;
 import cn.easyes.test.mapper.DocumentMapper;
 import org.elasticsearch.geometry.Point;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -27,7 +26,7 @@ import java.util.Set;
  * <p>
  * Copyright © 2022 xpc1024 All Rights Reserved
  **/
-@RunWith(SpringRunner.class)
+@Disabled
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class NestedTest {
     @Resource
@@ -37,7 +36,7 @@ public class NestedTest {
     public void testInsert() {
         // 测试插入数据
         Document document = new Document();
-        document.setId("5");
+        document.setEsId("5");
         document.setTitle("老汉");
         document.setContent("人才");
         document.setCreator("吃饭");
@@ -59,7 +58,7 @@ public class NestedTest {
         users.add(new User("用户2", 19, faqs1));
         document.setUsers(users);
         int successCount = documentMapper.insert(document);
-        Assert.assertEquals(successCount, 1);
+        Assertions.assertEquals(successCount, 1);
     }
 
     @Test

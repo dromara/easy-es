@@ -32,6 +32,16 @@ public class GlobalConfig {
      * is distributed environment true by default 是否分布式环境 默认为是
      */
     private boolean distributed = true;
+    /**
+     * Activate the current client's release index maximum number of retries
+     * 分布式环境下,平滑模式,当前客户端激活最新索引最大重试次数若数据量过大,重建索引数据迁移时间超过60*(180/60)=180分钟时,可调大此参数值,此参数值决定最大重试次数,超出此次数后仍未成功,则终止重试并记录异常日志
+     */
+    private int activeReleaseIndexMaxRetry = 60;
+    /**
+     * Activate the current client's release index retry delay for a fixed time uint:second
+     * 分布式环境下,平滑模式,当前客户端激活最新索引最大重试次数 若数据量过大,重建索引数据迁移时间超过60*(180/60)=180分钟时,可调大此参数值 此参数值决定多久重试一次 单位:秒
+     */
+    private int activeReleaseIndexFixedDelay = 180;
 
     /**
      * es db config 数据库配置
@@ -72,5 +82,9 @@ public class GlobalConfig {
          * must convert to filter must by default, must 条件转filter 默认不转换
          */
         private boolean enableMust2Filter = false;
+        /**
+         * Batch update threshold 10000 by default 批量更新阈值 默认值为1万
+         */
+        private Integer batchUpdateThreshold = 10000;
     }
 }

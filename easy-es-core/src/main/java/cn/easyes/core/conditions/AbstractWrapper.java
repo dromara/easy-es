@@ -5,6 +5,7 @@ import cn.easyes.common.utils.*;
 import cn.easyes.core.biz.*;
 import cn.easyes.core.conditions.interfaces.*;
 import org.apache.lucene.search.join.ScoreMode;
+import org.elasticsearch.common.geo.GeoDistance;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.geo.ShapeRelation;
 import org.elasticsearch.common.unit.DistanceUnit;
@@ -15,6 +16,7 @@ import org.elasticsearch.search.sort.SortOrder;
 
 import java.util.*;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static cn.easyes.common.enums.BaseEsParamTypeEnum.*;
@@ -64,6 +66,10 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * 排序参数列表
      */
     protected List<OrderByParam> orderByParams;
+    /**
+     * 距离排序参数
+     */
+    protected DistanceOrderByParam distanceOrderByParam;
     /**
      * 是否查询全部文档
      */
@@ -154,13 +160,13 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
-    public Children and(boolean condition, Function<Children, Children> func) {
-        return doIt(condition, func, AND_LEFT_BRACKET, AND_RIGHT_BRACKET);
+    public Children and(boolean condition, Consumer<Children> consumer) {
+        return doIt(condition, consumer, AND_LEFT_BRACKET, AND_RIGHT_BRACKET);
     }
 
     @Override
-    public Children or(boolean condition, Function<Children, Children> func) {
-        return doIt(condition, func, OR_LEFT_BRACKET, OR_RIGHT_BRACKET);
+    public Children or(boolean condition, Consumer<Children> consumer) {
+        return doIt(condition, consumer, OR_LEFT_BRACKET, OR_RIGHT_BRACKET);
     }
 
     @Override
@@ -190,8 +196,8 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
-    public Children matchPhase(boolean condition, String column, Object val, Float boost) {
-        return doIt(condition, MATCH_PHASE, MUST, column, val, boost);
+    public Children matchPhrase(boolean condition, String column, Object val, Float boost) {
+        return doIt(condition, MATCH_PHRASE, MUST, column, val, boost);
     }
 
     @Override
@@ -314,6 +320,57 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     public Children orderBy(boolean condition, List<OrderByParam> orderByParams) {
         if (CollectionUtils.isNotEmpty(orderByParams)) {
             this.orderByParams = orderByParams;
+        }
+        return typedThis;
+    }
+
+    @Override
+    public Children orderByDistanceAsc(boolean condition, String column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints) {
+        if (ArrayUtils.isNotEmpty(geoPoints)) {
+            if (condition) {
+                this.distanceOrderByParam = DistanceOrderByParam.builder()
+                        .fieldName(column)
+                        .geoPoints(geoPoints)
+                        .unit(unit)
+                        .geoDistance(geoDistance)
+                        .sortOrder(SortOrder.ASC)
+                        .build();
+            }
+        }
+        return typedThis;
+    }
+
+    @Override
+    public Children orderByDistanceDesc(boolean condition, String column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints) {
+        if (ArrayUtils.isNotEmpty(geoPoints)) {
+            if (condition) {
+                this.distanceOrderByParam = DistanceOrderByParam.builder()
+                        .fieldName(column)
+                        .geoPoints(geoPoints)
+                        .unit(unit)
+                        .geoDistance(geoDistance)
+                        .sortOrder(SortOrder.DESC)
+                        .build();
+            }
+        }
+        return typedThis;
+    }
+
+    @Override
+    public Children sort(boolean condition, List<SortBuilder<?>> sortBuilders) {
+        if (CollectionUtils.isEmpty(sortBuilders)) {
+            return typedThis;
+        }
+        if (condition) {
+            this.sortBuilders = sortBuilders;
+        }
+        return typedThis;
+    }
+
+    @Override
+    public Children sortByScore(boolean condition, SortOrder sortOrder) {
+        if (condition) {
+            this.sortOrder = sortOrder;
         }
         return typedThis;
     }
@@ -447,25 +504,6 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         return doIt(condition, column, geometry, shapeRelation, boost, false);
     }
 
-    @Override
-    public Children sort(boolean condition, List<SortBuilder<?>> sortBuilders) {
-        if (CollectionUtils.isEmpty(sortBuilders)) {
-            return typedThis;
-        }
-        if (condition) {
-            this.sortBuilders = sortBuilders;
-        }
-        return typedThis;
-    }
-
-    @Override
-    public Children sortByScore(boolean condition, SortOrder sortOrder) {
-        if (condition) {
-            this.sortOrder = sortOrder;
-        }
-        return typedThis;
-    }
-
     /**
      * 子类返回一个自己的新对象
      *
@@ -499,17 +537,17 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * 封装查询参数(含AND,OR这种连接操作)
      *
      * @param condition 条件
-     * @param func      函数
+     * @param consumer      函数
      * @param open      左括号
      * @param close     右括号
      * @return 泛型
      */
-    private Children doIt(boolean condition, Function<Children, Children> func, BaseEsParamTypeEnum open, BaseEsParamTypeEnum close) {
+    private Children doIt(boolean condition, Consumer<Children> consumer, BaseEsParamTypeEnum open, BaseEsParamTypeEnum close) {
         if (condition) {
             BaseEsParam left = new BaseEsParam();
             left.setType(open.getType());
             baseEsParamList.add(left);
-            func.apply(instance());
+            consumer.accept(instance());
             BaseEsParam right = new BaseEsParam();
             right.setType(close.getType());
             baseEsParamList.add(right);
@@ -892,6 +930,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
                 break;
             case NOT_BETWEEN:
                 baseEsParam.getNotBetweenList().add(model);
+                break;
             case LIKE_LEFT:
                 baseEsParam.getLikeLeftList().add(model);
                 break;

@@ -357,32 +357,32 @@ public interface Compare<Children, R> extends Serializable {
      */
     Children parentId(boolean condition, Object parentId, String type, Float boost);
 
-    default Children matchPhase(R column, Object val) {
-        return matchPhase(true, column, val, DEFAULT_BOOST);
+    default Children matchPhrase(R column, Object val) {
+        return matchPhrase(true, column, val, DEFAULT_BOOST);
     }
 
-    default Children matchPhase(boolean condition, R column, Object val) {
-        return matchPhase(condition, column, val, DEFAULT_BOOST);
+    default Children matchPhrase(boolean condition, R column, Object val) {
+        return matchPhrase(condition, column, val, DEFAULT_BOOST);
     }
 
-    default Children matchPhase(R column, Object val, Float boost) {
-        return matchPhase(true, column, val, boost);
+    default Children matchPhrase(R column, Object val, Float boost) {
+        return matchPhrase(true, column, val, boost);
     }
 
-    default Children matchPhase(String column, Object val) {
-        return matchPhase(true, column, val, DEFAULT_BOOST);
+    default Children matchPhrase(String column, Object val) {
+        return matchPhrase(true, column, val, DEFAULT_BOOST);
     }
 
-    default Children matchPhase(boolean condition, String column, Object val) {
-        return matchPhase(condition, column, val, DEFAULT_BOOST);
+    default Children matchPhrase(boolean condition, String column, Object val) {
+        return matchPhrase(condition, column, val, DEFAULT_BOOST);
     }
 
-    default Children matchPhase(String column, Object val, Float boost) {
-        return matchPhase(true, column, val, boost);
+    default Children matchPhrase(String column, Object val, Float boost) {
+        return matchPhrase(true, column, val, boost);
     }
 
-    default Children matchPhase(boolean condition, R column, Object val, Float boost) {
-        return matchPhase(condition, FieldUtils.getFieldName(column), val, boost);
+    default Children matchPhrase(boolean condition, R column, Object val, Float boost) {
+        return matchPhrase(condition, FieldUtils.getFieldName(column), val, boost);
     }
 
     /**
@@ -394,7 +394,7 @@ public interface Compare<Children, R> extends Serializable {
      * @param boost     权重值
      * @return 泛型
      */
-    Children matchPhase(boolean condition, String column, Object val, Float boost);
+    Children matchPhrase(boolean condition, String column, Object val, Float boost);
 
 
     default Children matchAllQuery() {
