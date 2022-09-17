@@ -427,6 +427,9 @@ public class EntityInfoHelper {
                     entityFieldInfo.setColumnType(fieldType.getType());
                     entityFieldInfo.setAnalyzer(tableField.analyzer());
                     entityFieldInfo.setSearchAnalyzer(tableField.searchAnalyzer());
+                    if (StringUtils.isNotBlank(tableField.dateFormat())) {
+                        entityFieldInfo.setDateFormat(tableField.dateFormat());
+                    }
                     entityFieldInfoList.add(entityFieldInfo);
                 } else {
                     mappingColumn = getMappingColumn(dbConfig, field);

@@ -16,10 +16,10 @@ public interface Index<Children, R> extends Serializable {
     /**
      * 设置索引名称
      *
-     * @param indexName 索引名称
+     * @param indexNames 索引名称
      * @return 泛型
      */
-    Children indexName(String indexName);
+    Children indexName(String... indexNames);
 
     /**
      * 设置索引的分片数和副本数

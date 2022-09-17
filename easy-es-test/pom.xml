@@ -7,7 +7,7 @@
     <parent>
         <artifactId>easy-es</artifactId>
         <groupId>cn.easy-es</groupId>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
     </parent>
 
     <artifactId>easy-es-test</artifactId>

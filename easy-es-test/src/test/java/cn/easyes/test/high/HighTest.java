@@ -111,7 +111,7 @@ public class HighTest {
     @Test
     public void testHighlight() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        String keyword = "内容";
+        String keyword = "技术";
         wrapper.match(Document::getContent, keyword);
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);

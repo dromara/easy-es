@@ -34,6 +34,7 @@ public class IndexTest {
      */
     @Test
     public void testCreateIndexByEntity() {
+        // 绝大多数场景推荐使用 简单至上
         documentMapper.createIndex();
     }
 
@@ -42,6 +43,7 @@ public class IndexTest {
      */
     @Test
     public void testCreateIndex() {
+        // 复杂场景使用
         LambdaEsIndexWrapper<Document> wrapper = new LambdaEsIndexWrapper<>();
         // 此处简单起见 索引名称须保持和实体类名称一致,字母小写 后面章节会教大家更如何灵活配置和使用索引
         wrapper.indexName(Document.class.getSimpleName().toLowerCase());

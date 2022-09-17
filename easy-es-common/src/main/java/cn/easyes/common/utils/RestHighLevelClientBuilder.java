@@ -35,13 +35,13 @@ public class RestHighLevelClientBuilder {
      */
     private static void verify(RestHighLevelClient restHighLevelClient) {
         // 校验jar包版本是否为推荐使用版本
-        String jarVersion = EEVersionUtil.getJarVersion(restHighLevelClient.getClass());
+        String jarVersion = EEVersionUtils.getJarVersion(restHighLevelClient.getClass());
         LogUtils.formatInfo("Elasticsearch jar version:%s", jarVersion);
         if (!jarVersion.startsWith(supportedVersion)) {
             // 这里抛出异常原因是ee强制依赖于jar包版本，jar包版本不对会导致ee异常
             throw ExceptionUtils.eee("Easy-Es supported elasticsearch jar version is:%s.xx", supportedVersion);
         }
-        String clientVersion = EEVersionUtil.getClientVersion(restHighLevelClient);
+        String clientVersion = EEVersionUtils.getClientVersion(restHighLevelClient);
         LogUtils.formatInfo("Elasticsearch client version:%s", clientVersion);
         if (!clientVersion.startsWith(supportedVersion)) {
             // 这里校验客户端为非强制，客户端版本非推荐版本对应提醒即可，es会报错提醒

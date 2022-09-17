@@ -58,8 +58,8 @@ public class LambdaEsUpdateWrapper<T> extends AbstractLambdaUpdateWrapper<T, Lam
     }
 
     @Override
-    public LambdaEsUpdateWrapper<T> index(boolean condition, String indexName) {
-        this.indexName = indexName;
+    public LambdaEsUpdateWrapper<T> index(boolean condition, String... indexNames) {
+        this.indexNames = indexNames;
         return typedThis;
     }
 

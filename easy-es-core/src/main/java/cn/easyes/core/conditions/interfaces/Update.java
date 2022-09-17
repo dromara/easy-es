@@ -41,11 +41,11 @@ public interface Update<Children, R> extends Serializable {
     /**
      * 设置当前更新操作作用的索引
      *
-     * @param condition 条件
-     * @param indexName 索引名
+     * @param condition  条件
+     * @param indexNames 索引名
      * @return 泛型
      */
-    Children index(boolean condition, String indexName);
+    Children index(boolean condition, String... indexNames);
 
 
     default Children setSearchSourceBuilder(SearchSourceBuilder searchSourceBuilder) {

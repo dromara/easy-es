@@ -1,6 +1,6 @@
 package cn.easyes.starter.register;
 
-import cn.easyes.common.utils.EEVersionUtil;
+import cn.easyes.common.utils.EEVersionUtils;
 import cn.easyes.common.utils.LogUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.EnvironmentAware;
@@ -43,11 +43,10 @@ public class MapperScannerRegister implements ImportBeanDefinitionRegistrar, Res
             return;
         }
 
-        //打印banner
-        //@author dazer
+        //打印banner @author dazer007
         boolean banner = Optional.ofNullable(environment.getProperty(ENABLE_BANNER)).map(Boolean::parseBoolean).orElse(Boolean.TRUE);
         if (banner) {
-            String versionStr = EEVersionUtil.getJarVersion(this.getClass());
+            String versionStr = EEVersionUtils.getJarVersion(this.getClass());
             System.out.println("\n" +
                     "___                     _  _            ___\n" +
                     "  | __|   __ _     ___    | || |   ___    | __|    ___\n" +
@@ -55,7 +54,7 @@ public class MapperScannerRegister implements ImportBeanDefinitionRegistrar, Res
                     "  |___|  \\__,_|   /__/_   _|__/   _____   |___|   /__/_\n" +
                     "_|\"\"\"\"\"|_|\"\"\"\"\"|_|\"\"\"\"\"|_| \"\"\"\"|_|     |_|\"\"\"\"\"|_|\"\"\"\"\"|\n" +
                     "\"`-0-0-'\"`-0-0-'\"`-0-0-'\"`-0-0-'\"`-0-0-'\"`-0-0-'\"`-0-0-'\n" +
-                    "--------------------------xpc-------------------------->");
+                    "----------添加老汉微信:252645816,早日成为肌肉猛男----------->");
             System.out.println(":: easy-es ::                                  (v:" + versionStr + ")");
         }
 

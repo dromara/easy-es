@@ -1,5 +1,7 @@
 package cn.easyes.common.utils;
 
+import cn.easyes.common.exception.EasyEsException;
+
 import java.util.Collection;
 
 /**
@@ -25,7 +27,13 @@ public class Assert {
 
     public static void isTrue(boolean expression, String message) {
         if (!expression) {
-            throw new IllegalArgumentException(message);
+            throw new EasyEsException(message);
+        }
+    }
+
+    public static void isFalse(boolean expression, String message) {
+        if (expression) {
+            throw new EasyEsException(message);
         }
     }
 

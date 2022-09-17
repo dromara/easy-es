@@ -30,13 +30,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
             String className = metadataReader.getClassMetadata().getClassName();
             try {
                 Class<?> clazz = Class.forName(className);
-                Class<?>[] interfaces = clazz.getInterfaces();
-                if (ArrayUtils.isNotEmpty(interfaces)) {
-                    boolean isEeMapper = Arrays.asList(interfaces).contains(BaseEsMapper.class);
-                    if (!isEeMapper) {
-                        return false;
-                    }
-                }
+                return BaseEsMapper.class.isAssignableFrom(clazz);
             } catch (ClassNotFoundException e) {
                 logger.debug("mapper not found" + e);
             }

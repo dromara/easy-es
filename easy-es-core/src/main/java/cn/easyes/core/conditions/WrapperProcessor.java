@@ -21,15 +21,17 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.collapse.CollapseBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.GeoDistanceSortBuilder;
+import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
 import java.util.*;
 
-import static cn.easyes.common.constants.BaseEsConstants.*;
+import static cn.easyes.common.constants.BaseEsConstants.DEFAULT_SIZE;
+import static cn.easyes.common.constants.BaseEsConstants.REPEAT_NUM_KEY;
 import static cn.easyes.common.enums.BaseEsParamTypeEnum.*;
 import static cn.easyes.common.enums.EsAttachTypeEnum.*;
+import static org.elasticsearch.index.query.QueryBuilders.geoShapeQuery;
 
 /**
  * 核心 wrpeer处理类
@@ -311,9 +313,9 @@ public class WrapperProcessor {
         // 构造查询参数
         GeoShapeQueryBuilder builder;
         if (StringUtils.isNotBlank(geoParam.getIndexedShapeId())) {
-            builder = QueryBuilders.geoShapeQuery(geoParam.getField(), geoParam.getIndexedShapeId());
+            builder = geoShapeQuery(geoParam.getField(), geoParam.getIndexedShapeId());
         } else {
-            builder = QueryBuilders.geoShapeQuery(geoParam.getField(), geoParam.getGeometry());
+            builder = geoShapeQuery(geoParam.getField(), geoParam.getGeometry());
         }
 
         Optional.ofNullable(geoParam.getShapeRelation()).ifPresent(builder::relation);
@@ -549,42 +551,22 @@ public class WrapperProcessor {
         // 获取配置
         GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
 
-        // 设置排序字段
-        if (CollectionUtils.isNotEmpty(wrapper.sortParamList)) {
-            wrapper.sortParamList.forEach(sortParam -> {
-                SortOrder sortOrder = sortParam.getIsAsc() ? SortOrder.ASC : SortOrder.DESC;
-                sortParam.getFields().forEach(field -> {
-                    FieldSortBuilder fieldSortBuilder;
-                    String customField = FieldUtils.getRealField(field, mappingColumnMap, dbConfig);
-                    if (Objects.nonNull(customField)) {
-                        fieldSortBuilder = new FieldSortBuilder(customField).order(sortOrder);
-                    } else {
-                        if (dbConfig.isMapUnderscoreToCamelCase()) {
-                            fieldSortBuilder = new FieldSortBuilder(StringUtils.camelToUnderline(field)).order(sortOrder);
-                        } else {
-                            fieldSortBuilder = new FieldSortBuilder(field).order(sortOrder);
-                        }
-                    }
-                    searchSourceBuilder.sort(fieldSortBuilder);
-                });
+        // 批量设置排序字段
+        if (CollectionUtils.isNotEmpty(wrapper.baseSortParams)) {
+            wrapper.baseSortParams.forEach(baseSortParam -> {
+                // 获取es中的实际字段 有可能已经被用户自定义或者驼峰转成下划线
+                String realField = Objects.isNull(baseSortParam.getSortField()) ?
+                        null : FieldUtils.getRealField(baseSortParam.getSortField(), mappingColumnMap, dbConfig);
+                SortBuilder<?> sortBuilder = getSortBuilder(realField, baseSortParam);
+                Optional.ofNullable(sortBuilder).ifPresent(searchSourceBuilder::sort);
             });
         }
 
-        // 设置以String形式指定的排序字段及规则
+        // 设置以String形式指定的自定义排序字段及规则(此类排序通常由前端传入,满足部分用户个性化需求)
         if (CollectionUtils.isNotEmpty(wrapper.orderByParams)) {
             wrapper.orderByParams.forEach(orderByParam -> {
                 // 设置排序字段
-                FieldSortBuilder fieldSortBuilder;
-                String customField = FieldUtils.getRealField(orderByParam.getOrder(), mappingColumnMap, dbConfig);
-                if (Objects.nonNull(customField)) {
-                    fieldSortBuilder = new FieldSortBuilder(customField);
-                } else {
-                    if (dbConfig.isMapUnderscoreToCamelCase()) {
-                        fieldSortBuilder = new FieldSortBuilder(StringUtils.camelToUnderline(orderByParam.getOrder()));
-                    } else {
-                        fieldSortBuilder = new FieldSortBuilder(orderByParam.getOrder());
-                    }
-                }
+                FieldSortBuilder fieldSortBuilder = new FieldSortBuilder(orderByParam.getOrder());
 
                 // 设置排序规则
                 if (SortOrder.ASC.toString().equalsIgnoreCase(orderByParam.getSort())) {
@@ -596,26 +578,32 @@ public class WrapperProcessor {
                 searchSourceBuilder.sort(fieldSortBuilder);
             });
         }
+    }
 
-        // 设置用户自定义的sorts
-        if (CollectionUtils.isNotEmpty(wrapper.sortBuilders)) {
-            wrapper.sortBuilders.forEach(searchSourceBuilder::sort);
+
+    /**
+     * 获取排序器
+     *
+     * @param realField     实际字段名称
+     * @param baseSortParam 排序参数
+     * @return 排序器
+     */
+    private static SortBuilder<?> getSortBuilder(String realField, BaseSortParam baseSortParam) {
+        switch (baseSortParam.getOrderTypeEnum()) {
+            case FIELD:
+                return SortBuilders.fieldSort(realField).order(baseSortParam.getSortOrder());
+            case SCORE:
+                return SortBuilders.scoreSort().order(baseSortParam.getSortOrder());
+            case GEO:
+                return SortBuilders.geoDistanceSort(realField, baseSortParam.getGeoPoints())
+                        .order(baseSortParam.getSortOrder())
+                        .geoDistance(baseSortParam.getGeoDistance())
+                        .unit(baseSortParam.getUnit());
+            case CUSTOMIZE:
+                return baseSortParam.getSortBuilder();
+            default:
+                return null;
         }
-
-        // 设置得分排序规则
-        Optional.ofNullable(wrapper.sortOrder)
-                .ifPresent(sortOrder -> searchSourceBuilder.sort(SCORE_FIELD, sortOrder));
-
-        // 设置距离排序
-        Optional.ofNullable(wrapper.distanceOrderByParam)
-                .ifPresent(distanceOrderByParam -> {
-                    GeoDistanceSortBuilder geoDistanceSortBuilder =
-                            SortBuilders.geoDistanceSort(distanceOrderByParam.getFieldName(), distanceOrderByParam.getGeoPoints())
-                                    .order(distanceOrderByParam.getSortOrder())
-                                    .geoDistance(distanceOrderByParam.getGeoDistance())
-                                    .unit(distanceOrderByParam.getUnit());
-                    searchSourceBuilder.sort(geoDistanceSortBuilder);
-                });
     }
 
 

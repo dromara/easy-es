@@ -67,6 +67,10 @@ public interface BaseEsConstants {
      */
     String COLON = ":";
     /**
+     * 逗号分隔符
+     */
+    String COMMA_SEPARATOR = ",";
+    /**
      * ee内置es分布式锁索引名称
      */
     String LOCK_INDEX = "ee-distribute-lock";
@@ -145,11 +149,11 @@ public interface BaseEsConstants {
     /**
      * DSL语句前缀
      */
-    String DSL_PREFIX = "===> Execute DSL By Easy-Es: ";
+    String DSL_PREFIX = "===> Execute By Easy-Es: ";
     /**
      * count DSL语句前缀
      */
-    String COUNT_DSL_PREFIX = "===> Execute Count DSL By Easy-Es(Note that size does not affect the total count): ";
+    String COUNT_DSL_PREFIX = "===> Execute Count By Easy-Es(Note the size specified in wrapper won't affect the total count): ";
     /**
      * 分片数key
      */

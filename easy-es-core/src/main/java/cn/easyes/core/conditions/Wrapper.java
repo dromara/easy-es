@@ -16,9 +16,9 @@ public abstract class Wrapper<T> {
     protected abstract SearchRequest getSearchRequest();
 
     /**
-     * 更新操作作用的索引名
+     * 当前操作作用的索引名数组
      */
-    protected String indexName;
+    protected String[] indexNames;
 
     /**
      * must条件转filter

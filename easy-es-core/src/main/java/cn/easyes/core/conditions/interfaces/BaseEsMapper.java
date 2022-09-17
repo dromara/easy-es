@@ -72,10 +72,10 @@ public interface BaseEsMapper<T> {
     /**
      * 删除指定索引
      *
-     * @param indexName 索引名称
+     * @param indexNames 索引名称数组
      * @return 是否成功
      */
-    Boolean deleteIndex(String indexName);
+    Boolean deleteIndex(String... indexNames);
 
     /**
      * 标准查询
@@ -142,17 +142,16 @@ public interface BaseEsMapper<T> {
     SAPageInfo<T> searchAfterPage(LambdaEsQueryWrapper<T> wrapper, List<Object> searchAfter, Integer pageSize);
 
     /**
-     * 获取总数 默认根据折叠参数去重
+     * 获取总数(智能推断:若wrapper中指定了去重字段则去重,若未指定则不去重 推荐使用)
      *
      * @param wrapper 条件
      * @return 总数
      */
-    default Long selectCount(LambdaEsQueryWrapper<T> wrapper) {
-        return selectCount(wrapper, true);
-    }
+    Long selectCount(LambdaEsQueryWrapper<T> wrapper);
+
 
     /**
-     * 是否去重获取总数
+     * 无论wrapper中是否指定去重字段,都以用户传入的distinct布尔值作为是否去重的条件
      *
      * @param wrapper  条件
      * @param distinct 是否去重
@@ -169,13 +168,13 @@ public interface BaseEsMapper<T> {
     Integer insert(T entity);
 
     /**
-     * 插入一条记录,可指定索引插入
+     * 插入一条记录,可指定多索引插入
      *
-     * @param entity    插入的数据对象
-     * @param indexName 指定插入的索引名
-     * @return 成功条数
+     * @param entity     插入的数据对象
+     * @param indexNames 指定插入的索引名数组
+     * @return 总成功条数
      */
-    Integer insert(T entity, String indexName);
+    Integer insert(T entity, String... indexNames);
 
     /**
      * 批量插入
@@ -189,10 +188,10 @@ public interface BaseEsMapper<T> {
      * 批量插入
      *
      * @param entityList 插入的数据对象列表
-     * @param indexName  指定插入的索引名
+     * @param indexNames 指定插入的索引名数组
      * @return 总成功条数
      */
-    Integer insertBatch(Collection<T> entityList, String indexName);
+    Integer insertBatch(Collection<T> entityList, String... indexNames);
 
     /**
      * 根据 ID 删除
@@ -205,19 +204,12 @@ public interface BaseEsMapper<T> {
     /**
      * 根据 ID 删除
      *
-     * @param id        主键
-     * @param indexName 指定删除的索引名
-     * @return 成功条数
-     */
-    Integer deleteById(Serializable id, String indexName);
-
-    /**
-     * 根据 entity 条件，删除记录
-     *
-     * @param wrapper 条件
+     * @param id         主键
+     * @param indexNames 指定删除的索引名数组
      * @return 总成功条数
      */
-    Integer delete(LambdaEsQueryWrapper<T> wrapper);
+    Integer deleteById(Serializable id, String... indexNames);
+
 
     /**
      * 删除（根据ID 批量删除）
@@ -230,11 +222,19 @@ public interface BaseEsMapper<T> {
     /**
      * 删除（根据ID 批量删除）
      *
-     * @param idList    主键列表
-     * @param indexName 指定删除的索引名
+     * @param idList     主键列表
+     * @param indexNames 指定删除的索引名数组
      * @return 总成功条数
      */
-    Integer deleteBatchIds(Collection<? extends Serializable> idList, String indexName);
+    Integer deleteBatchIds(Collection<? extends Serializable> idList, String... indexNames);
+
+    /**
+     * 根据 entity 条件，删除记录
+     *
+     * @param wrapper 条件
+     * @return 总成功条数
+     */
+    Integer delete(LambdaEsQueryWrapper<T> wrapper);
 
     /**
      * 根据 ID 更新
@@ -247,11 +247,11 @@ public interface BaseEsMapper<T> {
     /**
      * 根据 ID 更新
      *
-     * @param entity    更新对象
-     * @param indexName 指定更新的索引名称
+     * @param entity     更新对象
+     * @param indexNames 指定更新的索引名称数组
      * @return 总成功条数
      */
-    Integer updateById(T entity, String indexName);
+    Integer updateById(T entity, String... indexNames);
 
     /**
      * 根据ID 批量更新
@@ -265,10 +265,10 @@ public interface BaseEsMapper<T> {
      * 根据ID 批量更新
      *
      * @param entityList 更新对象列表
-     * @param indexName  指定更新的索引名称
+     * @param indexNames 指定更新的索引名称数组
      * @return 总成功条数
      */
-    Integer updateBatchByIds(Collection<T> entityList, String indexName);
+    Integer updateBatchByIds(Collection<T> entityList, String... indexNames);
 
     /**
      * 根据 whereEntity 条件，更新记录
@@ -291,10 +291,10 @@ public interface BaseEsMapper<T> {
      * 根据 ID 查询
      *
      * @param id        主键
-     * @param indexName 指定查询的索引名
+     * @param indexNames 指定查询的索引名数组
      * @return 指定的返回对象
      */
-    T selectById(Serializable id, String indexName);
+    T selectById(Serializable id, String... indexNames);
 
     /**
      * 查询（根据ID 批量查询）
@@ -307,11 +307,11 @@ public interface BaseEsMapper<T> {
     /**
      * 查询（根据ID 批量查询）
      *
-     * @param idList    主键列表
-     * @param indexName 指定查询的索引名
+     * @param idList     主键列表
+     * @param indexNames 指定查询的索引名数组
      * @return 指定的返回对象列表
      */
-    List<T> selectBatchIds(Collection<? extends Serializable> idList, String indexName);
+    List<T> selectBatchIds(Collection<? extends Serializable> idList, String... indexNames);
 
     /**
      * 根据 entity 条件，查询一条记录

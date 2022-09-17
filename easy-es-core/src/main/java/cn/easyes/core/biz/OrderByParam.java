@@ -3,7 +3,7 @@ package cn.easyes.core.biz;
 import lombok.Data;
 
 /**
- * 排序参数
+ * 自定义排序参数 通常由前端传入
  * <p>
  * Copyright © 2022 xpc1024 All Rights Reserved
  **/

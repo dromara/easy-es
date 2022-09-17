@@ -17,12 +17,12 @@ import org.elasticsearch.search.sort.SortOrder;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static cn.easyes.common.enums.BaseEsParamTypeEnum.*;
 import static cn.easyes.common.enums.EsAttachTypeEnum.*;
 import static cn.easyes.common.enums.EsQueryTypeEnum.*;
 import static cn.easyes.common.enums.JoinTypeEnum.*;
+import static cn.easyes.common.enums.OrderTypeEnum.CUSTOMIZE;
 
 /**
  * 抽象Lambda表达式父类
@@ -38,10 +38,12 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * 基础查询参数列表
      */
     protected List<BaseEsParam> baseEsParamList;
+
     /**
-     * 排序查询参数列表
+     * 基础排序参数列表
      */
-    protected List<SortParam> sortParamList;
+    protected List<BaseSortParam> baseSortParams;
+
     /**
      * 聚合查询参数列表
      */
@@ -54,22 +56,12 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * geo相关参数
      */
     protected GeoParam geoParam;
-    /**
-     * 用户自定义的排序规则
-     */
-    protected List<SortBuilder<?>> sortBuilders;
-    /**
-     * 得分排序规则
-     */
-    protected SortOrder sortOrder;
+
     /**
      * 排序参数列表
      */
     protected List<OrderByParam> orderByParams;
-    /**
-     * 距离排序参数
-     */
-    protected DistanceOrderByParam distanceOrderByParam;
+
     /**
      * 是否查询全部文档
      */
@@ -111,7 +103,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      */
     protected final void initNeed() {
         baseEsParamList = new ArrayList<>();
-        sortParamList = new ArrayList<>();
+        baseSortParams = new ArrayList<>();
         aggregationParamList = new ArrayList<>();
     }
 
@@ -310,8 +302,15 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         }
 
         if (condition) {
-            List<String> fields = Arrays.asList(columns);
-            sortParamList.add(new SortParam(isAsc, fields));
+            Arrays.stream(columns)
+                    .forEach(column -> {
+                        BaseSortParam baseSortParam = BaseSortParam.builder()
+                                .sortField(column)
+                                .sortOrder(isAsc ? SortOrder.ASC : SortOrder.DESC)
+                                .orderTypeEnum(OrderTypeEnum.FIELD)
+                                .build();
+                        baseSortParams.add(baseSortParam);
+                    });
         }
         return typedThis;
     }
@@ -328,13 +327,15 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     public Children orderByDistanceAsc(boolean condition, String column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints) {
         if (ArrayUtils.isNotEmpty(geoPoints)) {
             if (condition) {
-                this.distanceOrderByParam = DistanceOrderByParam.builder()
-                        .fieldName(column)
+                BaseSortParam baseSortParam = BaseSortParam.builder()
+                        .sortField(column)
+                        .sortOrder(SortOrder.ASC)
+                        .orderTypeEnum(OrderTypeEnum.GEO)
                         .geoPoints(geoPoints)
                         .unit(unit)
                         .geoDistance(geoDistance)
-                        .sortOrder(SortOrder.ASC)
                         .build();
+                baseSortParams.add(baseSortParam);
             }
         }
         return typedThis;
@@ -344,13 +345,15 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     public Children orderByDistanceDesc(boolean condition, String column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints) {
         if (ArrayUtils.isNotEmpty(geoPoints)) {
             if (condition) {
-                this.distanceOrderByParam = DistanceOrderByParam.builder()
-                        .fieldName(column)
+                BaseSortParam baseSortParam = BaseSortParam.builder()
+                        .sortField(column)
+                        .sortOrder(SortOrder.DESC)
+                        .orderTypeEnum(OrderTypeEnum.GEO)
                         .geoPoints(geoPoints)
                         .unit(unit)
                         .geoDistance(geoDistance)
-                        .sortOrder(SortOrder.DESC)
                         .build();
+                baseSortParams.add(baseSortParam);
             }
         }
         return typedThis;
@@ -362,7 +365,14 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
             return typedThis;
         }
         if (condition) {
-            this.sortBuilders = sortBuilders;
+            sortBuilders.forEach(sortBuilder -> {
+                BaseSortParam baseSortParam = BaseSortParam
+                        .builder()
+                        .orderTypeEnum(CUSTOMIZE)
+                        .sortBuilder(sortBuilder)
+                        .build();
+                baseSortParams.add(baseSortParam);
+            });
         }
         return typedThis;
     }
@@ -370,7 +380,11 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     @Override
     public Children sortByScore(boolean condition, SortOrder sortOrder) {
         if (condition) {
-            this.sortOrder = sortOrder;
+            BaseSortParam baseSortParam = BaseSortParam.builder()
+                    .sortOrder(sortOrder)
+                    .orderTypeEnum(OrderTypeEnum.SCORE)
+                    .build();
+            baseSortParams.add(baseSortParam);
         }
         return typedThis;
     }
@@ -537,7 +551,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * 封装查询参数(含AND,OR这种连接操作)
      *
      * @param condition 条件
-     * @param consumer      函数
+     * @param consumer  函数
      * @param open      左括号
      * @param close     右括号
      * @return 泛型

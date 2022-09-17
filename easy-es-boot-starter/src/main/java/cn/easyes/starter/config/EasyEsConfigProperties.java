@@ -57,10 +57,6 @@ public class EasyEsConfigProperties {
      * socketTimeout timeUnit:millis  通讯超时时间 单位毫秒
      */
     private Integer socketTimeout;
-    /**
-     * requestTimeout timeUnit:millis  请求超时时间 单位毫秒
-     */
-    private Integer requestTimeout;
     /***
      * 保持心跳时间 timeUnit:millis  单位毫秒
      */

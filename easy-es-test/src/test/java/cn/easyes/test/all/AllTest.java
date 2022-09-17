@@ -602,7 +602,7 @@ public class AllTest {
         wrapper.match(Document::getCreator, "老汉");
         List<OrderByParam> orderByParams = new ArrayList<>();
         OrderByParam orderByParam = new OrderByParam();
-        orderByParam.setOrder("starNum");
+        orderByParam.setOrder("star_num");
         orderByParam.setSort("DESC");
         orderByParams.add(orderByParam);
         wrapper.orderBy(orderByParams);

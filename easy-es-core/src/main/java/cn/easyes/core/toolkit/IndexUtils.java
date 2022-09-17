@@ -391,7 +391,7 @@ public class IndexUtils {
                                 info.put(BaseEsConstants.SEARCH_ANALYZER, indexParam.getSearchAnalyzer().toLowerCase()));
 
                 // 设置是否对text类型进行聚合处理
-                MyOptional.of(indexParam.isFieldData()).ifTrue(isFieldData -> info.put(FIELD_DATA, isFieldData));
+                MyOptional.ofNullable(indexParam.getFieldData()).ifTrue(fieldData -> info.put(FIELD_DATA, fieldData));
             }
 
             // 设置权重
@@ -632,7 +632,7 @@ public class IndexUtils {
         try {
             client.index(indexRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
-            LogUtils.formatError("saveReleaseIndex error, releaseIndexName:{}, e:{}", releaseIndexName, e.toString());
+            LogUtils.formatError("saveReleaseIndex error, releaseIndexName:%s, e:%s", releaseIndexName, e.toString());
         }
     }
 

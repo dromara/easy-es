@@ -2,6 +2,7 @@ package cn.easyes.core.conditions;
 
 import cn.easyes.common.enums.FieldType;
 import cn.easyes.common.params.SFunction;
+import cn.easyes.common.utils.ArrayUtils;
 import cn.easyes.common.utils.StringUtils;
 import cn.easyes.core.biz.EsIndexParam;
 import cn.easyes.core.conditions.interfaces.Index;
@@ -20,10 +21,6 @@ import java.util.Objects;
  **/
 @SuppressWarnings("serial")
 public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaEsIndexWrapper<T>, SFunction<T, ?>> {
-    /**
-     * 索引名称
-     */
-    protected String indexName;
     /**
      * 别名
      */
@@ -77,11 +74,11 @@ public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaE
     }
 
     @Override
-    public LambdaEsIndexWrapper<T> indexName(String indexName) {
-        if (StringUtils.isEmpty(indexName)) {
-            throw new RuntimeException("indexName can not be empty");
+    public LambdaEsIndexWrapper<T> indexName(String... indexNames) {
+        if (ArrayUtils.isEmpty(indexNames)) {
+            throw new RuntimeException("indexNames can not be empty");
         }
-        this.indexName = indexName;
+        this.indexNames = indexNames;
         return typedThis;
     }
 
@@ -117,8 +114,8 @@ public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaE
 
     @Override
     public LambdaEsIndexWrapper<T> createAlias(String aliasName) {
-        if (StringUtils.isEmpty(indexName)) {
-            throw new RuntimeException("indexName can not be empty");
+        if (ArrayUtils.isEmpty(indexNames)) {
+            throw new RuntimeException("indexNames can not be empty");
         }
         if (StringUtils.isEmpty(aliasName)) {
             throw new RuntimeException("aliasName can not be empty");

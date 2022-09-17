@@ -102,14 +102,18 @@ public interface Query<Children, T, R> extends Serializable {
         return index(true, indexName);
     }
 
+    default Children index(String... indexNames) {
+        return index(true, indexNames);
+    }
+
     /**
      * 设置当前查询的索引名称
      *
-     * @param condition 条件
-     * @param indexName 索引名
+     * @param condition  条件
+     * @param indexNames 索引名
      * @return 泛型
      */
-    Children index(boolean condition, String indexName);
+    Children index(boolean condition, String... indexNames);
 
 
     default Children enableMust2Filter(boolean enable) {
