@@ -6,7 +6,7 @@ easy-es:
   password: WG7WVmuNMtM4GwNYkyWH
   keep-alive-millis: 18000
   global-config:
-    process-index-mode: manual
+    process-index-mode: smoothly
     async-process-index-blocking: true
     print-dsl: true
     db-config:

@@ -1,6 +1,5 @@
 package cn.easyes.starter.register;
 
-import cn.easyes.common.utils.ArrayUtils;
 import cn.easyes.core.conditions.interfaces.BaseEsMapper;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;

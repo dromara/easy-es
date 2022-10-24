@@ -719,7 +719,10 @@ public class IndexUtils {
                 LockUtils.release(client, entityClass.getSimpleName().toLowerCase(), BaseEsConstants.LOCK_MAX_RETRY);
             }
         }).exceptionally((throwable) -> {
-            Optional.ofNullable(throwable).ifPresent(e -> LogUtils.error("process index exception", e.toString()));
+            Optional.ofNullable(throwable).ifPresent(e -> {
+                e.printStackTrace();
+                LogUtils.error("process index exception:", e.toString());
+            });
             return Boolean.FALSE;
         }).whenCompleteAsync((success, throwable) -> {
             if (success) {

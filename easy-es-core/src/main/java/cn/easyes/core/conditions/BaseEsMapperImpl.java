@@ -107,6 +107,16 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     }
 
     @Override
+    public Boolean createIndex(String indexName) {
+        EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
+        CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo);
+        if (StringUtils.isNotBlank(indexName)) {
+            createIndexParam.setIndexName(indexName);
+        }
+        return IndexUtils.createIndex(client, entityInfo, createIndexParam);
+    }
+
+    @Override
     public Boolean createIndex(LambdaEsIndexWrapper<T> wrapper) {
         Arrays.stream(wrapper.indexNames).forEach(indexName -> doCreateIndex(wrapper, indexName));
         return Boolean.TRUE;
@@ -518,7 +528,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 更新mapping
         PutMappingRequest putMappingRequest = new PutMappingRequest(indexName);
         if (Objects.isNull(wrapper.mapping)) {
-            Assert.isEmpty(wrapper.esIndexParamList, String.format("update index: %s failed, because of empty update args", indexName));
+            Assert.notEmpty(wrapper.esIndexParamList, String.format("update index: %s failed, because of empty update args", indexName));
             Map<String, Object> mapping = IndexUtils.initMapping(EntityInfoHelper.getEntityInfo(entityClass), wrapper.esIndexParamList);
             putMappingRequest.source(mapping);
         } else {

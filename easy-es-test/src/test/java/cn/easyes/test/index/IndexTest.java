@@ -52,7 +52,7 @@ public class IndexTest {
         wrapper.mapping(Document::getTitle, FieldType.KEYWORD, 2.0f)
                 .mapping(Document::getLocation, FieldType.GEO_POINT)
                 .mapping(Document::getGeoLocation, FieldType.GEO_SHAPE)
-                .mapping(Document::getContent, FieldType.TEXT, Analyzer.IK_SMART, Analyzer.IK_SMART);
+                .mapping(Document::getContent, FieldType.TEXT, Analyzer.IK_SMART, Analyzer.IK_MAX_WORD);
 
         // 0.9.8+版本,增加对符串字段名称的支持,Document实体中须在对应字段上加上@Tablefield(value="wu-la")用于映射此字段值
         wrapper.mapping("wu-la", FieldType.TEXT, Analyzer.IK_MAX_WORD, Analyzer.IK_MAX_WORD);

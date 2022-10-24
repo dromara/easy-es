@@ -4,7 +4,6 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.core.MainResponse;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -26,6 +25,7 @@ public class EEVersionUtils {
      *      <li>如果获取EE本身版本需要打包后获取,在test包测试用例中无法获取</li>
      * </ul>
      *
+     * @param <T>         泛型
      * @param objectClass T.getClass()
      * @return classVersion
      */
@@ -44,12 +44,13 @@ public class EEVersionUtils {
      * @return client version
      */
     public static String getClientVersion(RestHighLevelClient restHighLevelClient) {
-        MainResponse info;
         try {
-            info = restHighLevelClient.info(RequestOptions.DEFAULT);
+            return restHighLevelClient.info(RequestOptions.DEFAULT)
+                    .getVersion()
+                    .getNumber();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LogUtils.formatWarn("get client version error");
         }
-        return info.getVersion().getNumber();
+        return "unknown";
     }
 }

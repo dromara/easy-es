@@ -420,33 +420,53 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         if (ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
-        Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.TERMS, column, column));
+        Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.TERMS, column));
         return typedThis;
     }
 
     @Override
-    public Children termsAggregation(boolean condition, boolean enablePipeline, String returnName, String column) {
-        return doIt(condition, enablePipeline, AggregationTypeEnum.TERMS, returnName, column);
+    public Children termsAggregation(boolean condition, boolean enablePipeline, String... columns) {
+        if (ArrayUtils.isEmpty(columns)) {
+            return typedThis;
+        }
+        Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.TERMS, column));
+        return typedThis;
     }
 
     @Override
-    public Children avg(boolean condition, boolean enablePipeline, String returnName, String column) {
-        return doIt(condition, enablePipeline, AggregationTypeEnum.AVG, returnName, column);
+    public Children avg(boolean condition, boolean enablePipeline, String... columns) {
+        if (ArrayUtils.isEmpty(columns)) {
+            return typedThis;
+        }
+        Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.AVG, column));
+        return typedThis;
     }
 
     @Override
-    public Children min(boolean condition, boolean enablePipeline, String returnName, String column) {
-        return doIt(condition, enablePipeline, AggregationTypeEnum.MIN, returnName, column);
+    public Children min(boolean condition, boolean enablePipeline, String... columns) {
+        if (ArrayUtils.isEmpty(columns)) {
+            return typedThis;
+        }
+        Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.MIN, column));
+        return typedThis;
     }
 
     @Override
-    public Children max(boolean condition, boolean enablePipeline, String returnName, String column) {
-        return doIt(condition, enablePipeline, AggregationTypeEnum.MAX, returnName, column);
+    public Children max(boolean condition, boolean enablePipeline, String... columns) {
+        if (ArrayUtils.isEmpty(columns)) {
+            return typedThis;
+        }
+        Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.MAX, column));
+        return typedThis;
     }
 
     @Override
-    public Children sum(boolean condition, boolean enablePipeline, String returnName, String column) {
-        return doIt(condition, enablePipeline, AggregationTypeEnum.SUM, returnName, column);
+    public Children sum(boolean condition, boolean enablePipeline, String... columns) {
+        if (ArrayUtils.isEmpty(columns)) {
+            return typedThis;
+        }
+        Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.SUM, column));
+        return typedThis;
     }
 
     @Override
@@ -531,15 +551,14 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * @param condition           条件
      * @param enablePipeline      是否管道聚合
      * @param aggregationTypeEnum 聚合类型
-     * @param returnName          返回的聚合字段名称
      * @param column              列
      * @return 泛型
      */
-    private Children doIt(boolean condition, boolean enablePipeline, AggregationTypeEnum aggregationTypeEnum, String returnName, String column) {
+    private Children doIt(boolean condition, boolean enablePipeline, AggregationTypeEnum aggregationTypeEnum, String column) {
         if (condition) {
             AggregationParam aggregationParam = new AggregationParam();
             aggregationParam.setEnablePipeline(enablePipeline);
-            aggregationParam.setName(returnName);
+            aggregationParam.setName(column);
             aggregationParam.setField(column);
             aggregationParam.setAggregationType(aggregationTypeEnum);
             aggregationParamList.add(aggregationParam);

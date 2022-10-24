@@ -37,14 +37,14 @@ public class Assert {
         }
     }
 
-    public static void notEmpty(Object[] array, String message) {
-        if (isEmpty(array)) {
+    public static void isEmpty(Object[] array, String message) {
+        if (!isEmpty(array)) {
             throw new IllegalArgumentException(message);
         }
     }
 
-    public static void isEmpty(Object[] array, String message) {
-        if (!isEmpty(array)) {
+    public static void notEmpty(Object[] array, String message) {
+        if (isEmpty(array)) {
             throw new IllegalArgumentException(message);
         }
     }

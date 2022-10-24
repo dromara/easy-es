@@ -60,6 +60,38 @@ public class AggTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void testTermsFuncAgg() {
+        // 根据标题和副标题聚合,聚合完在该桶中再次根据点赞数聚合
+        // 注意:指定的多个聚合参数为链式聚合,就是第一个聚合参数聚合之后的结果,再根据第二个参数聚合,对应Pipeline聚合
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.eq(Document::getTitle, "老汉")
+                .termsAggregation(Document::getTitle, Document::getSubTitle)
+                .avg(Document::getStarNum, Document::getScore)
+                .min(true, Document::getStarNum, Document::getScore)
+                .max(false, Document::getStarNum, Document::getScore)
+                .sum(false, false, Document::getStarNum, Document::getScore);
+        SearchResponse response = documentMapper.search(wrapper);
+        System.out.println(response);
+    }
+
+    @Test
+    public void testTermsStrAgg() {
+        // 根据标题和副标题聚合,聚合完在该桶中再次根据点赞数聚合
+        // 注意:指定的多个聚合参数为链式聚合,就是第一个聚合参数聚合之后的结果,再根据第二个参数聚合,对应Pipeline聚合
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.eq(Document::getTitle, "老汉")
+                .termsAggregation("title", "subTitle")
+                .avg("starNum", "score")
+                .min(true, "starNum", "score")
+                .max(false, "starNum", "score")
+                .sum(false, false, "starNum", "score");
+        SearchResponse response = documentMapper.search(wrapper);
+        System.out.println(response);
+    }
+
+
+    @Test
     public void testAggNotPipeline() {
         // 对于下面两个字段,如果不想以pipeline管道聚合,各自聚合的结果在各自的桶中展示的话,我们也提供了支持
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();

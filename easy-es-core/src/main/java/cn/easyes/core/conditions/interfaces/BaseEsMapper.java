@@ -54,6 +54,14 @@ public interface BaseEsMapper<T> {
     Boolean createIndex();
 
     /**
+     * 创建索引,根据当前mapper对应实体类信息及其注解配置生成索引信息 可指定索引名进行创建 适用于定时任务按日期创建索引场景
+     *
+     * @param indexName 指定的索引名,会覆盖注解上指定的索引名
+     * @return 是否创建成功
+     */
+    Boolean createIndex(String indexName);
+
+    /**
      * 创建索引
      *
      * @param wrapper 条件
@@ -290,7 +298,7 @@ public interface BaseEsMapper<T> {
     /**
      * 根据 ID 查询
      *
-     * @param id        主键
+     * @param id         主键
      * @param indexNames 指定查询的索引名数组
      * @return 指定的返回对象
      */

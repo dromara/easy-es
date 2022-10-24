@@ -108,7 +108,7 @@ public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaE
 
     @Override
     public LambdaEsIndexWrapper<T> mapping(String column, FieldType fieldType, String analyzer, String searchAnalyzer, String dateFormat, Boolean fieldData, Float boost) {
-        addEsIndexParam(column, fieldType, analyzer, analyzer, dateFormat, fieldData, boost);
+        addEsIndexParam(column, fieldType, analyzer, searchAnalyzer, dateFormat, fieldData, boost);
         return typedThis;
     }
 
