@@ -136,7 +136,8 @@ String indexName = "document";
 
 ## MySQL Easy-Es and Es syntax comparison table
 
-| MySQL | Easy-Es | es-DSL/es java api|
+
+| MySQL | Easy-Es | Es-DSL/Es java api|
 | --- | --- |--- |
 | and | and |must|
 | or | or | should|
