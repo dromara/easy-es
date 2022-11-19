@@ -54,8 +54,13 @@ public class MapperScannerRegister implements ImportBeanDefinitionRegistrar, Res
                     "  |___|  \\__,_|   /__/_   _|__/   _____   |___|   /__/_\n" +
                     "_|\"\"\"\"\"|_|\"\"\"\"\"|_|\"\"\"\"\"|_| \"\"\"\"|_|     |_|\"\"\"\"\"|_|\"\"\"\"\"|\n" +
                     "\"`-0-0-'\"`-0-0-'\"`-0-0-'\"`-0-0-'\"`-0-0-'\"`-0-0-'\"`-0-0-'\n" +
-                    "----------添加老汉微信:252645816,早日成为肌肉猛男----------->");
-            System.out.println(":: easy-es ::                                  (v:" + versionStr + ")");
+                    "------------------------------------------------------>"
+            );
+            System.out.println(":: version   :: " + versionStr + "                                 >");
+            System.out.println(":: home      :: https://easy-es.cn/                   >");
+            System.out.println(":: community :: https://dromara.org/                  >");
+            System.out.println(":: wechat    :: 252645816, add and become muscle man! >");
+            System.out.println("------------------------------------------------------>");
         }
 
         AnnotationAttributes mapperScanAttrs = AnnotationAttributes

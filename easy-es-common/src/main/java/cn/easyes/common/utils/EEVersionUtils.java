@@ -8,6 +8,8 @@ import org.elasticsearch.client.RestHighLevelClient;
 import java.io.IOException;
 import java.util.Optional;
 
+import static cn.easyes.common.constants.BaseEsConstants.UNKNOWN;
+
 /**
  * ee 版本工具类
  *
@@ -31,7 +33,7 @@ public class EEVersionUtils {
      */
     public static <T> String getJarVersion(Class<T> objectClass) {
         return Optional.ofNullable(objectClass.getPackage().getImplementationVersion()).
-                orElse("unknown");
+                orElse(UNKNOWN);
     }
 
     /**

@@ -27,6 +27,10 @@ public class EsIndexInfo {
      */
     private Integer replicasNum;
     /**
+     * 最大返回数
+     */
+    private Integer maxResultWindow;
+    /**
      * 索引字段信息
      */
     private Map<String, Object> mapping;

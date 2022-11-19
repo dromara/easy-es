@@ -1,7 +1,8 @@
 package cn.easyes.core.config;
 
-import cn.easyes.common.enums.FieldStrategy;
-import cn.easyes.common.enums.IdType;
+
+import cn.easyes.annotation.rely.FieldStrategy;
+import cn.easyes.annotation.rely.IdType;
 import cn.easyes.common.enums.ProcessIndexStrategyEnum;
 import cn.easyes.common.enums.RefreshPolicy;
 import lombok.Data;

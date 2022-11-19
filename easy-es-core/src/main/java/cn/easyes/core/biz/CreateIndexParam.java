@@ -35,6 +35,10 @@ public class CreateIndexParam {
      */
     private Integer replicasNum;
     /**
+     * 最大返回数
+     */
+    private Integer maxResultWindow;
+    /**
      * 索引字段及类型分词器等信息
      */
     private List<EsIndexParam> esIndexParamList;

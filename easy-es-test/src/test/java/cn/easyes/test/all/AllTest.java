@@ -1,8 +1,8 @@
 package cn.easyes.test.all;
 
 import cn.easyes.common.constants.BaseEsConstants;
+import cn.easyes.core.biz.EsPageInfo;
 import cn.easyes.core.biz.OrderByParam;
-import cn.easyes.core.biz.PageInfo;
 import cn.easyes.core.biz.SAPageInfo;
 import cn.easyes.core.cache.GlobalConfigCache;
 import cn.easyes.core.conditions.LambdaEsQueryWrapper;
@@ -526,7 +526,7 @@ public class AllTest {
     public void testPageQuery() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉");
-        PageInfo<Document> pageInfo = documentMapper.pageQuery(wrapper, 1, 5);
+        EsPageInfo<Document> pageInfo = documentMapper.pageQuery(wrapper, 1, 5);
         Assertions.assertEquals(5, pageInfo.getSize());
         Assertions.assertEquals(22, pageInfo.getTotal());
     }

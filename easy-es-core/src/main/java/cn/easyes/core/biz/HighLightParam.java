@@ -1,6 +1,6 @@
 package cn.easyes.core.biz;
 
-import cn.easyes.common.enums.HighLightTypeEnum;
+import cn.easyes.annotation.rely.HighLightTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

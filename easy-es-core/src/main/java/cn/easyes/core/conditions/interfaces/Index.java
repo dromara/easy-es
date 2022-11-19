@@ -1,6 +1,6 @@
 package cn.easyes.core.conditions.interfaces;
 
-import cn.easyes.common.enums.FieldType;
+import cn.easyes.annotation.rely.FieldType;
 import cn.easyes.core.toolkit.FieldUtils;
 import org.elasticsearch.common.settings.Settings;
 
@@ -20,6 +20,14 @@ public interface Index<Children, R> extends Serializable {
      * @return 泛型
      */
     Children indexName(String... indexNames);
+
+    /**
+     * 设置最大返回数
+     *
+     * @param maxResultWindow 最大返回数
+     * @return 泛型
+     */
+    Children maxResultWindow(Integer maxResultWindow);
 
     /**
      * 设置索引的分片数和副本数

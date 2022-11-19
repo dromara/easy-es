@@ -1,8 +1,8 @@
 package cn.easyes.core.biz;
 
 import cn.easyes.annotation.IndexField;
-import cn.easyes.common.enums.FieldStrategy;
-import cn.easyes.common.enums.FieldType;
+import cn.easyes.annotation.rely.FieldStrategy;
+import cn.easyes.annotation.rely.FieldType;
 import cn.easyes.core.config.GlobalConfig;
 import com.alibaba.fastjson.serializer.NameFilter;
 import lombok.AccessLevel;
@@ -36,7 +36,7 @@ public class EntityFieldInfo {
      */
     private String mappingColumn;
     /**
-     * 自动在es中的存储类型
+     * 自段在es中的存储类型
      */
     private FieldType fieldType;
     /**

@@ -28,7 +28,7 @@ public class LambdaEsUpdateWrapper<T> extends AbstractLambdaUpdateWrapper<T, Lam
     protected SearchSourceBuilder searchSourceBuilder;
 
     /**
-     * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
+     * 不建议直接 new 该实例，使用 EsWrappers.lambdaQuery(entity)
      */
     public LambdaEsUpdateWrapper() {
         this(null);

@@ -4,10 +4,10 @@ import cn.easyes.annotation.HighLight;
 import cn.easyes.annotation.IndexField;
 import cn.easyes.annotation.IndexId;
 import cn.easyes.annotation.IndexName;
-import cn.easyes.common.constants.Analyzer;
-import cn.easyes.common.enums.FieldStrategy;
-import cn.easyes.common.enums.FieldType;
-import cn.easyes.common.enums.IdType;
+import cn.easyes.annotation.rely.Analyzer;
+import cn.easyes.annotation.rely.FieldStrategy;
+import cn.easyes.annotation.rely.FieldType;
+import cn.easyes.annotation.rely.IdType;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -18,7 +18,7 @@ import lombok.experimental.Accessors;
  **/
 @Data
 @Accessors(chain = true)
-@IndexName(value = "easyes_document", shardsNum = 3, replicasNum = 2, keepGlobalPrefix = true)
+@IndexName(value = "easyes_document", shardsNum = 3, replicasNum = 2, keepGlobalPrefix = true,maxResultWindow = 100)
 public class Document {
     /**
      * es中的唯一id,如果你想自定义es中的id为你提供的id,比如MySQL中的id,请将注解中的type指定为customize或直接在全局配置文件中指定,如此id便支持任意数据类型)

@@ -1,8 +1,8 @@
 package cn.easyes.starter.register;
 
 import cn.easyes.annotation.Intercepts;
+import cn.easyes.annotation.rely.DefaultChildClass;
 import cn.easyes.common.enums.ProcessIndexStrategyEnum;
-import cn.easyes.common.params.DefaultChildClass;
 import cn.easyes.common.utils.LogUtils;
 import cn.easyes.common.utils.TypeUtils;
 import cn.easyes.core.biz.EntityInfo;

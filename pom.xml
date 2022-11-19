@@ -6,7 +6,7 @@
 
     <groupId>cn.easy-es</groupId>
     <artifactId>easy-es</artifactId>
-    <version>1.0.3</version>
+    <version>1.1.0</version>
 
     <name>easy-es</name>
     <description>easy use for elastic search</description>
@@ -19,7 +19,8 @@
 
     <properties>
         <junit.version>5.4.0</junit.version>
-        <spring-boot.version>2.6.10</spring-boot.version>
+<!--        <spring-boot.version>2.6.10</spring-boot.version>-->
+        <spring-boot.version>2.7.0</spring-boot.version>
         <commons-lang3>3.9</commons-lang3>
     </properties>
     <dependencyManagement>

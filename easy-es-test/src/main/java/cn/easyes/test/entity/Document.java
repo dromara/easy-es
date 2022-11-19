@@ -1,12 +1,7 @@
 package cn.easyes.test.entity;
 
 import cn.easyes.annotation.*;
-import cn.easyes.common.constants.Analyzer;
-import cn.easyes.common.enums.FieldStrategy;
-import cn.easyes.common.enums.FieldType;
-import cn.easyes.common.enums.HighLightTypeEnum;
-import cn.easyes.common.enums.IdType;
-import cn.easyes.common.params.JoinField;
+import cn.easyes.annotation.rely.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
 

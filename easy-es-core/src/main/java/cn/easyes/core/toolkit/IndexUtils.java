@@ -1,11 +1,12 @@
 package cn.easyes.core.toolkit;
 
-import cn.easyes.common.constants.Analyzer;
+
+import cn.easyes.annotation.rely.Analyzer;
+import cn.easyes.annotation.rely.DefaultChildClass;
+import cn.easyes.annotation.rely.FieldType;
 import cn.easyes.common.constants.BaseEsConstants;
-import cn.easyes.common.enums.FieldType;
 import cn.easyes.common.enums.JdkDataTypeEnum;
 import cn.easyes.common.enums.ProcessIndexStrategyEnum;
-import cn.easyes.common.params.DefaultChildClass;
 import cn.easyes.common.utils.*;
 import cn.easyes.core.biz.*;
 import cn.easyes.core.cache.GlobalConfigCache;
@@ -45,6 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 
+import static cn.easyes.annotation.rely.AnnotationConstants.DEFAULT_ALIAS;
 import static cn.easyes.common.constants.BaseEsConstants.*;
 
 
@@ -106,6 +108,9 @@ public class IndexUtils {
             Settings.Builder settings = Settings.builder();
             Optional.ofNullable(indexParam.getShardsNum()).ifPresent(shards -> settings.put(BaseEsConstants.SHARDS_FIELD, shards));
             Optional.ofNullable(indexParam.getReplicasNum()).ifPresent(replicas -> settings.put(BaseEsConstants.REPLICAS_FIELD, replicas));
+
+            // 最大返回个数
+            Optional.ofNullable(indexParam.getMaxResultWindow()).ifPresent(maxResultWindow -> settings.put(MAX_RESULT_WINDOW_FIELD, maxResultWindow));
             createIndexRequest.settings(settings);
         } else {
             // 用户自定义settings
@@ -190,18 +195,31 @@ public class IndexUtils {
      * @param indexName 索引名
      */
     public static void addDefaultAlias(RestHighLevelClient client, String indexName) {
+        addAliases(client, indexName, DEFAULT_ALIAS);
+    }
+
+    /**
+     * 添加别名
+     *
+     * @param client    RestHighLevelClient
+     * @param indexName 索引名
+     * @param aliases   别名数组，可以是单个
+     * @return 是否添加成功
+     */
+    public static Boolean addAliases(RestHighLevelClient client, String indexName, String... aliases) {
         IndicesAliasesRequest indicesAliasesRequest = new IndicesAliasesRequest();
         IndicesAliasesRequest.AliasActions aliasActions =
                 new IndicesAliasesRequest.AliasActions(IndicesAliasesRequest.AliasActions.Type.ADD);
         aliasActions.index(indexName);
-        aliasActions.alias(BaseEsConstants.DEFAULT_ALIAS);
+        aliasActions.aliases(aliases);
         indicesAliasesRequest.addAliasAction(aliasActions);
         try {
             client.indices().updateAliases(indicesAliasesRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
             LogUtils.warn("addDefaultAlias exception", e.toString());
+            return Boolean.FALSE;
         }
-
+        return Boolean.TRUE;
     }
 
     /**
@@ -248,12 +266,12 @@ public class IndexUtils {
                 .flatMap(aliases -> Optional.ofNullable(aliases.get(indexName)))
                 .ifPresent(aliasMetadataList ->
                         aliasMetadataList.forEach(aliasMetadata -> {
-                            if (BaseEsConstants.DEFAULT_ALIAS.equals(aliasMetadata.alias())) {
+                            if (DEFAULT_ALIAS.equals(aliasMetadata.alias())) {
                                 esIndexInfo.setHasDefaultAlias(Boolean.TRUE);
                             }
                         }));
 
-        // 设置分片及副本数
+        // 设置分片、副本、最大返回数等
         Optional.ofNullable(getIndexResponse.getSettings())
                 .flatMap(settingsMap -> Optional.ofNullable(settingsMap.get(indexName)))
                 .ifPresent(p -> {
@@ -263,6 +281,9 @@ public class IndexUtils {
                     String replicasNumStr = p.get(BaseEsConstants.REPLICAS_NUM_KEY);
                     Optional.ofNullable(replicasNumStr)
                             .ifPresent(r -> esIndexInfo.setReplicasNum(Integer.parseInt(r)));
+                    String maxResultWindowStr = p.get(MAX_RESULT_WINDOW_FIELD);
+                    Optional.ofNullable(maxResultWindowStr)
+                            .ifPresent(m -> esIndexInfo.setMaxResultWindow(Integer.parseInt(maxResultWindowStr)));
                 });
 
         // 设置mapping信息
@@ -341,7 +362,7 @@ public class IndexUtils {
      * @return 索引mapping
      */
     public static Map<String, Object> initMapping(EntityInfo entityInfo, List<EsIndexParam> indexParamList) {
-        Map<String, Object> mapping = new HashMap<>(1);
+        Map<String, Object> mapping = new HashMap<>(2);
         if (CollectionUtils.isEmpty(indexParamList)) {
             return mapping;
         }
@@ -434,9 +455,9 @@ public class IndexUtils {
      */
     public static boolean changeAliasAtomic(RestHighLevelClient client, String oldIndexName, String releaseIndexName) {
         IndicesAliasesRequest.AliasActions addIndexAction = new IndicesAliasesRequest.AliasActions(
-                IndicesAliasesRequest.AliasActions.Type.ADD).index(releaseIndexName).alias(BaseEsConstants.DEFAULT_ALIAS);
+                IndicesAliasesRequest.AliasActions.Type.ADD).index(releaseIndexName).alias(DEFAULT_ALIAS);
         IndicesAliasesRequest.AliasActions removeAction = new IndicesAliasesRequest.AliasActions(
-                IndicesAliasesRequest.AliasActions.Type.REMOVE).index(oldIndexName).alias(BaseEsConstants.DEFAULT_ALIAS);
+                IndicesAliasesRequest.AliasActions.Type.REMOVE).index(oldIndexName).alias(DEFAULT_ALIAS);
 
         IndicesAliasesRequest indicesAliasesRequest = new IndicesAliasesRequest();
         indicesAliasesRequest.addAliasAction(addIndexAction);
@@ -485,6 +506,7 @@ public class IndexUtils {
         createIndexParam.setShardsNum(entityInfo.getShardsNum());
         createIndexParam.setReplicasNum(entityInfo.getReplicasNum());
         createIndexParam.setIndexName(entityInfo.getIndexName());
+        createIndexParam.setMaxResultWindow(entityInfo.getMaxResultWindow());
 
         // 如果有设置新索引名称,则用新索引名覆盖原索引名进行创建
         Optional.ofNullable(entityInfo.getReleaseIndexName()).ifPresent(createIndexParam::setIndexName);
@@ -563,6 +585,9 @@ public class IndexUtils {
             return Boolean.TRUE;
         }
         if (!entityInfo.getReplicasNum().equals(esIndexInfo.getReplicasNum())) {
+            return Boolean.TRUE;
+        }
+        if (!entityInfo.getMaxResultWindow().equals(esIndexInfo.getMaxResultWindow())) {
             return Boolean.TRUE;
         }
 

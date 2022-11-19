@@ -1,14 +1,15 @@
 package cn.easyes.annotation;
 
 
-import cn.easyes.common.enums.HighLightTypeEnum;
+import cn.easyes.annotation.rely.HighLightTypeEnum;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import static cn.easyes.common.constants.BaseEsConstants.*;
+import static cn.easyes.annotation.rely.AnnotationConstants.*;
+
 
 /**
  * 字段注解
@@ -45,8 +46,10 @@ public @interface HighLight {
      * @return 高亮后置标签
      */
     String postTag() default HIGH_LIGHT_POST_TAG;
+
     /**
      * 使用的高亮模式
+     *
      * @return 高亮模式
      */
     HighLightTypeEnum highLightType() default HighLightTypeEnum.UNIFIED;

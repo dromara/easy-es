@@ -1,13 +1,13 @@
 package cn.easyes.annotation;
 
-import cn.easyes.common.constants.BaseEsConstants;
-import cn.easyes.common.params.DefaultChildClass;
-import cn.easyes.common.params.JoinField;
+import cn.easyes.annotation.rely.DefaultChildClass;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import static cn.easyes.annotation.rely.AnnotationConstants.*;
 
 /**
  * 索引注解
@@ -29,21 +29,28 @@ public @interface IndexName {
      *
      * @return 默认为1
      */
-    int shardsNum() default BaseEsConstants.DEFAULT_SHARDS;
+    int shardsNum() default DEFAULT_SHARDS;
 
     /**
      * 副本数
      *
      * @return 默认为1
      */
-    int replicasNum() default BaseEsConstants.DEFAULT_REPLICAS;
+    int replicasNum() default DEFAULT_REPLICAS;
+
+    /**
+     * 默认最大返回数
+     *
+     * @return 默认1w条
+     */
+    int maxResultWindow() default DEFAULT_MAX_RESULT_WINDOW;
 
     /**
      * 索引别名
      *
      * @return 别名
      */
-    String aliasName() default BaseEsConstants.DEFAULT_ALIAS;
+    String aliasName() default DEFAULT_ALIAS;
 
     /**
      * 是否保持使用全局的 tablePrefix 的值
@@ -67,5 +74,4 @@ public @interface IndexName {
      * @return 默认子类
      */
     Class<?> childClass() default DefaultChildClass.class;
-
 }

@@ -536,7 +536,7 @@ public interface Func<Children, R> extends Serializable {
     }
 
     default Children avg(boolean enablePipeline, String column) {
-        return avg(true, enablePipeline, column, column);
+        return avg(true, enablePipeline, column);
     }
 
     default Children avg(String... columns) {
@@ -570,8 +570,8 @@ public interface Func<Children, R> extends Serializable {
         return min(true, enablePipeline, column);
     }
 
-    default Children min(R... column) {
-        return min(true, true, column);
+    default Children min(R... columns) {
+        return min(true, true, columns);
     }
 
     default Children min(boolean enablePipeline, R... columns) {

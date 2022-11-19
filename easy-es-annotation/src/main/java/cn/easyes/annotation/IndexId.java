@@ -1,6 +1,6 @@
 package cn.easyes.annotation;
 
-import cn.easyes.common.enums.IdType;
+import cn.easyes.annotation.rely.IdType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

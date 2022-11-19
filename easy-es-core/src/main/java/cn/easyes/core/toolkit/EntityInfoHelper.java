@@ -1,9 +1,9 @@
 package cn.easyes.core.toolkit;
 
 import cn.easyes.annotation.*;
-import cn.easyes.common.enums.FieldType;
-import cn.easyes.common.enums.IdType;
-import cn.easyes.common.params.DefaultNestedClass;
+import cn.easyes.annotation.rely.DefaultNestedClass;
+import cn.easyes.annotation.rely.FieldType;
+import cn.easyes.annotation.rely.IdType;
 import cn.easyes.common.utils.ClassUtils;
 import cn.easyes.common.utils.FastJsonUtils;
 import cn.easyes.common.utils.ReflectionKit;
@@ -589,6 +589,7 @@ public class EntityInfoHelper {
             } else {
                 indexName = tableName;
             }
+            entityInfo.setMaxResultWindow(table.maxResultWindow());
             entityInfo.setAliasName(table.aliasName());
             entityInfo.setShardsNum(table.shardsNum());
             entityInfo.setReplicasNum(table.replicasNum());

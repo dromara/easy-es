@@ -1,6 +1,7 @@
 package cn.easyes.core.conditions;
 
-import cn.easyes.common.enums.FieldType;
+
+import cn.easyes.annotation.rely.FieldType;
 import cn.easyes.common.params.SFunction;
 import cn.easyes.common.utils.ArrayUtils;
 import cn.easyes.common.utils.StringUtils;
@@ -9,10 +10,7 @@ import cn.easyes.core.conditions.interfaces.Index;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.settings.Settings;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 索引Lambda表达式
@@ -33,6 +31,10 @@ public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaE
      * 副本数
      */
     protected Integer replicasNum;
+    /**
+     * 最大返回数
+     */
+    protected Integer maxResultWindow;
     /**
      * 用户手动指定的索引mapping信息,优先级最高
      */
@@ -82,6 +84,11 @@ public class LambdaEsIndexWrapper<T> extends Wrapper<T> implements Index<LambdaE
         return typedThis;
     }
 
+    @Override
+    public LambdaEsIndexWrapper<T> maxResultWindow(Integer maxResultWindow) {
+        Optional.ofNullable(maxResultWindow).ifPresent(max -> this.maxResultWindow = maxResultWindow);
+        return typedThis;
+    }
 
     @Override
     public LambdaEsIndexWrapper<T> settings(Integer shards, Integer replicas) {

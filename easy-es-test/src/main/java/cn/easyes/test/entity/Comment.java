@@ -1,11 +1,13 @@
 package cn.easyes.test.entity;
 
+
 import cn.easyes.annotation.IndexField;
 import cn.easyes.annotation.IndexName;
-import cn.easyes.common.constants.Analyzer;
-import cn.easyes.common.enums.FieldType;
-import cn.easyes.common.params.JoinField;
+import cn.easyes.annotation.rely.Analyzer;
+import cn.easyes.annotation.rely.FieldType;
+import cn.easyes.annotation.rely.JoinField;
 import lombok.Data;
+
 
 /**
  * es 评论 数据模型 Document的子文档,Document是其父文档

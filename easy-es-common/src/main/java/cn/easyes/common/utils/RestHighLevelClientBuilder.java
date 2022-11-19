@@ -5,15 +5,21 @@ import lombok.NoArgsConstructor;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 
+import static cn.easyes.common.constants.BaseEsConstants.UNKNOWN;
+
 /**
  * elasticsearch 构造器
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RestHighLevelClientBuilder {
     /**
-     * 支持的版本 目前支持版本为7.xx 推荐7.14.0
+     * 支持的版本 目前支持版本为7.14.0 稳定无漏洞版
      */
-    private final static String supportedVersion = "7";
+    private final static String SUPPORTED_JAR_VERSION = "7.14.0";
+    /**
+     * 支持的客户端版本 目前支持7.xx 推荐7.14.0
+     */
+    private final static String SUPPORTED_CLIENT_VERSION = "7";
 
     /**
      * 构建RestHighLevelClient
@@ -37,19 +43,18 @@ public class RestHighLevelClientBuilder {
         // 校验jar包版本是否为推荐使用版本
         String jarVersion = EEVersionUtils.getJarVersion(restHighLevelClient.getClass());
         LogUtils.formatInfo("Elasticsearch jar version:%s", jarVersion);
-        if (!jarVersion.startsWith(supportedVersion)) {
-            // 这里抛出异常原因是ee强制依赖于jar包版本，jar包版本不对会导致ee异常
-            throw ExceptionUtils.eee("Easy-Es supported elasticsearch jar version is:%s.xx", supportedVersion);
+        if (!jarVersion.equals(SUPPORTED_JAR_VERSION) && !UNKNOWN.equals(jarVersion)) {
+            LogUtils.formatError("Easy-Es supported elasticsearch and restHighLevelClient jar version is:%s ,Please resolve the dependency conflict!", SUPPORTED_JAR_VERSION);
         }
         String clientVersion = EEVersionUtils.getClientVersion(restHighLevelClient);
         LogUtils.formatInfo("Elasticsearch client version:%s", clientVersion);
-        if (!clientVersion.startsWith(supportedVersion)) {
+        if (!clientVersion.startsWith(SUPPORTED_CLIENT_VERSION)) {
             // 这里校验客户端为非强制，客户端版本非推荐版本对应提醒即可，es会报错提醒
-            LogUtils.formatWarn("Easy-Es supported elasticsearch client version is:%s.xx", supportedVersion);
+            LogUtils.formatWarn("Easy-Es supported elasticsearch client version is:%s.xx", SUPPORTED_CLIENT_VERSION);
         }
         if (!jarVersion.equals(clientVersion)) {
             // 提示jar包与客户端版本不对应，es官方推荐jar包版本对应客户端版本
-            LogUtils.formatWarn("Elasticsearch clientVersion:%s not equals jarVersion:%s", clientVersion, jarVersion);
+            LogUtils.formatWarn("Elasticsearch clientVersion:%s not equals jarVersion:%s, It does not affect your use, but we still recommend keeping it consistent!", clientVersion, jarVersion);
         }
     }
 }

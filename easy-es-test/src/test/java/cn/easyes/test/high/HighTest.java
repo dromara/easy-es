@@ -1,7 +1,7 @@
 package cn.easyes.test.high;
 
+import cn.easyes.core.biz.EsPageInfo;
 import cn.easyes.core.biz.OrderByParam;
-import cn.easyes.core.biz.PageInfo;
 import cn.easyes.core.biz.SAPageInfo;
 import cn.easyes.core.conditions.LambdaEsQueryWrapper;
 import cn.easyes.core.toolkit.EsWrappers;
@@ -122,7 +122,7 @@ public class HighTest {
         // 浅分页,适合数据量少于1w的情况
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getTitle, "老汉");
-        PageInfo<Document> documentPageInfo = documentMapper.pageQuery(wrapper, 1, 10);
+        EsPageInfo<Document> documentPageInfo = documentMapper.pageQuery(wrapper, 2, 10);
         System.out.println(documentPageInfo);
     }
 

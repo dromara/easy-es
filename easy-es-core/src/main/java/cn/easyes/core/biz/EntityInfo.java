@@ -1,8 +1,8 @@
 package cn.easyes.core.biz;
 
+import cn.easyes.annotation.rely.IdType;
+import cn.easyes.annotation.rely.JoinField;
 import cn.easyes.common.constants.BaseEsConstants;
-import cn.easyes.common.enums.IdType;
-import cn.easyes.common.params.JoinField;
 import com.alibaba.fastjson.PropertyNamingStrategy;
 import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
 import com.alibaba.fastjson.serializer.SerializeFilter;
@@ -42,6 +42,10 @@ public class EntityInfo {
      * 重试成功的索引名
      */
     private String retrySuccessIndexName;
+    /**
+     * 最大返回数
+     */
+    private Integer maxResultWindow;
     /**
      * 表映射结果集
      */

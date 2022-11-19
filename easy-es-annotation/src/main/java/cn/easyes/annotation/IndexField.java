@@ -1,10 +1,7 @@
 package cn.easyes.annotation;
 
-import cn.easyes.common.constants.Analyzer;
-import cn.easyes.common.enums.FieldStrategy;
-import cn.easyes.common.enums.FieldType;
-import cn.easyes.common.params.DefaultNestedClass;
-import cn.easyes.common.params.JoinField;
+
+import cn.easyes.annotation.rely.*;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

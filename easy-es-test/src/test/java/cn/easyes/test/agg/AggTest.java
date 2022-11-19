@@ -1,6 +1,6 @@
 package cn.easyes.test.agg;
 
-import cn.easyes.core.biz.PageInfo;
+import cn.easyes.core.biz.EsPageInfo;
 import cn.easyes.core.conditions.LambdaEsQueryWrapper;
 import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Document;
@@ -29,7 +29,7 @@ public class AggTest {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq(Document::getTitle, "老汉")
                 .distinct(Document::getSubTitle);
-        PageInfo<Document> pageInfo = documentMapper.pageQuery(wrapper, 1, 10);
+        EsPageInfo<Document> pageInfo = documentMapper.pageQuery(wrapper, 1, 10);
         System.out.println(pageInfo);
     }
 

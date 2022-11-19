@@ -34,18 +34,7 @@ public interface BaseEsConstants {
      * 数字-1
      */
     Integer MINUS_ONE = -1;
-    /**
-     * 默认索引别名
-     */
-    String DEFAULT_ALIAS = "ee_default_alias";
-    /**
-     * 高亮默认前缀标签
-     */
-    String HIGH_LIGHT_PRE_TAG = "<em>";
-    /**
-     * 高亮默认后缀标签
-     */
-    String HIGH_LIGHT_POST_TAG = "</em>";
+
     /**
      * 默认的当前页码
      */
@@ -102,6 +91,10 @@ public interface BaseEsConstants {
      * 副本数量字段
      */
     String REPLICAS_FIELD = "index.number_of_replicas";
+    /**
+     * 最大返回个数字段
+     */
+    String MAX_RESULT_WINDOW_FIELD = "index.max_result_window";
     /**
      * 索引特性
      */
@@ -194,14 +187,7 @@ public interface BaseEsConstants {
      * 初始任务执行延迟
      */
     int INITIAL_DELAY = 30;
-    /**
-     * 默认分片数
-     */
-    int DEFAULT_SHARDS = 1;
-    /**
-     * 默认副本数
-     */
-    int DEFAULT_REPLICAS = 1;
+
     /**
      * 被折叠的重复数据数量的key
      */
@@ -231,12 +217,12 @@ public interface BaseEsConstants {
      */
     String BOOST_KEY = "boost";
     /**
-     * 高亮截取默认长度
-     */
-    int DEFAULT_FRAGMENT_SIZE = 100;
-    /**
      * 针对text进行聚合
      */
     String FIELD_DATA = "fielddata";
+    /**
+     * 未知的版本号
+     */
+    String UNKNOWN = "unknown";
 
 }

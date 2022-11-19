@@ -1,9 +1,9 @@
 package cn.easyes.test.entity;
 
 import cn.easyes.annotation.IndexField;
-import cn.easyes.annotation.IndexName;
-import cn.easyes.common.constants.Analyzer;
-import cn.easyes.common.enums.FieldType;
+
+import cn.easyes.annotation.rely.Analyzer;
+import cn.easyes.annotation.rely.FieldType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

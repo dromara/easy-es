@@ -1,6 +1,6 @@
 package cn.easyes.core.conditions.interfaces;
 
-import cn.easyes.core.biz.PageInfo;
+import cn.easyes.core.biz.EsPageInfo;
 import cn.easyes.core.biz.SAPageInfo;
 import cn.easyes.core.conditions.LambdaEsIndexWrapper;
 import cn.easyes.core.conditions.LambdaEsQueryWrapper;
@@ -137,7 +137,7 @@ public interface BaseEsMapper<T> {
      * @param pageSize 每页条数
      * @return 指定的返回类型
      */
-    PageInfo<T> pageQuery(LambdaEsQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
+    EsPageInfo<T> pageQuery(LambdaEsQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
 
     /**
      * searchAfter类型分页

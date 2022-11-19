@@ -1,7 +1,7 @@
 package cn.easyes.test.other;
 
+import cn.easyes.annotation.rely.FieldType;
 import cn.easyes.common.constants.BaseEsConstants;
-import cn.easyes.common.enums.FieldType;
 import cn.easyes.core.conditions.LambdaEsIndexWrapper;
 import cn.easyes.core.conditions.LambdaEsQueryWrapper;
 import cn.easyes.core.toolkit.EntityInfoHelper;
