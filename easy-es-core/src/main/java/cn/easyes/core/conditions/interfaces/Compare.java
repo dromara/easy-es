@@ -6,6 +6,7 @@ import org.elasticsearch.index.query.Operator;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiPredicate;
 
@@ -249,6 +250,151 @@ public interface Compare<Children, R> extends Serializable {
      */
     Children nestedMatch(boolean condition, String path, String column, Object val, ScoreMode scoreMode, Float boost);
 
+    default Children nestedEq(R path, String column, Object val) {
+        return nestedEq(true, path, column, val, ScoreMode.Avg, DEFAULT_BOOST);
+    }
+
+    default Children nestedEq(R path, String column, Object val, ScoreMode scoreMode) {
+        return nestedEq(true, path, column, val, scoreMode, DEFAULT_BOOST);
+    }
+
+    default Children nestedEq(boolean condition, R path, String column, Object val) {
+        return nestedEq(condition, path, column, val, ScoreMode.Avg, DEFAULT_BOOST);
+    }
+
+    default Children nestedEq(boolean condition, R path, String column, Object val, Float boost) {
+        return nestedEq(condition, path, column, val, ScoreMode.Avg, boost);
+    }
+
+    default Children nestedEq(R path, String column, Object val, Float boost) {
+        return nestedEq(true, path, column, val, ScoreMode.Avg, boost);
+    }
+
+    default Children nestedEq(boolean condition, R path, String column, Object val, ScoreMode scoreMode) {
+        return nestedEq(condition, path, column, val, scoreMode, DEFAULT_BOOST);
+    }
+
+    default Children nestedEq(R path, String column, Object val, ScoreMode scoreMode, Float boost) {
+        return nestedEq(true, path, column, val, scoreMode, boost);
+    }
+
+    default Children nestedEq(boolean condition, R path, String column, Object val, ScoreMode scoreMode, Float boost) {
+        return nestedEq(condition, FieldUtils.getFieldName(path), column, val, scoreMode, boost);
+    }
+
+    default Children nestedEq(String path, String column, Object val) {
+        return nestedEq(true, path, column, val, ScoreMode.Avg, DEFAULT_BOOST);
+    }
+
+    default Children nestedEq(String path, String column, Object val, ScoreMode scoreMode) {
+        return nestedEq(true, path, column, val, scoreMode, DEFAULT_BOOST);
+    }
+
+    default Children nestedEq(boolean condition, String path, String column, Object val) {
+        return nestedEq(condition, path, column, val, ScoreMode.Avg, DEFAULT_BOOST);
+    }
+
+    default Children nestedEq(boolean condition, String path, String column, Object val, Float boost) {
+        return nestedEq(condition, path, column, val, ScoreMode.Avg, boost);
+    }
+
+    default Children nestedEq(String path, String column, Object val, Float boost) {
+        return nestedEq(true, path, column, val, ScoreMode.Avg, boost);
+    }
+
+    default Children nestedEq(boolean condition, String path, String column, Object val, ScoreMode scoreMode) {
+        return nestedEq(condition, path, column, val, scoreMode, DEFAULT_BOOST);
+    }
+
+    default Children nestedEq(String path, String column, Object val, ScoreMode scoreMode, Float boost) {
+        return nestedEq(true, path, column, val, scoreMode, boost);
+    }
+
+    /**
+     * 嵌套查询 嵌套层级大于1级时适用
+     *
+     * @param condition 条件
+     * @param path      路径
+     * @param column    列名
+     * @param val       值
+     * @param scoreMode 得分模式
+     * @param boost     权重
+     * @return 泛型
+     */
+    Children nestedEq(boolean condition, String path, String column, Object val, ScoreMode scoreMode, Float boost);
+
+    default Children nestedIn(R path, String column, Collection<?> coll) {
+        return nestedIn(true, path, column, coll, ScoreMode.Avg, DEFAULT_BOOST);
+    }
+
+    default Children nestedIn(R path, String column, Collection<?> coll, ScoreMode scoreMode) {
+        return nestedIn(true, path, column, coll, scoreMode, DEFAULT_BOOST);
+    }
+
+    default Children nestedIn(boolean condition, R path, String column, Collection<?> coll) {
+        return nestedIn(condition, path, column, coll, ScoreMode.Avg, DEFAULT_BOOST);
+    }
+
+    default Children nestedIn(boolean condition, R path, String column, Collection<?> coll, Float boost) {
+        return nestedIn(condition, path, column, coll, ScoreMode.Avg, boost);
+    }
+
+    default Children nestedIn(R path, String column, Collection<?> coll, Float boost) {
+        return nestedIn(true, path, column, coll, ScoreMode.Avg, boost);
+    }
+
+    default Children nestedIn(boolean condition, R path, String column, Collection<?> coll, ScoreMode scoreMode) {
+        return nestedIn(condition, path, column, coll, scoreMode, DEFAULT_BOOST);
+    }
+
+    default Children nestedIn(R path, String column, Collection<?> coll, ScoreMode scoreMode, Float boost) {
+        return nestedIn(true, path, column, coll, scoreMode, boost);
+    }
+
+    default Children nestedIn(boolean condition, R path, String column, Collection<?> coll, ScoreMode scoreMode, Float boost) {
+        return nestedIn(condition, FieldUtils.getFieldName(path), column, coll, scoreMode, boost);
+    }
+
+    default Children nestedIn(String path, String column, Collection<?> coll) {
+        return nestedIn(true, path, column, coll, ScoreMode.Avg, DEFAULT_BOOST);
+    }
+
+    default Children nestedIn(String path, String column, Collection<?> coll, ScoreMode scoreMode) {
+        return nestedIn(true, path, column, coll, scoreMode, DEFAULT_BOOST);
+    }
+
+    default Children nestedIn(boolean condition, String path, String column, Collection<?> coll) {
+        return nestedIn(condition, path, column, coll, ScoreMode.Avg, DEFAULT_BOOST);
+    }
+
+    default Children nestedIn(boolean condition, String path, String column, Collection<?> coll, Float boost) {
+        return nestedIn(condition, path, column, coll, ScoreMode.Avg, boost);
+    }
+
+    default Children nestedIn(String path, String column, Collection<?> coll, Float boost) {
+        return nestedIn(true, path, column, coll, ScoreMode.Avg, boost);
+    }
+
+    default Children nestedIn(boolean condition, String path, String column, Collection<?> coll, ScoreMode scoreMode) {
+        return nestedIn(condition, path, column, coll, scoreMode, DEFAULT_BOOST);
+    }
+
+    default Children nestedIn(String path, String column, Collection<?> coll, ScoreMode scoreMode, Float boost) {
+        return nestedIn(true, path, column, coll, scoreMode, boost);
+    }
+
+    /**
+     * 嵌套查询 嵌套层级大于1级时适用
+     *
+     * @param condition 条件
+     * @param path      路径
+     * @param column    列名
+     * @param coll      值
+     * @param scoreMode 得分模式
+     * @param boost     权重
+     * @return 泛型
+     */
+    Children nestedIn(boolean condition, String path, String column, Collection<?> coll, ScoreMode scoreMode, Float boost);
 
     default Children hasChild(String type, String column, Object val) {
         return hasChild(true, type, column, val, ScoreMode.Avg, DEFAULT_BOOST);

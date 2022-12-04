@@ -172,6 +172,19 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
+    public Children nestedEq(boolean condition, String path, String column, Object val, ScoreMode scoreMode, Float boost) {
+        return doIt(condition, TERM_QUERY, MUST, NESTED, path, column, val, scoreMode, boost);
+    }
+
+    @Override
+    public Children nestedIn(boolean condition, String path, String column, Collection<?> coll, ScoreMode scoreMode, Float boost) {
+        if (CollectionUtils.isEmpty(coll)) {
+            return typedThis;
+        }
+        return doIt(condition, TERMS_QUERY, MUST, NESTED, path, column, coll, scoreMode, boost);
+    }
+
+    @Override
     public Children hasChild(boolean condition, String type, String column, Object val, ScoreMode scoreMode, Float boost) {
         return doIt(condition, MATCH_QUERY, MUST, HAS_CHILD, type, column, val, scoreMode, boost);
     }

@@ -57,12 +57,32 @@ public class EsQueryTypeUtil {
         if (Objects.equals(queryType, EsQueryTypeEnum.TERM_QUERY.getType())) {
             // 封装精确查询参数
             TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery(field, value).boost(boost);
-            setQueryBuilder(boolQueryBuilder, attachType, originalAttachType, enableMust2Filter, termQueryBuilder);
+            if (StringUtils.isBlank(path)) {
+                setQueryBuilder(boolQueryBuilder, attachType, originalAttachType, enableMust2Filter, termQueryBuilder);
+            } else {
+                // 嵌套类型及父子类型处理
+                path = FieldUtils.getRealField(path, entityInfo.getMappingColumnMap(), dbConfig);
+                if (JoinTypeEnum.NESTED.equals(model.getExt())) {
+                    termQueryBuilder = QueryBuilders.termQuery(path + PATH_FIELD_JOIN + field, value).boost(boost);
+                    NestedQueryBuilder nestedQueryBuilder = QueryBuilders.nestedQuery(path, QueryBuilders.boolQuery().must(termQueryBuilder), (ScoreMode) model.getScoreMode());
+                    setQueryBuilder(boolQueryBuilder, attachType, originalAttachType, enableMust2Filter, nestedQueryBuilder);
+                }
+            }
         } else if (Objects.equals(queryType, EsQueryTypeEnum.TERMS_QUERY.getType())) {
             // 此处兼容由or转入shouldList的in参数
             Collection<?> values = Objects.isNull(value) ? model.getValues() : (Collection<?>) value;
             TermsQueryBuilder termsQueryBuilder = QueryBuilders.termsQuery(field, values).boost(boost);
-            setQueryBuilder(boolQueryBuilder, attachType, originalAttachType, enableMust2Filter, termsQueryBuilder);
+            if (StringUtils.isBlank(path)) {
+                setQueryBuilder(boolQueryBuilder, attachType, originalAttachType, enableMust2Filter, termsQueryBuilder);
+            } else {
+                // 嵌套类型及父子类型处理
+                path = FieldUtils.getRealField(path, entityInfo.getMappingColumnMap(), dbConfig);
+                if (JoinTypeEnum.NESTED.equals(model.getExt())) {
+                    termsQueryBuilder = QueryBuilders.termsQuery(path + PATH_FIELD_JOIN + field, values).boost(boost);
+                    NestedQueryBuilder nestedQueryBuilder = QueryBuilders.nestedQuery(path, QueryBuilders.boolQuery().must(termsQueryBuilder), (ScoreMode) model.getScoreMode());
+                    setQueryBuilder(boolQueryBuilder, attachType, originalAttachType, enableMust2Filter, nestedQueryBuilder);
+                }
+            }
         } else if (Objects.equals(queryType, EsQueryTypeEnum.MATCH_PHRASE.getType())) {
             // 封装模糊分词查询参数(分词必须按原关键词顺序)
             MatchPhraseQueryBuilder matchPhraseQueryBuilder = QueryBuilders.matchPhraseQuery(field, value).boost(boost);

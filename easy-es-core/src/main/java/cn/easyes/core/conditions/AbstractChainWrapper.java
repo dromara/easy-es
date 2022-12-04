@@ -117,6 +117,18 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
+    public Children nestedEq(boolean condition, String path, String column, Object val, ScoreMode scoreMode, Float boost) {
+        getWrapper().nestedEq(condition, path, column, val, scoreMode, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children nestedIn(boolean condition, String path, String column, Collection<?> coll, ScoreMode scoreMode, Float boost) {
+        getWrapper().nestedIn(condition, path, column, coll, scoreMode, boost);
+        return typedThis;
+    }
+
+    @Override
     public Children matchPhrase(boolean condition, R column, Object val, Float boost) {
         getWrapper().matchPhrase(condition, column, val, boost);
         return typedThis;

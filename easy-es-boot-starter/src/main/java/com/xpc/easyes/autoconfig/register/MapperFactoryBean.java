@@ -18,7 +18,6 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import sun.dc.pr.PRError;
 
 import java.lang.reflect.Proxy;
 import java.util.Map;
