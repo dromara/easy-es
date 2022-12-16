@@ -1,0 +1,6 @@
+# Auto Configure
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  cn.easyes.starter.config.EsAutoConfiguration,\
+  cn.easyes.starter.factory.IndexStrategyFactory,\
+  cn.easyes.starter.service.impl.AutoProcessIndexSmoothlyServiceImpl,\
+  cn.easyes.starter.service.impl.AutoProcessIndexNotSmoothlyServiceImpl

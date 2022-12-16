@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>cn.easy-es</groupId>
+        <artifactId>easy-es-parent</artifactId>
+        <version>1.1.1</version>
+        <relativePath>../easy-es-parent</relativePath>
+    </parent>
+
+    <artifactId>easy-es-extension</artifactId>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>cn.easy-es</groupId>
+            <artifactId>easy-es-annotation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.easy-es</groupId>
+            <artifactId>easy-es-common</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>
