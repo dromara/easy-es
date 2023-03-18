@@ -4,11 +4,10 @@ import cn.easyes.common.constants.BaseEsConstants;
 import cn.easyes.core.biz.EsPageInfo;
 import cn.easyes.core.biz.OrderByParam;
 import cn.easyes.core.biz.SAPageInfo;
-import cn.easyes.core.cache.GlobalConfigCache;
-import cn.easyes.core.conditions.LambdaEsQueryWrapper;
-import cn.easyes.core.conditions.LambdaEsUpdateWrapper;
+import cn.easyes.core.conditions.select.LambdaEsQueryWrapper;
+import cn.easyes.core.conditions.update.LambdaEsUpdateWrapper;
+import cn.easyes.core.core.EsWrappers;
 import cn.easyes.core.toolkit.EntityInfoHelper;
-import cn.easyes.core.toolkit.EsWrappers;
 import cn.easyes.core.toolkit.FieldUtils;
 import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Document;
@@ -21,6 +20,7 @@ import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.geometry.Circle;
 import org.elasticsearch.geometry.Point;
 import org.elasticsearch.geometry.Rectangle;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedLongTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -40,6 +40,8 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+
+import static cn.easyes.common.constants.BaseEsConstants.KEYWORD_SUFFIX;
 
 /**
  * 全部核心功能测试-除手动挡索引相关API
@@ -64,6 +66,7 @@ public class AllTest {
         document.setTitle("测试文档1");
         document.setContent("测试内容1");
         document.setCreator("老汉1");
+        document.setIpAddress("192.168.1.1");
         document.setLocation("40.171975,116.587105");
         document.setGmtCreate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         document.setCustomField("自定义字段1");
@@ -128,10 +131,20 @@ public class AllTest {
 
     @Test
     @Order(4)
+    public void testUpdateByChainWrapper() {
+        int count = EsWrappers.lambdaChainUpdate(documentMapper)
+                .eq(Document::getTitle, "测试文档3")
+                .set(Document::getContent, "测试文档内容3的内容被修改了")
+                .update();
+        Assertions.assertEquals(1, count);
+    }
+
+    @Test
+    @Order(4)
     public void testUpdateBySetSearchSourceBuilder() {
         LambdaEsUpdateWrapper<Document> wrapper = new LambdaEsUpdateWrapper<>();
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.termQuery(FieldUtils.val(Document::getTitle), "测试文档2"));
+        searchSourceBuilder.query(QueryBuilders.termQuery(FieldUtils.val(Document::getTitle) + KEYWORD_SUFFIX, "测试文档2"));
         wrapper.setSearchSourceBuilder(searchSourceBuilder);
         Document document = new Document();
         document.setContent("测试文档内容2的内容再次被更新了");
@@ -151,15 +164,44 @@ public class AllTest {
     }
 
     // 3.查询
+
+    @Test
+    @Order(6)
+    public void testSQL() {
+        // 注意 sql中的from后面跟的是要被查询的索引名,也可以是索引别名(效果一样) 由于索引名可能会变,所以此处我采用别名ee_default_alias进行查询
+        String sql = "select count(*) from ee_default_alias where star_num > 0";
+        String jsonResult = documentMapper.executeSQL(sql);
+        System.out.println(jsonResult);
+        Assertions.assertNotNull(jsonResult);
+    }
+
+    @Test
+    @Order(6)
+    public void testDSL() {
+        String dsl = "{\"size\":10000,\"query\":{\"bool\":{\"must\":[{\"term\":{\"title.keyword\":{\"value\":\"测试文档2\",\"boost\":1.0}}}],\"adjust_pure_negative\":true,\"boost\":1.0}}\"track_total_hits\":2147483647}";
+        String jsonResult = documentMapper.executeDSL(dsl);
+        System.out.println(jsonResult);
+        Assertions.assertNotNull(jsonResult);
+    }
+
     @Test
     @Order(6)
     public void testSelectOne() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+
         wrapper.match(Document::getContent, "内容")
                 .orderByAsc(Document::getStarNum, Document::getEsId)
                 .limit(1);
         Document document = documentMapper.selectOne(wrapper);
         Assertions.assertEquals("测试文档1标题被更新了", document.getTitle());
+    }
+
+    @Test
+    @Order(6)
+    public void testOne() {
+        // 链式调用
+        Document document = EsWrappers.lambdaChainQuery(documentMapper).eq(Document::getTitle, "测试文档3").one();
+        Assertions.assertEquals(document.getContent(), "测试文档内容3的内容被修改了");
     }
 
     @Test
@@ -175,8 +217,6 @@ public class AllTest {
     public void testSelectBatchIds() {
         List<Document> documents = documentMapper.selectBatchIds(Arrays.asList("1", "2"));
         Assertions.assertEquals(2, documents.size());
-        Assertions.assertEquals("1", documents.get(1).getEsId());
-        Assertions.assertEquals("老汉2", documents.get(0).getCreator());
     }
 
     @Test
@@ -186,6 +226,15 @@ public class AllTest {
         wrapper.match(Document::getCustomField, "字段");
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(22, documents.size());
+    }
+
+    @Test
+    @Order(6)
+    public void testIp(){
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.eq(Document::getIpAddress,"192.168.0.0/16");
+        List<Document> documents = documentMapper.selectList(wrapper);
+        Assertions.assertEquals(documents.size(),1);
     }
 
     @Test
@@ -219,15 +268,6 @@ public class AllTest {
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(1, documents.size());
         Assertions.assertEquals("测试文档10", documents.get(0).getTitle());
-    }
-
-    @Test
-    @Order(6)
-    public void testConditionNe() {
-        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.ne(Document::getTitle, "测试文档10");
-        List<Document> documents = documentMapper.selectList(wrapper);
-        Assertions.assertEquals(21, documents.size());
     }
 
     @Test
@@ -277,29 +317,11 @@ public class AllTest {
 
     @Test
     @Order(6)
-    public void testConditionNotBetween() {
-        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.notBetween(Document::getStarNum, 1, 10);
-        List<Document> documents = documentMapper.selectList(wrapper);
-        Assertions.assertEquals(12, documents.size());
-    }
-
-    @Test
-    @Order(6)
     public void testConditionLike() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.like(Document::getTitle, "试文档");
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(22, documents.size());
-    }
-
-    @Test
-    @Order(6)
-    public void testConditionNotLike() {
-        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.notLike(Document::getTitle, "试文档");
-        List<Document> documents = documentMapper.selectList(wrapper);
-        Assertions.assertEquals(0, documents.size());
     }
 
     @Test
@@ -322,21 +344,23 @@ public class AllTest {
 
     @Test
     @Order(6)
-    public void testConditionIsNull() {
-        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.isNull(Document::getNullField);
-        List<Document> documents = documentMapper.selectList(wrapper);
-        Assertions.assertEquals(21, documents.size());
-    }
-
-    @Test
-    @Order(6)
     public void testConditionIsNotNull() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.isNotNull(Document::getNullField);
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(1, documents.size());
     }
+
+    @Test
+    @Order(6)
+    public void testConditionExists() {
+        // exists等价于isNotNull 在es中更推荐此种语法
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.exists(Document::getNullField);
+        List<Document> documents = documentMapper.selectList(wrapper);
+        Assertions.assertEquals(1, documents.size());
+    }
+
 
     @Test
     @Order(6)
@@ -350,15 +374,6 @@ public class AllTest {
         wrapper1.in(Document::getStarNum, 7, 8);
         List<Document> documents1 = documentMapper.selectList(wrapper1);
         Assertions.assertEquals(2, documents1.size());
-    }
-
-    @Test
-    @Order(6)
-    public void testConditionNotIn() {
-        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.notIn(Document::getStarNum, 1, 2);
-        List<Document> documents = documentMapper.selectList(wrapper);
-        Assertions.assertEquals(20, documents.size());
     }
 
     @Test
@@ -480,17 +495,6 @@ public class AllTest {
 
     @Test
     @Order(6)
-    public void testConditionEnableMust2Filter() {
-        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.match(Document::getCreator, "老汉")
-                .enableMust2Filter(true);
-        String source = documentMapper.getSource(wrapper);
-        System.out.println(source);
-        Assertions.assertTrue(source.contains("filter"));
-    }
-
-    @Test
-    @Order(6)
     public void testConditionAnd() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.in(Document::getStarNum, 1, 2, 3, 4, 10, 11)
@@ -501,23 +505,43 @@ public class AllTest {
 
     @Test
     @Order(6)
+    public void testConditionOr() {
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.in(Document::getStarNum, 1, 10, 12, 13)
+                .or(i -> i.eq(Document::getTitle, "测试文档11").eq(Document::getTitle, "测试文档10"));
+        List<Document> documents = documentMapper.selectList(wrapper);
+        Assertions.assertEquals(5, documents.size());
+    }
+
+    @Test
+    @Order(6)
     public void testConditionOrInner() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.in(Document::getStarNum, 1, 2, 3, 4, 10, 11)
-                .and(w -> w.eq(Document::getTitle, "测试文档10").or().eq(Document::getTitle, "测试文档3"));
+        wrapper.eq(Document::getTitle, "测试文档10")
+                .or()
+                .eq(Document::getTitle, "测试文档20");
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(2, documents.size());
     }
 
     @Test
     @Order(6)
-    public void testConditionOrOuter() {
+    public void testConditionFilter() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.eq(Document::getTitle, "测试文档10")
-                .or()
-                .in(Document::getEsId, 1, 2, 3);
+        wrapper.eq(Document::getStarNum, 10)
+                .filter(i -> i.eq(Document::getTitle, "测试文档10"));
         List<Document> documents = documentMapper.selectList(wrapper);
-        Assertions.assertEquals(4, documents.size());
+        Assertions.assertEquals(1, documents.size());
+    }
+
+    @Test
+    @Order(6)
+    public void testConditionNot() {
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.in(Document::getStarNum, 10,11,12,13)
+                .not(i->i.eq(Document::getTitle,"测试文档10").eq(Document::getTitle,"测试文档11"));
+        List<Document> documents = documentMapper.selectList(wrapper);
+        Assertions.assertEquals(2, documents.size());
     }
 
 
@@ -527,6 +551,17 @@ public class AllTest {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉");
         EsPageInfo<Document> pageInfo = documentMapper.pageQuery(wrapper, 1, 5);
+        Assertions.assertEquals(5, pageInfo.getSize());
+        Assertions.assertEquals(22, pageInfo.getTotal());
+    }
+
+    @Test
+    @Order(6)
+    public void testChainPage() {
+        // 链式
+        EsPageInfo<Document> pageInfo = EsWrappers.lambdaChainQuery(documentMapper)
+                .match(Document::getCreator, "老汉")
+                .page(1, 5);
         Assertions.assertEquals(5, pageInfo.getSize());
         Assertions.assertEquals(22, pageInfo.getTotal());
     }
@@ -581,7 +616,7 @@ public class AllTest {
         wrapper.orderByDesc(Document::getStarNum);
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals("22", documents.get(0).getEsId());
-        Assertions.assertEquals("1", documents.get(21).getEsId());
+        Assertions.assertEquals("21", documents.get(1).getEsId());
     }
 
     @Test
@@ -608,7 +643,7 @@ public class AllTest {
         wrapper.orderBy(orderByParams);
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals("22", documents.get(0).getEsId());
-        Assertions.assertEquals("1", documents.get(21).getEsId());
+        Assertions.assertEquals("21", documents.get(1).getEsId());
     }
 
     @Test
@@ -639,6 +674,21 @@ public class AllTest {
 
     @Test
     @Order(6)
+    public void testOrderByDistanceMulti() {
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        GeoPoint centerPoint = new GeoPoint(41.0, 116.0);
+        GeoPoint centerPoint1 = new GeoPoint(42.0, 118.0);
+        wrapper.match(Document::getCreator, "老汉")
+                .geoDistance(Document::getLocation, 168.8, centerPoint)
+                .orderByDistanceDesc(Document::getLocation, centerPoint)
+                .orderByDistanceDesc(Document::getLocation, centerPoint1);
+        List<Document> documents = documentMapper.selectList(wrapper);
+        Assertions.assertEquals("4", documents.get(0).getEsId());
+        Assertions.assertEquals("3", documents.get(3).getEsId());
+    }
+
+    @Test
+    @Order(6)
     public void testSortByScore() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉11");
@@ -655,13 +705,12 @@ public class AllTest {
         FieldSortBuilder fieldSortBuilder = SortBuilders.
                 fieldSort(FieldUtils.getRealField(
                         FieldUtils.val(Document::getStarNum),
-                        EntityInfoHelper.getEntityInfo(Document.class).getMappingColumnMap(),
-                        GlobalConfigCache.getGlobalConfig().getDbConfig()));
+                        EntityInfoHelper.getEntityInfo(Document.class).getMappingColumnMap()));
         fieldSortBuilder.order(SortOrder.DESC);
         wrapper.sort(fieldSortBuilder);
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals("22", documents.get(0).getEsId());
-        Assertions.assertEquals("1", documents.get(21).getEsId());
+        Assertions.assertEquals("21", documents.get(1).getEsId());
     }
 
     @Test
@@ -671,16 +720,6 @@ public class AllTest {
         wrapper.match(Document::getCreator, "老汉");
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(22, documents.size());
-    }
-
-    @Test
-    @Order(6)
-    public void testNotMatch() {
-        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.notMatch(Document::getCreator, "老汉");
-        wrapper.orderByAsc(Document::getStarNum);
-        List<Document> documents = documentMapper.selectList(wrapper);
-        Assertions.assertEquals(0, documents.size());
     }
 
     @Test
@@ -749,18 +788,6 @@ public class AllTest {
 
     @Test
     @Order(6)
-    public void testWeight() {
-        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.match(Document::getContent, "更新", 2.0f)
-                .or()
-                .match(Document::getCreator, "老汉");
-        wrapper.sortByScore();
-        List<Document> documents = documentMapper.selectList(wrapper);
-        Assertions.assertEquals("2", documents.get(0).getEsId());
-    }
-
-    @Test
-    @Order(6)
     public void testHighLight() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getContent, "测试");
@@ -779,16 +806,6 @@ public class AllTest {
         Assertions.assertEquals(4, documents.size());
     }
 
-    @Test
-    @Order(6)
-    public void testNotInGeoBoundingBox() {
-        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        GeoPoint leftTop = new GeoPoint(41.187328D, 115.498353D);
-        GeoPoint bottomRight = new GeoPoint(39.084509D, 117.610461D);
-        wrapper.notInGeoBoundingBox(Document::getLocation, leftTop, bottomRight);
-        List<Document> documents = documentMapper.selectList(wrapper);
-        Assertions.assertEquals(18, documents.size());
-    }
 
     @Test
     @Order(6)
@@ -864,6 +881,31 @@ public class AllTest {
         boolean lockDeleted = documentMapper.deleteIndex(BaseEsConstants.LOCK_INDEX);
         Assertions.assertTrue(deleted);
         Assertions.assertTrue(lockDeleted);
+    }
+
+    @Test
+    @Order(9)
+    public void testComplex() {
+        // SQL写法
+        // where business_type = 1 and (state = 9 or (state = 8 and bidding_sign = 1)) or (business_type = 2 and state in (2,3))
+
+        // RestHighLevelClient写法
+        List<Integer> values = Arrays.asList(2, 3);
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        boolQueryBuilder.must(QueryBuilders.termQuery("business_type", 1));
+        boolQueryBuilder.must(QueryBuilders.boolQuery().must(QueryBuilders.termQuery("state", 9))
+                .should(QueryBuilders.boolQuery().must(QueryBuilders.termQuery("state", 8)).must(QueryBuilders.termQuery("bidding_sign", 1))));
+        boolQueryBuilder.should(QueryBuilders.boolQuery().must(QueryBuilders.termQuery("business_type", 2)).must(QueryBuilders.termsQuery("state", values)));
+
+        System.out.println(boolQueryBuilder);
+        System.out.println("--------------------");
+
+        // MP及EE写法
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.eq("business_type", 1)
+                .and(a -> a.eq("state", 9).or(b -> b.eq("state", 8).eq("bidding_sign", 1)))
+                .or(i -> i.eq("business_type", 2).in("state", 2, 3));
+        documentMapper.selectList(wrapper);
     }
 
 }

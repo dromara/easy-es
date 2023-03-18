@@ -21,8 +21,11 @@ import java.util.Set;
 public class User {
     @IndexField(value = "user_name", fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART)
     private String username;
-    @IndexField(exist = false)
+    @IndexField(fieldType = FieldType.INTEGER)
     private Integer age;
+
+    @IndexField(fieldType = FieldType.KEYWORD)
+    private String password;
     /**
      * 多级嵌套
      */

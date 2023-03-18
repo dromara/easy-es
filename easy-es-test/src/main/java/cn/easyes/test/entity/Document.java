@@ -14,7 +14,7 @@ import java.util.List;
  **/
 @Data
 @Accessors(chain = true)
-@IndexName(value = "easyes_document", shardsNum = 3, replicasNum = 2, keepGlobalPrefix = true, childClass = Comment.class)
+@IndexName(value = "easyes_document", shardsNum = 3, replicasNum = 2, keepGlobalPrefix = true, childClass = Comment.class,routing = "testRouting")
 public class Document {
     /**
      * es中的唯一id,字段名随便起,我这里演示用esId,你也可以用id(推荐),bizId等.
@@ -46,6 +46,11 @@ public class Document {
      */
     @IndexField(fieldType = FieldType.TEXT, fieldData = true)
     private String filedData;
+    /**
+     * ip字段
+     */
+    @IndexField(fieldType = FieldType.IP)
+    private String ipAddress;
     /**
      * 创建时间
      */
@@ -105,4 +110,10 @@ public class Document {
      */
     @Distance(decimalPlaces = 1)
     private Double distance;
+
+    /**
+     * es返回的距离2,有N个排序器就有N个排序返回的距离 参考cn.easyes.test.all.AllTest#testOrderByDistanceMulti
+     */
+    @Distance(decimalPlaces = 2)
+    private Double distance2;
 }

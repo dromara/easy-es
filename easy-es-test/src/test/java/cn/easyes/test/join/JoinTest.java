@@ -1,8 +1,8 @@
 package cn.easyes.test.join;
 
 import cn.easyes.annotation.rely.JoinField;
-import cn.easyes.core.conditions.LambdaEsQueryWrapper;
-import cn.easyes.core.conditions.LambdaEsUpdateWrapper;
+import cn.easyes.core.conditions.select.LambdaEsQueryWrapper;
+import cn.easyes.core.conditions.update.LambdaEsUpdateWrapper;
 import cn.easyes.core.toolkit.FieldUtils;
 import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Comment;

@@ -3,10 +3,11 @@ package cn.easyes.common.utils;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
- * 对JDK提供的Optional的自定义,个人认为其高频api ifPresent没有返回用起来不方便
- * 可避免写过多if-else 提升代码优雅
+ * 对JDK提供的Optional的自定义增强
+ * 可在一定程度上减少代码中出现的if-else 提升代码优雅
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
@@ -47,6 +48,14 @@ public final class MyOptional<T> {
             if (condition) {
                 consumer.accept(value);
             }
+        }
+    }
+
+    public void ifPresent(Consumer<? super T> present, Supplier<?> other) {
+        if (value != null) {
+            present.accept(value);
+        } else {
+            other.get();
         }
     }
 

@@ -19,7 +19,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 import static cn.easyes.common.constants.BaseEsConstants.COLON;
 import static cn.easyes.common.constants.BaseEsConstants.DEFAULT_SCHEMA;
@@ -62,48 +65,35 @@ public class EsAutoConfiguration {
 
         // 转换成 HttpHost 数组
         HttpHost[] httpHost = hostList.toArray(new HttpHost[]{});
+
         // 构建连接对象
         RestClientBuilder builder = RestClient.builder(httpHost);
+        builder.setHttpClientConfigCallback(httpClientBuilder -> {
+            // 设置心跳时间,最大连接数,最大连接路由
+            Optional.ofNullable(easyEsConfigProperties.getKeepAliveMillis()).ifPresent(p -> httpClientBuilder.setKeepAliveStrategy((response, context) -> p));
+            Optional.ofNullable(easyEsConfigProperties.getMaxConnTotal()).ifPresent(httpClientBuilder::setMaxConnTotal);
+            Optional.ofNullable(easyEsConfigProperties.getMaxConnPerRoute()).ifPresent(httpClientBuilder::setMaxConnPerRoute);
 
-        // 设置账号密码最大连接数之类的
-        String username = easyEsConfigProperties.getUsername();
-        String password = easyEsConfigProperties.getPassword();
-        Integer maxConnTotal = easyEsConfigProperties.getMaxConnTotal();
-        Integer maxConnPerRoute = easyEsConfigProperties.getMaxConnPerRoute();
-        Integer keepAliveMillis = easyEsConfigProperties.getKeepAliveMillis();
-        boolean needSetHttpClient = (StringUtils.isNotEmpty(username) && StringUtils.isNotEmpty(password))
-                || (Objects.nonNull(maxConnTotal) || Objects.nonNull(maxConnPerRoute)) || Objects.nonNull(keepAliveMillis);
-        if (needSetHttpClient) {
-            builder.setHttpClientConfigCallback(httpClientBuilder -> {
-                // 设置心跳时间等
-                Optional.ofNullable(keepAliveMillis).ifPresent(p -> httpClientBuilder.setKeepAliveStrategy((response, context) -> p));
-                Optional.ofNullable(maxConnTotal).ifPresent(httpClientBuilder::setMaxConnTotal);
-                Optional.ofNullable(maxConnPerRoute).ifPresent(httpClientBuilder::setMaxConnPerRoute);
-                if (StringUtils.isNotEmpty(username) && StringUtils.isNotEmpty(password)) {
-                    final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-                    // 设置账号密码
-                    credentialsProvider.setCredentials(AuthScope.ANY,
-                            new UsernamePasswordCredentials(easyEsConfigProperties.getUsername(), easyEsConfigProperties.getPassword()));
-                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-                }
-                return httpClientBuilder;
-            });
-        }
+            // 设置账号密码
+            String username = easyEsConfigProperties.getUsername();
+            String password = easyEsConfigProperties.getPassword();
+            if (StringUtils.isNotEmpty(username) && StringUtils.isNotEmpty(password)) {
+                final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                credentialsProvider.setCredentials(AuthScope.ANY,
+                        new UsernamePasswordCredentials(username, password));
+                httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+            }
+            return httpClientBuilder;
+        });
 
         // 设置超时时间之类的
-        Integer connectTimeOut = easyEsConfigProperties.getConnectTimeout();
-        Integer socketTimeOut = easyEsConfigProperties.getSocketTimeout();
-        Integer connectionRequestTimeOut = easyEsConfigProperties.getConnectionRequestTimeout();
-        boolean needSetRequestConfig = Objects.nonNull(connectTimeOut) || Objects.nonNull(connectionRequestTimeOut);
-        if (needSetRequestConfig) {
-            builder.setRequestConfigCallback(requestConfigBuilder -> {
-                Optional.ofNullable(connectTimeOut).ifPresent(requestConfigBuilder::setConnectTimeout);
-                Optional.ofNullable(socketTimeOut).ifPresent(requestConfigBuilder::setSocketTimeout);
-                Optional.ofNullable(connectionRequestTimeOut)
-                        .ifPresent(requestConfigBuilder::setConnectionRequestTimeout);
-                return requestConfigBuilder;
-            });
-        }
+        builder.setRequestConfigCallback(requestConfigBuilder -> {
+            Optional.ofNullable(easyEsConfigProperties.getConnectTimeout()).ifPresent(requestConfigBuilder::setConnectTimeout);
+            Optional.ofNullable(easyEsConfigProperties.getSocketTimeout()).ifPresent(requestConfigBuilder::setSocketTimeout);
+            Optional.ofNullable(easyEsConfigProperties.getConnectionRequestTimeout())
+                    .ifPresent(requestConfigBuilder::setConnectionRequestTimeout);
+            return requestConfigBuilder;
+        });
 
         return RestHighLevelClientBuilder.build(builder);
     }

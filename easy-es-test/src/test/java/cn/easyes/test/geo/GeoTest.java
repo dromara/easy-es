@@ -1,6 +1,6 @@
 package cn.easyes.test.geo;
 
-import cn.easyes.core.conditions.LambdaEsQueryWrapper;
+import cn.easyes.core.conditions.select.LambdaEsQueryWrapper;
 import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Document;
 import cn.easyes.test.mapper.DocumentMapper;

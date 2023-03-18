@@ -11,9 +11,8 @@ easy-es:
     print-dsl: false
     db-config:
       map-underscore-to-camel-case: true
-      #      table-prefix: dev_
+      table-prefix: dev_
       id-type: customize
       field-strategy: not_empty
       refresh-policy: immediate
       enable-track-total-hits: true
-      enable-must2-filter: false

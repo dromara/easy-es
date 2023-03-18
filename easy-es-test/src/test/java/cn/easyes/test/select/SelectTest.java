@@ -2,8 +2,8 @@ package cn.easyes.test.select;
 
 import cn.easyes.common.enums.Link;
 import cn.easyes.common.enums.Query;
-import cn.easyes.core.conditions.LambdaEsQueryWrapper;
-import cn.easyes.core.toolkit.EsWrappers;
+import cn.easyes.core.conditions.select.LambdaEsQueryWrapper;
+import cn.easyes.core.core.EsWrappers;
 import cn.easyes.core.toolkit.QueryUtils;
 import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Document;
@@ -191,5 +191,4 @@ public class SelectTest {
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);
     }
-
 }

@@ -56,10 +56,6 @@ public interface BaseEsConstants {
      */
     String COLON = ":";
     /**
-     * 逗号分隔符
-     */
-    String COMMA_SEPARATOR = ",";
-    /**
      * ee内置es分布式锁索引名称
      */
     String LOCK_INDEX = "ee-distribute-lock";
@@ -136,10 +132,6 @@ public interface BaseEsConstants {
      */
     Integer DEFAULT_SIZE = 10000;
     /**
-     * es默认得分字段
-     */
-    String SCORE_FIELD = "_score";
-    /**
      * DSL语句前缀
      */
     String DSL_PREFIX = "===> Execute By Easy-Es: ";
@@ -201,10 +193,6 @@ public interface BaseEsConstants {
      */
     int DEFAULT_MIN_SHOULD_MATCH = 60;
     /**
-     * 百分比符号
-     */
-    String PERCENT = "%";
-    /**
      * 嵌套类型 path和field连接符
      */
     String PATH_FIELD_JOIN = ".";
@@ -224,5 +212,20 @@ public interface BaseEsConstants {
      * 未知的版本号
      */
     String UNKNOWN = "unknown";
-
+    /**
+     * keyword后缀
+     */
+    String KEYWORD_SUFFIX = ".keyword";
+    /**
+     * 执行SQL x-pack 固定地址
+     */
+    String SQL_ENDPOINT = "/_xpack/sql?format=json";
+    /**
+     * 执行DSL 查询固定地址
+     */
+    String DSL_ENDPOINT = "/_search";
+    /**
+     * 查询
+     */
+    String QUERY = "query";
 }

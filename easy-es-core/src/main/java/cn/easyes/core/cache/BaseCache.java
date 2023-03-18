@@ -4,7 +4,7 @@ import cn.easyes.common.constants.BaseEsConstants;
 import cn.easyes.common.utils.CollectionUtils;
 import cn.easyes.common.utils.ExceptionUtils;
 import cn.easyes.core.biz.EntityInfo;
-import cn.easyes.core.conditions.BaseEsMapperImpl;
+import cn.easyes.core.core.BaseEsMapperImpl;
 import cn.easyes.core.toolkit.EntityInfoHelper;
 import cn.easyes.core.toolkit.FieldUtils;
 import org.elasticsearch.client.RestHighLevelClient;

@@ -1,6 +1,6 @@
 package cn.easyes.sample.controller;
 
-import cn.easyes.core.conditions.LambdaEsQueryWrapper;
+import cn.easyes.core.conditions.select.LambdaEsQueryWrapper;
 import cn.easyes.sample.entity.Document;
 import cn.easyes.sample.mapper.DocumentMapper;
 import org.springframework.web.bind.annotation.GetMapping;

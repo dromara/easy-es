@@ -16,7 +16,6 @@ easy-es:
       field-strategy: not_empty
       refresh-policy: immediate
       enable-track-total-hits: true
-      enable-must2-filter: false
 #logging:
 #  level:
 #   tracer: trace

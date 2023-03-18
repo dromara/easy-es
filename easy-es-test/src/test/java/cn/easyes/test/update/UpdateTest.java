@@ -1,6 +1,6 @@
 package cn.easyes.test.update;
 
-import cn.easyes.core.conditions.LambdaEsUpdateWrapper;
+import cn.easyes.core.conditions.update.LambdaEsUpdateWrapper;
 import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Document;
 import cn.easyes.test.mapper.DocumentMapper;
@@ -51,7 +51,12 @@ public class UpdateTest {
         document2.setCustomField("乌拉巴拉中魔仙");
         documentMapper.update(document2, wrapper);
 
-        // 关于case2 还有另一种省略实体的简单写法,这里不演示,后面章节有介绍,语法与MP一致
+        // 关于case2 另一种省略实体的简单写法,语法与MP一致
+        LambdaEsUpdateWrapper<Document> wrapper3 = new LambdaEsUpdateWrapper<>();
+        wrapper3.eq(Document::getTitle, title1);
+        wrapper3.set(Document::getContent,"推*技术过软")
+                .set(Document::getCustomField,"乌拉巴拉中魔仙");
+        documentMapper.update(null,wrapper);
     }
 
     @Test

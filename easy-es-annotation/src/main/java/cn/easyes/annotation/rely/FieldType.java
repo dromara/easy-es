@@ -1,5 +1,7 @@
 package cn.easyes.annotation.rely;
 
+import java.util.Arrays;
+
 /**
  * Es支持的数据类型枚举
  * <p>
@@ -28,10 +30,19 @@ public enum FieldType {
     KEYWORD("keyword"),
     TEXT("text"),
     KEYWORD_TEXT("keyword&text"),
+    WILDCARD("wildcard"),
     /**
      * mix
      */
+    /**
+     * If it is an array, configure its field type to text, and use match for query，如果是数组，请配置其字段类型为text，查询用match
+     */
+    @Deprecated
     ARRAY("array"),
+    /**
+     * If it is an object, configure its field type as nested, and indicate nested Class，如果是对象，请配置其字段类型为nested，并在@IndexField注解中指明nestedClass
+     */
+    @Deprecated
     OBJECT("object"),
     NESTED("nested"),
     JOIN("join"),
@@ -57,5 +68,18 @@ public enum FieldType {
 
     public String getType() {
         return type;
+    }
+
+    /**
+     * 根据类型字符串获取对应枚举
+     *
+     * @param type 类型字符串
+     * @return 对应枚举
+     */
+    public static FieldType getByType(String type) {
+        return Arrays.stream(FieldType.values())
+                .filter(v -> v.getType().equals(type))
+                .findFirst()
+                .orElse(FieldType.KEYWORD_TEXT);
     }
 }

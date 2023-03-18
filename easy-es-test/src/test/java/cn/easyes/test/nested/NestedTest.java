@@ -1,6 +1,6 @@
 package cn.easyes.test.nested;
 
-import cn.easyes.core.conditions.LambdaEsQueryWrapper;
+import cn.easyes.core.conditions.select.LambdaEsQueryWrapper;
 import cn.easyes.core.toolkit.FieldUtils;
 import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Document;
@@ -54,22 +54,60 @@ public class NestedTest {
         Set<Faq> faqs1 = new HashSet<>();
         faqs1.add(new Faq("问题3", "回答3"));
         faqs1.add(new Faq("问题4", "回答4"));
-        users.add(new User("用户1", 18, faqs));
-        users.add(new User("用户2", 19, faqs1));
+        users.add(new User("用户1", 18, "12345", faqs));
+        users.add(new User("用户2", 19, "123", faqs1));
         document.setUsers(users);
         int successCount = documentMapper.insert(document);
+        Assertions.assertEquals(successCount, 1);
+
+        document.setEsId("6");
+        users.clear();
+        faqs.clear();
+        faqs1.clear();
+        faqs.add(new Faq("question1", "answer1"));
+        faqs.add(new Faq("question2", "answer2"));
+
+        faqs1.add(new Faq("q3", "a3"));
+        faqs1.add(new Faq("q4", "a4"));
+        users.add(new User("user1", 8, "12345", faqs));
+        users.add(new User("u2", 9, "54321", faqs1));
+        document.setUsers(users);
+        successCount = documentMapper.insert(document);
         Assertions.assertEquals(successCount, 1);
     }
 
     @Test
     public void testNestedMatch() {
-        // 嵌套查询 查询内容匹配人才且嵌套数据中用户名匹配"用户"的数据
+        // 嵌套查询 查询年龄等于18或8，且密码等于12345的数据
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.match(Document::getContent, "人才");
-        // 其中嵌套类的字段名称获取我们提供了工具类FieldUtils.val帮助用户通过lambda函数式获取字段名称,当然如果不想用也可以直接传字符串
-        wrapper.nestedMatch(Document::getUsers, FieldUtils.val(User::getUsername), "用户");
-        wrapper.nestedMatch("users.faqs", "faq_name", "问题");
+        wrapper.nested(FieldUtils.val(Document::getUsers), w ->
+                w.in("users.age", 8)
+                        .eq("users.password", "12345"));
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);
+
+        // 嵌套类型中的字段获取可以用FieldUtils.val或直接传入字符串
+        LambdaEsQueryWrapper<Document> wrapper1 = new LambdaEsQueryWrapper<>();
+        wrapper1.eq(Document::getTitle,"老汉")
+                .nested("users.faqs", w -> w.eq("users.faqs.answer", "a4")
+                        .match("users.faqs.faq_name", "q4"))
+                .nested("users", w -> w.between("users.age", 1, 30))
+                .match(Document::getCreator, "吃饭");
+        List<Document> documents1 = documentMapper.selectList(wrapper1);
+        System.out.println(documents1);
+
+        LambdaEsQueryWrapper<Document> wrapper2 = new LambdaEsQueryWrapper<>();
+        wrapper2.nested("users", w -> w.in("users.age", 18))
+                .or()
+                .nested("users.faqs", w -> w.match("users.faqs.faq_name", "q3"));
+        List<Document> documents2 = documentMapper.selectList(wrapper2);
+
+        System.out.println(documents2);
+
+        LambdaEsQueryWrapper<Document> wrapper3 = new LambdaEsQueryWrapper<>();
+        wrapper3.nested("users.faqs",w->w.match("users.faqs.faq_name", "q3").or().match("users.faqs.faq_name","q4"));
+        List<Document> documents3 = documentMapper.selectList(wrapper3);
+        System.out.println(documents3);
     }
+
 }

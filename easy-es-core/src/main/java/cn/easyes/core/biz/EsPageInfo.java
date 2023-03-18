@@ -72,7 +72,7 @@ public class EsPageInfo<T> extends PageSerializable<T> {
     /**
      * 所有导航页号
      */
-    private int[] navigatepageNums;
+    private int[] navigatePageNums;
     /**
      * 导航条上的第一页
      */
@@ -108,12 +108,6 @@ public class EsPageInfo<T> extends PageSerializable<T> {
         this.endRow = list.size() > 0 ? list.size() - 1 : 0;
 
         this.navigatePages = navigatePages;
-        //计算导航页
-        calcNavigatepageNums();
-        //计算前后页，第一页，最后一页
-        calcPage();
-        //判断页面边界
-        judgePageBoudary();
     }
 
     public static <T> EsPageInfo<T> of(List<T> list) {
@@ -127,15 +121,15 @@ public class EsPageInfo<T> extends PageSerializable<T> {
     /**
      * 计算导航页
      */
-    private void calcNavigatepageNums() {
+    public void calcNavigatePageNums() {
         //当总页数小于或等于导航页码数时
         if (pages <= navigatePages) {
-            navigatepageNums = new int[pages];
+            navigatePageNums = new int[pages];
             for (int i = 0; i < pages; i++) {
-                navigatepageNums[i] = i + 1;
+                navigatePageNums[i] = i + 1;
             }
         } else { //当总页数大于导航页码数时
-            navigatepageNums = new int[navigatePages];
+            navigatePageNums = new int[navigatePages];
             int startNum = pageNum - navigatePages / 2;
             int endNum = pageNum + navigatePages / 2;
 
@@ -143,18 +137,18 @@ public class EsPageInfo<T> extends PageSerializable<T> {
                 startNum = 1;
                 //(最前navigatePages页
                 for (int i = 0; i < navigatePages; i++) {
-                    navigatepageNums[i] = startNum++;
+                    navigatePageNums[i] = startNum++;
                 }
             } else if (endNum > pages) {
                 endNum = pages;
                 //最后navigatePages页
                 for (int i = navigatePages - 1; i >= 0; i--) {
-                    navigatepageNums[i] = endNum--;
+                    navigatePageNums[i] = endNum--;
                 }
             } else {
                 //所有中间页
                 for (int i = 0; i < navigatePages; i++) {
-                    navigatepageNums[i] = startNum++;
+                    navigatePageNums[i] = startNum++;
                 }
             }
         }
@@ -163,10 +157,10 @@ public class EsPageInfo<T> extends PageSerializable<T> {
     /**
      * 计算前后页，第一页，最后一页
      */
-    private void calcPage() {
-        if (navigatepageNums != null && navigatepageNums.length > 0) {
-            navigateFirstPage = navigatepageNums[0];
-            navigateLastPage = navigatepageNums[navigatepageNums.length - 1];
+    public void calcPage() {
+        if (navigatePageNums != null && navigatePageNums.length > 0) {
+            navigateFirstPage = navigatePageNums[0];
+            navigateLastPage = navigatePageNums[navigatePageNums.length - 1];
             if (pageNum > 1) {
                 prePage = pageNum - 1;
             }
@@ -179,10 +173,9 @@ public class EsPageInfo<T> extends PageSerializable<T> {
     /**
      * 判定页面边界
      */
-    private void judgePageBoudary() {
+    public void judgePageBoundary() {
         isFirstPage = pageNum == 1;
         isLastPage = pageNum == pages || pages == 0;
-        ;
         hasPreviousPage = pageNum > 1;
         hasNextPage = pageNum < pages;
     }
@@ -203,7 +196,7 @@ public class EsPageInfo<T> extends PageSerializable<T> {
                 ", hasPreviousPage=" + hasPreviousPage +
                 ", hasNextPage=" + hasNextPage +
                 ", navigatePages=" + navigatePages +
-                ", navigatepageNums=" + Arrays.toString(navigatepageNums) +
+                ", navigatepageNums=" + Arrays.toString(navigatePageNums) +
                 ", navigateFirstPage=" + navigateFirstPage +
                 ", navigateLastPage=" + navigateLastPage +
                 ", total=" + total +

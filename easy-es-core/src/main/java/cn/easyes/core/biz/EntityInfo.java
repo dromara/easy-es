@@ -14,6 +14,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static cn.easyes.annotation.rely.AnnotationConstants.DEFAULT_MAX_RESULT_WINDOW;
+
 /**
  * 实体类信息
  * <p>
@@ -35,6 +37,10 @@ public class EntityInfo {
      */
     private String indexName;
     /**
+     * 配置的路由
+     */
+    private String routing;
+    /**
      * 新索引名(由EE在更新索引时自动创建)
      */
     private String releaseIndexName;
@@ -45,7 +51,7 @@ public class EntityInfo {
     /**
      * 最大返回数
      */
-    private Integer maxResultWindow;
+    private Integer maxResultWindow = DEFAULT_MAX_RESULT_WINDOW;
     /**
      * 表映射结果集
      */
@@ -79,17 +85,13 @@ public class EntityInfo {
      */
     private int scoreDecimalPlaces = 0;
     /**
-     * 距离字段名
+     * 距离字段名列表
      */
-    private String distanceField;
+    private List<String> distanceFields = new ArrayList<>();
     /**
-     * 距离保留小数位,默认不处理,保持es返回值,效率更高
+     * 距离保留小数位 每个排序器可自定义其保留位数,默认不处理,保持es返回值,效率更高
      */
-    private int distanceDecimalPlaces = 0;
-    /**
-     * 排序字段在sortBuilders中的位置, 默认为0
-     */
-    private int sortBuilderIndex = 0;
+    private List<Integer> distanceDecimalPlaces = new ArrayList<>();
     /**
      * join字段名称
      */
@@ -135,6 +137,10 @@ public class EntityInfo {
      */
     private final Map<String, String> highlightFieldMap = new HashMap<>();
     /**
+     * 实体字段名->es字段类型
+     */
+    private final Map<String, String> fieldTypeMap = new HashMap<>();
+    /**
      * 实体字段->es实际字段映射
      */
     private final Map<String, String> mappingColumnMap = new HashMap<>();
@@ -154,6 +160,10 @@ public class EntityInfo {
      * 嵌套类型 path和class对应关系
      */
     private final Map<String, Class<?>> pathClassMap = new HashMap<>();
+    /**
+     * 嵌套类型 实体字段名->字段类型
+     */
+    private final Map<Class<?>, Map<String, String>> nestedClassFieldTypeMap = new HashMap<>();
     /**
      * 嵌套类型 实体字段->es实际字段映射
      */

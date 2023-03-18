@@ -101,7 +101,6 @@ public class IndexUtils {
      */
     public static boolean createIndex(RestHighLevelClient client, EntityInfo entityInfo, CreateIndexParam indexParam) {
         CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexParam.getIndexName());
-
         // 设置settings信息
         if (Objects.isNull(indexParam.getSettings())) {
             // 分片个副本信息
@@ -119,10 +118,11 @@ public class IndexUtils {
 
         // mapping信息
         if (Objects.isNull(indexParam.getMapping())) {
+            // 用户未指定mapping 根据注解自动推断
             Map<String, Object> mapping = initMapping(entityInfo, indexParam.getEsIndexParamList());
             createIndexRequest.mapping(mapping);
         } else {
-            // 用户自定义的mapping
+            // 用户自定义的mapping优先级NO.1
             createIndexRequest.mapping(indexParam.getMapping());
         }
 
@@ -237,7 +237,8 @@ public class IndexUtils {
         reindexRequest.setDestOpType(BaseEsConstants.DEFAULT_DEST_OP_TYPE);
         reindexRequest.setConflicts(BaseEsConstants.DEFAULT_CONFLICTS);
         reindexRequest.setRefresh(Boolean.TRUE);
-        reindexRequest.setTimeout(TimeValue.MAX_VALUE);
+        int reindexTimeOutHours = GlobalConfigCache.getGlobalConfig().getReindexTimeOutHours();
+        reindexRequest.setTimeout(TimeValue.timeValueHours(reindexTimeOutHours));
         try {
             BulkByScrollResponse response = client.reindex(reindexRequest, RequestOptions.DEFAULT);
             List<BulkItemResponse.Failure> bulkFailures = response.getBulkFailures();
@@ -334,7 +335,7 @@ public class IndexUtils {
             case BIG_DECIMAL:
             case STRING:
             case CHAR:
-                type = FieldType.KEYWORD.getType();
+                type = FieldType.KEYWORD_TEXT.getType();
                 break;
             case BOOLEAN:
                 type = FieldType.BOOLEAN.getType();
@@ -348,7 +349,7 @@ public class IndexUtils {
                 type = FieldType.TEXT.getType();
                 break;
             default:
-                return FieldType.KEYWORD.getType();
+                return FieldType.KEYWORD_TEXT.getType();
         }
         return type;
     }

@@ -3,19 +3,19 @@ package cn.easyes.test.index;
 
 import cn.easyes.annotation.rely.Analyzer;
 import cn.easyes.annotation.rely.FieldType;
-import cn.easyes.core.conditions.LambdaEsIndexWrapper;
+import cn.easyes.core.conditions.index.LambdaEsIndexWrapper;
 import cn.easyes.test.TestEasyEsApplication;
 import cn.easyes.test.entity.Document;
 import cn.easyes.test.mapper.DocumentMapper;
-import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexResponse;
-import org.elasticsearch.common.settings.Settings;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -127,5 +127,11 @@ public class IndexTest {
         wrapper.mapping(map);
         boolean isOk = documentMapper.createIndex(wrapper);
         Assertions.assertTrue(isOk);
+    }
+
+    @Test
+    public void testActiveIndex(){
+        String indexName = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        documentMapper.setCurrentActiveIndex(indexName);
     }
 }

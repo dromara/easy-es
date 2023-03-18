@@ -74,4 +74,11 @@ public @interface IndexName {
      * @return 默认子类
      */
     Class<?> childClass() default DefaultChildClass.class;
+
+    /**
+     * 路由
+     *
+     * @return CRUD作用的路由
+     */
+    String routing() default "";
 }

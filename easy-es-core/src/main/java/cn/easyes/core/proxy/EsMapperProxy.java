@@ -1,7 +1,7 @@
 package cn.easyes.core.proxy;
 
 import cn.easyes.core.cache.BaseCache;
-import cn.easyes.core.conditions.BaseEsMapperImpl;
+import cn.easyes.core.core.BaseEsMapperImpl;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;

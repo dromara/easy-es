@@ -26,6 +26,10 @@ public class GlobalConfig {
      */
     private ProcessIndexStrategyEnum processIndexMode = ProcessIndexStrategyEnum.SMOOTHLY;
     /**
+     * Rebuild index timeout unit: hour, default: 72 重建索引超时时间 单位小时,默认72
+     */
+    private int reindexTimeOutHours = 72;
+    /**
      * process index blocking main thread true by default 异步处理索引是否阻塞主线程 默认阻塞
      */
     private boolean asyncProcessIndexBlocking = true;
@@ -35,15 +39,14 @@ public class GlobalConfig {
     private boolean distributed = true;
     /**
      * Activate the current client's release index maximum number of retries
-     * 分布式环境下,平滑模式,当前客户端激活最新索引最大重试次数若数据量过大,重建索引数据迁移时间超过60*(180/60)=180分钟时,可调大此参数值,此参数值决定最大重试次数,超出此次数后仍未成功,则终止重试并记录异常日志
+     * 分布式环境下,平滑模式,当前客户端激活最新索引最大重试次数,若数据量过大,重建索引数据迁移时间超过4320/60=72H,可调大此参数值,此参数值决定最大重试次数,超出此次数后仍未成功,则终止重试并记录异常日志
      */
-    private int activeReleaseIndexMaxRetry = 60;
+    private int activeReleaseIndexMaxRetry = 4320;
     /**
      * Activate the current client's release index retry delay for a fixed time uint:second
-     * 分布式环境下,平滑模式,当前客户端激活最新索引最大重试次数 若数据量过大,重建索引数据迁移时间超过60*(180/60)=180分钟时,可调大此参数值 此参数值决定多久重试一次 单位:秒
+     * 分布式环境下,平滑模式,当前客户端激活最新索引重试时间间隔 若您期望最终一致性的时效性更高,可调小此值,但会牺牲一些性能
      */
-    private int activeReleaseIndexFixedDelay = 180;
-
+    private int activeReleaseIndexFixedDelay = 60;
     /**
      * es db config 数据库配置
      */
@@ -58,11 +61,11 @@ public class GlobalConfig {
         /**
          * index prefix eg:daily_, 索引前缀 可缺省
          */
-        private String tablePrefix = EMPTY_STR;
+        private String indexPrefix = EMPTY_STR;
         /**
          * enable underscore to camel case default false 是否开启下划线自动转驼峰 默认关闭
          */
-        private boolean mapUnderscoreToCamelCase = false;
+        private boolean mapUnderscoreToCamelCase;
         /**
          * es id generate type. es id生成类型 默认由es自动生成
          */
@@ -80,12 +83,12 @@ public class GlobalConfig {
          */
         private RefreshPolicy refreshPolicy = RefreshPolicy.NONE;
         /**
-         * must convert to filter must by default, must 条件转filter 默认不转换
-         */
-        private boolean enableMust2Filter = false;
-        /**
          * Batch update threshold 10000 by default 批量更新阈值 默认值为1万
          */
         private Integer batchUpdateThreshold = 10000;
+        /**
+         * Whether to intelligently add the. keyword suffix to the field. This configuration is enabled by default. The field type is KEYWORD only for annotation configuration_ The String field of TEXT or unconfigured type takes effect and only takes effect when the query requires that the field be of keyword type, so it is called smart! 是否智能为字段添加.keyword后缀 默认开启 此配置仅对注解配置字段类型为KEYWORD_TEXT或未配置类型的String字段生效，并且只会在查询要求该字段必须为keyword类型的查询中才生效，因此谓之智能!
+         */
+        private boolean smartAddKeywordSuffix = true;
     }
 }

@@ -274,10 +274,9 @@ public class EntityInfoHelper {
         // 初始化封装Distance注解信息
         if (field.isAnnotationPresent(Distance.class)) {
             Distance distance = field.getAnnotation(Distance.class);
-            entityInfo.setDistanceField(field.getName());
+            entityInfo.getDistanceFields().add(field.getName());
             entityInfo.getNotSerializeField().add(field.getName());
-            entityInfo.setDistanceDecimalPlaces(distance.decimalPlaces());
-            entityInfo.setSortBuilderIndex(distance.sortBuilderIndex());
+            entityInfo.getDistanceDecimalPlaces().add(distance.decimalPlaces());
             hasAnnotation = true;
         }
         return hasAnnotation;
@@ -316,12 +315,14 @@ public class EntityInfoHelper {
             }
 
             // 其它
+            FieldType fieldType = FieldType.getByType(IndexUtils.getEsFieldType(tableField.fieldType(), field.getType().getSimpleName()));
             entityFieldInfo.setMappingColumn(mappingColumn);
             entityFieldInfo.setAnalyzer(tableField.analyzer());
             entityFieldInfo.setSearchAnalyzer(tableField.searchAnalyzer());
-            entityFieldInfo.setFieldType(tableField.fieldType());
+            entityFieldInfo.setFieldType(fieldType);
             entityFieldInfo.setFieldData(tableField.fieldData());
             entityFieldInfo.setColumnType(field.getType().getSimpleName());
+            entityInfo.getFieldTypeMap().putIfAbsent(field.getName(), fieldType.getType());
 
             // 父子类型
             if (FieldType.JOIN.equals(tableField.fieldType())) {
@@ -390,18 +391,22 @@ public class EntityInfoHelper {
         List<Field> allFields = getAllFields(nestedClass);
         Map<String, String> mappingColumnMap = new HashMap<>(allFields.size());
         Map<String, String> columnMappingMap = new HashMap<>(allFields.size());
+        Map<String, String> fieldTypeMap = new HashMap<>();
+
         List<EntityFieldInfo> entityFieldInfoList = new ArrayList<>();
         Set<String> notSerializedFields = new HashSet<>();
         allFields.forEach(field -> {
             String mappingColumn;
+            FieldType fieldType;
             // 处理TableField注解
             IndexField tableField = field.getAnnotation(IndexField.class);
             if (Objects.isNull(tableField)) {
                 mappingColumn = getMappingColumn(dbConfig, field);
                 EntityFieldInfo entityFieldInfo = new EntityFieldInfo(dbConfig, field);
                 entityFieldInfo.setMappingColumn(mappingColumn);
-                entityFieldInfo.setFieldType(FieldType.TEXT);
-                entityFieldInfo.setColumnType(FieldType.TEXT.getType());
+                fieldType = FieldType.getByType(IndexUtils.getEsFieldType(FieldType.NONE, field.getType().getSimpleName()));
+                entityFieldInfo.setFieldType(fieldType);
+                entityFieldInfo.setColumnType(field.getType().getSimpleName());
                 entityFieldInfoList.add(entityFieldInfo);
             } else {
                 if (tableField.exist()) {
@@ -420,7 +425,7 @@ public class EntityInfoHelper {
 
                     // 设置实体字段信息
                     EntityFieldInfo entityFieldInfo = new EntityFieldInfo(dbConfig, field, tableField);
-                    FieldType fieldType = FieldType.NONE.equals(tableField.fieldType()) ? FieldType.KEYWORD : tableField.fieldType();
+                    fieldType = FieldType.NONE.equals(tableField.fieldType()) ? FieldType.KEYWORD_TEXT : tableField.fieldType();
                     entityFieldInfo.setMappingColumn(mappingColumn);
                     entityFieldInfo.setFieldType(fieldType);
                     entityFieldInfo.setFieldData(tableField.fieldData());
@@ -433,18 +438,20 @@ public class EntityInfoHelper {
                     entityFieldInfoList.add(entityFieldInfo);
                 } else {
                     mappingColumn = getMappingColumn(dbConfig, field);
+                    fieldType = FieldType.KEYWORD_TEXT;
                     notSerializedFields.add(field.getName());
                 }
             }
             columnMappingMap.putIfAbsent(mappingColumn, field.getName());
             mappingColumnMap.putIfAbsent(field.getName(), mappingColumn);
+            fieldTypeMap.putIfAbsent(field.getName(), fieldType.getType());
 
         });
         entityInfo.getNestedNotSerializeField().putIfAbsent(nestedClass, notSerializedFields);
         entityInfo.getNestedClassColumnMappingMap().putIfAbsent(nestedClass, columnMappingMap);
         entityInfo.getNestedClassMappingColumnMap().putIfAbsent(nestedClass, mappingColumnMap);
+        entityInfo.getNestedClassFieldTypeMap().putIfAbsent(nestedClass, fieldTypeMap);
         entityInfo.getNestedFieldListMap().put(nestedClass, entityFieldInfoList);
-
     }
 
 
@@ -467,6 +474,8 @@ public class EntityInfoHelper {
         // 初始化
         String mappingColumn = initMappingColumnMapAndGet(dbConfig, entityInfo, field);
         entityFieldInfo.setMappingColumn(mappingColumn);
+        FieldType fieldType = FieldType.getByType(IndexUtils.getEsFieldType(FieldType.NONE, field.getType().getSimpleName()));
+        entityInfo.getFieldTypeMap().putIfAbsent(field.getName(), fieldType.getType());
         entityFieldInfo.setColumnType(field.getType().getSimpleName());
         fieldList.add(entityFieldInfo);
     }
@@ -572,7 +581,7 @@ public class EntityInfoHelper {
         GlobalConfig.DbConfig dbConfig = globalConfig.getDbConfig();
         IndexName table = clazz.getAnnotation(IndexName.class);
         String tableName = clazz.getSimpleName().toLowerCase(Locale.ROOT);
-        String tablePrefix = dbConfig.getTablePrefix();
+        String tablePrefix = dbConfig.getIndexPrefix();
 
         boolean tablePrefixEffect = true;
         String indexName;
@@ -588,6 +597,9 @@ public class EntityInfoHelper {
                 }
             } else {
                 indexName = tableName;
+            }
+            if (StringUtils.isNotBlank(table.routing())) {
+                entityInfo.setRouting(table.routing());
             }
             entityInfo.setMaxResultWindow(table.maxResultWindow());
             entityInfo.setAliasName(table.aliasName());

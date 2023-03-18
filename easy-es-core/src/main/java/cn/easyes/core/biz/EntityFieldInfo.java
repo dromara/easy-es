@@ -36,7 +36,7 @@ public class EntityFieldInfo {
      */
     private String mappingColumn;
     /**
-     * 自段在es中的存储类型
+     * 字段在es中的存储类型
      */
     private FieldType fieldType;
     /**

@@ -1,5 +1,6 @@
 package cn.easyes.core.toolkit;
 
+import cn.easyes.annotation.rely.FieldType;
 import cn.easyes.common.constants.BaseEsConstants;
 import cn.easyes.common.params.SFunction;
 import cn.easyes.common.utils.StringUtils;
@@ -18,8 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static cn.easyes.common.constants.BaseEsConstants.DEFAULT_ES_ID_NAME;
-import static cn.easyes.common.constants.BaseEsConstants.DEFAULT_ID_NAME;
+import static cn.easyes.common.constants.BaseEsConstants.*;
 
 /**
  * 核心 处理字段名称工具类
@@ -165,16 +165,16 @@ public class FieldUtils {
     /**
      * 获取实际字段名
      *
-     * @param field            原字段名
-     * @param mappingColumnMap 字段映射关系map
-     * @param dbConfig         配置
+     * @param field                      原字段名
+     * @param mappingColumnMap           字段映射关系map
      * @return 实际字段名
      */
-    public static String getRealField(String field, Map<String, String> mappingColumnMap, GlobalConfig.DbConfig dbConfig) {
+    public static String getRealField(String field, Map<String, String> mappingColumnMap) {
         String customField = mappingColumnMap.get(field);
         if (Objects.nonNull(customField)) {
             return DEFAULT_ID_NAME.equals(customField) ? DEFAULT_ES_ID_NAME : customField;
         } else {
+            GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
             if (dbConfig.isMapUnderscoreToCamelCase()) {
                 return StringUtils.camelToUnderline(field);
             } else {
@@ -183,21 +183,40 @@ public class FieldUtils {
         }
     }
 
+    /**
+     * 获取实际字段名 并且根据配置智能追加.keyword后缀
+     *
+     * @param field            字段
+     * @param fieldTypeMap     字段与es字段类型映射
+     * @param mappingColumnMap 实体字段与es实际字段映射
+     * @return 最终的字段
+     */
+    public static String getRealFieldAndSuffix(String field, Map<String, String> fieldTypeMap, Map<String, String> mappingColumnMap) {
+        GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
+        String realField = getRealField(field, mappingColumnMap);
+        String fieldType = fieldTypeMap.get(field);
+        boolean addSuffix = dbConfig.isSmartAddKeywordSuffix() && FieldType.KEYWORD_TEXT.getType().equals(fieldType);
+        if (addSuffix) {
+            return realField + KEYWORD_SUFFIX;
+        }
+        return realField;
+    }
+
 
     /**
      * 获取实际字段名 不转换id
      *
-     * @param field            原字段名
-     * @param mappingColumnMap 字段映射关系map
-     * @param dbConfig         配置
+     * @param field                      原字段名
+     * @param mappingColumnMap           字段映射关系map
+     * @param isMapUnderscoreToCamelCase 是否开启下划线自动转驼峰
      * @return 实际字段名
      */
-    public static String getRealFieldNotConvertId(String field, Map<String, String> mappingColumnMap, GlobalConfig.DbConfig dbConfig) {
+    public static String getRealFieldNotConvertId(String field, Map<String, String> mappingColumnMap, boolean isMapUnderscoreToCamelCase) {
         String customField = mappingColumnMap.get(field);
         if (Objects.nonNull(customField)) {
             return customField;
         } else {
-            if (dbConfig.isMapUnderscoreToCamelCase()) {
+            if (isMapUnderscoreToCamelCase) {
                 return StringUtils.camelToUnderline(field);
             } else {
                 return field;
@@ -210,12 +229,11 @@ public class FieldUtils {
      *
      * @param fields           原字段名数组
      * @param mappingColumnMap 字段映射关系map
-     * @param dbConfig         配置
      * @return 实际字段数组
      */
-    public static String[] getRealFields(String[] fields, Map<String, String> mappingColumnMap, GlobalConfig.DbConfig dbConfig) {
+    public static String[] getRealFields(String[] fields, Map<String, String> mappingColumnMap) {
         return Arrays.stream(fields)
-                .map(field -> getRealField(field, mappingColumnMap, dbConfig))
+                .map(field -> getRealField(field, mappingColumnMap))
                 .collect(Collectors.toList())
                 .toArray(new String[]{});
     }
@@ -228,7 +246,7 @@ public class FieldUtils {
      * @return 实际字段数组
      */
     public static List<String> getRealFields(List<String> fields, Map<String, String> mappingColumnMap) {
-        return Arrays.stream(getRealFields(fields.toArray(new String[0]), mappingColumnMap, GlobalConfigCache.getGlobalConfig().getDbConfig()))
+        return Arrays.stream(getRealFields(fields.toArray(new String[0]), mappingColumnMap))
                 .collect(Collectors.toList());
     }
 

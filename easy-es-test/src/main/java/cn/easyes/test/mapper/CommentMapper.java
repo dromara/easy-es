@@ -1,6 +1,6 @@
 package cn.easyes.test.mapper;
 
-import cn.easyes.core.conditions.interfaces.BaseEsMapper;
+import cn.easyes.core.core.BaseEsMapper;
 import cn.easyes.test.entity.Comment;
 
 /**

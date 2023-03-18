@@ -30,6 +30,12 @@ public class PageHelper {
         pageInfo.setPageNum(pageNum);
         pageInfo.setPageSize(pageSize);
         pageInfo.setPages((int) (total % pageSize > 0 ? total / pageSize + 1 : total / pageSize));
+        // 计算导航页
+        pageInfo.calcNavigatePageNums();
+        // 计算前后页,第一页,最后一页
+        pageInfo.calcPage();
+        // 判断页面边界
+        pageInfo.judgePageBoundary();
         return pageInfo;
     }
 
