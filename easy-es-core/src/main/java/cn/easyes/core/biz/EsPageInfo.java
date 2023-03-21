@@ -5,6 +5,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * 分页参数 来源:https://github.com/pagehelper/Mybatis-PageHelper
@@ -116,6 +119,20 @@ public class EsPageInfo<T> extends PageSerializable<T> {
 
     public static <T> EsPageInfo<T> of(List<T> list, int navigatePages) {
         return new EsPageInfo<T>(list, navigatePages);
+    }
+
+    /**
+     * EsPageInfo 的泛型转换
+     *
+     * @param mapper 转换函数
+     * @param <R>    转换后的泛型
+     * @return 转换泛型后的 EsPageInfo
+     */
+    @SuppressWarnings("unchecked")
+    public <R> EsPageInfo<R> convert(Function<? super T, ? extends R> mapper) {
+        List<R> collect = this.getList().stream().map(mapper).collect(toList());
+        ((EsPageInfo<R>) this).setList(collect);
+        return (EsPageInfo<R>) this;
     }
 
     /**
