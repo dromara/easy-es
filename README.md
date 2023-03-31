@@ -83,7 +83,7 @@ try {
     - Maven:
       ```xml
       <dependency>
-        <groupId>io.github.xpc1024</groupId>
+        <groupId>cn.easy-es</groupId>
         <artifactId>easy-es-boot-starter</artifactId>
         <version>Latest Version</version>
       </dependency>
