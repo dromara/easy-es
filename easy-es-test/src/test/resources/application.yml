@@ -1,0 +1,21 @@
+easy-es:
+  enable: true
+  address: 10.20.64.228:9200
+  schema: http
+  username: elastic
+  password: WG7WVmuNMtM4GwNYkyWH
+  keep-alive-millis: 18000
+  global-config:
+    process-index-mode: smoothly
+    async-process-index-blocking: true
+    print-dsl: true
+    db-config:
+      map-underscore-to-camel-case: true
+      #      table-prefix: dev_
+      id-type: customize
+      field-strategy: not_empty
+      refresh-policy: immediate
+      enable-track-total-hits: true
+#logging:
+#  level:
+#   tracer: trace
