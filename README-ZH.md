@@ -111,7 +111,7 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,全自动�
 # 相关链接 | Links
 ---
 
-- [Switch To English](https://gitee.com/easy-es/easy-es/blob/master/README_EN.md)
+- [Switch To English](https://github.com/dromara/easy-es/edit/main/README.md)
 - [功能示例](https://gitee.com/dromara/easy-es/tree/master/easy-es-sample)
 - [Springboot集成Demo](https://www.easy-es.cn/pages/12283a/)
 
