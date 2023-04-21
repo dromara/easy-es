@@ -1,6 +1,6 @@
 # Auto Configure
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  cn.easyes.starter.config.EsAutoConfiguration,\
-  cn.easyes.starter.factory.IndexStrategyFactory,\
-  cn.easyes.starter.service.impl.AutoProcessIndexSmoothlyServiceImpl,\
-  cn.easyes.starter.service.impl.AutoProcessIndexNotSmoothlyServiceImpl
+  org.dromara.easyes.starter.config.EsAutoConfiguration,\
+  org.dromara.easyes.starter.factory.IndexStrategyFactory,\
+  org.dromara.easyes.starter.service.impl.AutoProcessIndexSmoothlyServiceImpl,\
+  org.dromara.easyes.starter.service.impl.AutoProcessIndexNotSmoothlyServiceImpl
