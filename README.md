@@ -97,14 +97,14 @@ String indexName = "document";
     - Maven:
       ```xml
       <dependency>
-        <groupId>cn.easy-es</groupId>
+        <groupId>org.dromara.easy-es</groupId>
         <artifactId>easy-es-boot-starter</artifactId>
         <version>Latest Version</version>
       </dependency>
       ```
     - Gradle
       ```groovy
-      compile group: 'cn.easy-es', name: 'easy-es-boot-starter', version: 'Latest Version'
+      compile group: 'org.dromara.easy-es', name: 'easy-es-boot-starter', version: 'Latest Version'
       ```
 -   Add mapper file extends BaseEsMapper interface
 
