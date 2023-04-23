@@ -120,14 +120,14 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,全自动�
 **Maven:**
 ``` xml
 <dependency>
-    <groupId>cn.easy-es</groupId>
+    <groupId>org.dromara.easy-es</groupId>
     <artifactId>easy-es-boot-starter</artifactId>
     <version>Latest Version</version>
 </dependency>
 ```
 **Gradle:**
 ```groovy
-compile group: 'cn.easy-es', name: 'easy-es-boot-starter', version: 'Latest Version'
+compile group: 'org.dromara.easy-es', name: 'easy-es-boot-starter', version: 'Latest Version'
 ```
 
 # 其他开源项目 | Other Project
