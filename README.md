@@ -92,8 +92,10 @@ String indexName = "document";
 ## Getting started
 ---
 
--   Add Easy-Es dependency
-    - Latest Version: [![Maven Central](https://img.shields.io/github/v/release/xpc1024/easy-es?include_prereleases&logo=xpc&style=plastic)](https://search.maven.org/search?q=g:io.github.xpc1024%20a:easy-*)
+- Latest Version: [![Maven Central](https://img.shields.io/github/v/release/xpc1024/easy-es?include_prereleases&logo=xpc&style=plastic)](https://search.maven.org/search?q=g:io.github.xpc1024%20a:easy-*)
+
+- Add Easy-Es dependency
+
     - Maven:
       ```xml
       <dependency>
