@@ -30,10 +30,6 @@ public class EasyEsConfigProperties {
      */
     private String address = "127.0.0.1:9200";
     /**
-     * schema 模式
-     */
-    private String schema = "http";
-    /**
      * username of es 用户名,可缺省
      */
     private String username;

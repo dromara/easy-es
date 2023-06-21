@@ -53,15 +53,9 @@ public class EsAutoConfiguration {
         if (StringUtils.isEmpty(address)) {
             throw ExceptionUtils.eee("please config the es address");
         }
-        if (!address.contains(COLON)) {
-            throw ExceptionUtils.eee("the address must contains port and separate by ':'");
-        }
-        String schema = StringUtils.isEmpty(easyEsConfigProperties.getSchema())
-                ? DEFAULT_SCHEMA : easyEsConfigProperties.getSchema();
         List<HttpHost> hostList = new ArrayList<>();
         Arrays.stream(easyEsConfigProperties.getAddress().split(","))
-                .forEach(item -> hostList.add(new HttpHost(item.split(":")[0],
-                        Integer.parseInt(item.split(":")[1]), schema)));
+                .forEach(item -> hostList.add(HttpHost.create(item)));
 
         // 转换成 HttpHost 数组
         HttpHost[] httpHost = hostList.toArray(new HttpHost[]{});
