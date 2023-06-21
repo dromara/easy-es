@@ -1,5 +1,13 @@
 package org.dromara.easyes.core.core;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializeFilter;
+import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
+import lombok.Setter;
+import lombok.SneakyThrows;
+import org.apache.http.util.EntityUtils;
 import org.dromara.easyes.annotation.rely.FieldStrategy;
 import org.dromara.easyes.annotation.rely.IdType;
 import org.dromara.easyes.common.constants.BaseEsConstants;
@@ -13,14 +21,6 @@ import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.core.toolkit.FieldUtils;
 import org.dromara.easyes.core.toolkit.IndexUtils;
 import org.dromara.easyes.core.toolkit.PageHelper;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.serializer.SerializeFilter;
-import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
-import lombok.Setter;
-import lombok.SneakyThrows;
-import org.apache.http.util.EntityUtils;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -1217,7 +1217,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         SimplePropertyPreFilter simplePropertyPreFilter = FastJsonUtils.getSimplePropertyPreFilter(entity.getClass(), excludeColumn);
         Optional.ofNullable(simplePropertyPreFilter).ifPresent(serializeFilters::add);
 
-        return JSON.toJSONString(entity, serializeFilters.toArray(new SerializeFilter[0]), SerializerFeature.WriteMapNullValue);
+        return JSON.toJSONString(entity, serializeFilters.toArray(new SerializeFilter[serializeFilters.size()]), SerializerFeature.WriteMapNullValue);
     }
 
     /**

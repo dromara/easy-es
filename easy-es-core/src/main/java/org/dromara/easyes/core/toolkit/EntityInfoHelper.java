@@ -234,7 +234,7 @@ public class EntityInfoHelper {
                 }
                 return mappingColumn;
             };
-            preFilters.add(nameFilter);
+            preFilters.add(0, nameFilter);
         }
     }
 
