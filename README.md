@@ -58,10 +58,9 @@ Easy-Es is a powerfully enhanced toolkit of RestHighLevelClient for simplify dev
 
 
 ```java
-// Use Easy-Es to complete the query with only 3 lines of code
-LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.eq(Document::getTitle, "Hi").eq(Document::getCreator, "Guy");
-        List<Document> documents = documentMapper.selectList(wrapper);
+
+// Use Easy-Es to complete the query with only 1 lines of code
+List<Document> documents = documentMapper.selectList(EsWrappers.lambdaQuery(Document.class).eq(Document::getTitle, "Hi").eq(Document::getCreator, "Guy"));
 ```
 
 ```java
