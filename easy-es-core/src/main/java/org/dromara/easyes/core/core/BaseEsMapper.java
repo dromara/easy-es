@@ -21,6 +21,13 @@ import java.util.List;
  **/
 public interface BaseEsMapper<T> {
     /**
+     * 获取mapper中的entityClass
+     *
+     * @return entityClass
+     */
+    Class<T> getEntityClass();
+
+    /**
      * 是否存在索引
      *
      * @param indexName 索引名称

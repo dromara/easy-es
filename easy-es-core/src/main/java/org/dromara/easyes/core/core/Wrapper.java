@@ -1,6 +1,7 @@
 package org.dromara.easyes.core.core;
 
 
+import lombok.SneakyThrows;
 import org.dromara.easyes.core.biz.*;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -36,6 +37,14 @@ public abstract class Wrapper<T> implements Cloneable {
      */
     protected String[] exclude;
     /**
+     * 排除_score 小于 min_score 中指定的最小值的文档
+     */
+    protected Float minScore;
+    /**
+     * 自定义排序时(如 脚本里面使用 _score)，是否计算分数
+     */
+    protected Boolean trackScores;
+    /**
      * 从第多少条开始查询
      */
     protected Integer from;
@@ -43,6 +52,10 @@ public abstract class Wrapper<T> implements Cloneable {
      * 查询多少条记录
      */
     protected Integer size;
+    /**
+     * 当前查询的查询偏好
+     */
+    protected String preference;
     /**
      * 当前操作作用的索引名数组
      */
@@ -109,8 +122,9 @@ public abstract class Wrapper<T> implements Cloneable {
      *
      * @return Wrapper
      */
+    @SneakyThrows
     protected Wrapper<T> clone() {
-        return this.clone();
+        return (Wrapper<T>) super.clone();
     }
 
 }

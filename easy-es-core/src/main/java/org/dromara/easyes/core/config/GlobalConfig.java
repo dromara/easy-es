@@ -1,11 +1,11 @@
 package org.dromara.easyes.core.config;
 
 
+import lombok.Data;
 import org.dromara.easyes.annotation.rely.FieldStrategy;
 import org.dromara.easyes.annotation.rely.IdType;
 import org.dromara.easyes.common.enums.ProcessIndexStrategyEnum;
 import org.dromara.easyes.common.enums.RefreshPolicy;
-import lombok.Data;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import static org.dromara.easyes.common.constants.BaseEsConstants.EMPTY_STR;
@@ -22,9 +22,9 @@ public class GlobalConfig {
      */
     private boolean printDsl = true;
     /**
-     * process index mode Smoothly by default 索引处理模式 默认开启平滑模式
+     * process index mode Manual by default 索引处理模式 默认开启手动模式
      */
-    private ProcessIndexStrategyEnum processIndexMode = ProcessIndexStrategyEnum.SMOOTHLY;
+    private ProcessIndexStrategyEnum processIndexMode = ProcessIndexStrategyEnum.MANUAL;
     /**
      * Rebuild index timeout unit: hour, default: 72 重建索引超时时间 单位小时,默认72
      */

@@ -1,5 +1,6 @@
 package org.dromara.easyes.core.core;
 
+import org.apache.lucene.search.join.ScoreMode;
 import org.dromara.easyes.annotation.rely.FieldType;
 import org.dromara.easyes.common.enums.AggregationTypeEnum;
 import org.dromara.easyes.common.enums.EsQueryTypeEnum;
@@ -8,7 +9,6 @@ import org.dromara.easyes.common.utils.*;
 import org.dromara.easyes.core.biz.*;
 import org.dromara.easyes.core.conditions.function.*;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
-import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.common.geo.GeoDistance;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.geo.ShapeRelation;
@@ -261,8 +261,6 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children between(boolean condition, String column, Object from, Object to, ZoneId timeZone, String format, Float boost) {
-        Assert.notNull(from, "from must not be null in between query");
-        Assert.notNull(to, "to must not be null in between query");
         return addParam(condition, column, from, to, timeZone, format, boost);
     }
 
@@ -529,11 +527,22 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children index(boolean condition, String... indexNames) {
-        if (ArrayUtils.isEmpty(indexNames)) {
-            throw ExceptionUtils.eee("indexNames can not be empty");
-        }
         if (condition) {
+            if (ArrayUtils.isEmpty(indexNames)) {
+                throw ExceptionUtils.eee("indexNames can not be empty");
+            }
             this.indexNames = indexNames;
+        }
+        return typedThis;
+    }
+
+    @Override
+    public Children preference(boolean condition, String preference) {
+        if (condition) {
+            if (StringUtils.isBlank(preference)) {
+                return typedThis;
+            }
+            this.preference = preference;
         }
         return typedThis;
     }
@@ -567,6 +576,18 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         this.entityClass = entityClass;
         List<String> list = EntityInfoHelper.getEntityInfo(getCheckEntityClass()).chooseSelect(predicate);
         include = list.toArray(include);
+        return typedThis;
+    }
+
+    @Override
+    public Children minScore(Float score) {
+        minScore = score;
+        return typedThis;
+    }
+
+    @Override
+    public Children trackScores() {
+        trackScores = Boolean.TRUE;
         return typedThis;
     }
 
@@ -689,7 +710,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     /**
-     * 追加基础嵌套
+     * 追加基础嵌套 整个框架最难的点之一
      *
      * @param param         参数
      * @param queryTypeEnum 查询类型
@@ -705,13 +726,6 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
         // 入队之前需要先对MP中的拼接类型特殊处理
         processJoin(param);
-
-        // 这两种情况需要重置其prevType
-        if (NESTED_NOT.equals(queryTypeEnum)) {
-            prevQueryType = NESTED_NOT;
-        } else if (NESTED_FILTER.equals(queryTypeEnum)) {
-            prevQueryType = NESTED_FILTER;
-        }
 
         paramQueue.add(param);
         this.parentId = param.getId();
@@ -827,6 +841,8 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      */
     private Children addParam(boolean condition, String column, Object var1, Object var2, Object var3, Object var4, Float boost) {
         if (condition) {
+            Assert.notNull(var1, "from must not be null in between query");
+            Assert.notNull(var2, "to must not be null in between query");
             Param param = new Param();
             param.setExt1(var1);
             param.setExt2(var2);

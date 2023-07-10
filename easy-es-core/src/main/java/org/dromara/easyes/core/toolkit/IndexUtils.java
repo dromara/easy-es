@@ -347,6 +347,8 @@ public class IndexUtils {
                 type = FieldType.DOUBLE.getType();
                 break;
             case BIG_DECIMAL:
+                type = FieldType.SCALED_FLOAT.getType();
+                break;
             case STRING:
             case CHAR:
                 type = FieldType.KEYWORD_TEXT.getType();

@@ -1,9 +1,9 @@
 package org.dromara.easyes.core.core;
 
+import org.apache.lucene.search.join.ScoreMode;
 import org.dromara.easyes.annotation.rely.FieldType;
 import org.dromara.easyes.core.biz.EntityFieldInfo;
 import org.dromara.easyes.core.biz.OrderByParam;
-import org.apache.lucene.search.join.ScoreMode;
 import org.dromara.easyes.core.conditions.function.*;
 import org.elasticsearch.common.geo.GeoDistance;
 import org.elasticsearch.common.geo.GeoPoint;
@@ -679,6 +679,18 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
+    public Children minScore(Float score) {
+        getWrapper().minScore(score);
+        return typedThis;
+    }
+
+    @Override
+    public Children trackScores() {
+        getWrapper().trackScores();
+        return typedThis;
+    }
+
+    @Override
     public Children index(boolean condition, String... indexNames) {
         getWrapper().index(condition, indexNames);
         return typedThis;
@@ -693,6 +705,12 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     @Override
     public Children indexName(String... indexNames) {
         getWrapper().indexName(indexNames);
+        return typedThis;
+    }
+
+    @Override
+    public Children preference(boolean condition, String preference) {
+        getWrapper().preference(condition, preference);
         return typedThis;
     }
 

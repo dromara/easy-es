@@ -1,18 +1,19 @@
 package org.dromara.easyes.starter.config;
 
-import org.dromara.easyes.common.utils.ExceptionUtils;
-import org.dromara.easyes.common.utils.RestHighLevelClientBuilder;
-import org.dromara.easyes.common.utils.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.dromara.easyes.common.utils.ExceptionUtils;
+import org.dromara.easyes.common.utils.RestHighLevelClientBuilder;
+import org.dromara.easyes.common.utils.StringUtils;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -35,6 +36,7 @@ import static org.dromara.easyes.common.constants.BaseEsConstants.DEFAULT_SCHEMA
 @Configuration
 @ConditionalOnClass(RestHighLevelClient.class)
 @EnableConfigurationProperties(EasyEsConfigProperties.class)
+@ConditionalOnExpression("'${easy-es.address:x}'!='x'")
 @ConditionalOnProperty(prefix = "easy-es", name = {"enable"}, havingValue = "true", matchIfMissing = true)
 public class EsAutoConfiguration {
     @Autowired

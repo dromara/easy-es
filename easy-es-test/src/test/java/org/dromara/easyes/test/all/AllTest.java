@@ -58,6 +58,14 @@ public class AllTest {
     @Resource
     private DocumentMapper documentMapper;
 
+    @Test
+    @Order(0)
+    public void testCreateIndex() {
+        // 0.前置操作 创建索引 需确保索引托管模式处于manual手动挡,若为自动挡则会冲突.
+        boolean success = documentMapper.createIndex();
+        Assertions.assertTrue(success);
+    }
+
     // 1.新增
     @Test
     @Order(1)
@@ -181,7 +189,7 @@ public class AllTest {
     @Test
     @Order(6)
     public void testDSL() {
-        String dsl = "{\"size\":10000,\"query\":{\"bool\":{\"must\":[{\"term\":{\"title.keyword\":{\"value\":\"测试文档2\",\"boost\":1.0}}}],\"adjust_pure_negative\":true,\"boost\":1.0}}\"track_total_hits\":2147483647}";
+        String dsl = "{\"query\":{\"bool\":{\"must\":[{\"term\":{\"title.keyword\":{\"value\":\"测试文档3\",\"boost\":1.0}}}],\"adjust_pure_negative\":true,\"boost\":1.0}},\"track_total_hits\":2147483647,\"highlight\":{\"pre_tags\":[\"<em>\"],\"post_tags\":[\"</em>\"],\"fragment_size\":2,\"fields\":{\"content\":{\"type\":\"unified\"}}}}";
         String jsonResult = documentMapper.executeDSL(dsl);
         System.out.println(jsonResult);
         Assertions.assertNotNull(jsonResult);
@@ -191,7 +199,6 @@ public class AllTest {
     @Order(6)
     public void testSelectOne() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-
         wrapper.match(Document::getContent, "内容")
                 .orderByAsc(Document::getStarNum, Document::getEsId)
                 .limit(1);
@@ -233,20 +240,20 @@ public class AllTest {
 
     @Test
     @Order(6)
-    public void testIgnoreCase(){
+    public void testIgnoreCase() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.eq(Document::getCaseTest,"test");
+        wrapper.eq(Document::getCaseTest, "test");
         List<Document> documents = documentMapper.selectList(wrapper);
-        Assertions.assertEquals(1,documents.size());
+        Assertions.assertEquals(1, documents.size());
     }
 
     @Test
     @Order(6)
-    public void testIp(){
+    public void testIp() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.eq(Document::getIpAddress,"192.168.0.0/16");
+        wrapper.eq(Document::getIpAddress, "192.168.0.0/16");
         List<Document> documents = documentMapper.selectList(wrapper);
-        Assertions.assertEquals(documents.size(),1);
+        Assertions.assertEquals(documents.size(), 1);
     }
 
     @Test
@@ -256,6 +263,16 @@ public class AllTest {
         wrapper.match(Document::getCustomField, "字段");
         Long count = documentMapper.selectCount(wrapper);
         Assertions.assertEquals(22L, count);
+    }
+
+    @Test
+    @Order(6)
+    public void testSelectCountDistinct() {
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.match(Document::getCustomField, "字段");
+        wrapper.distinct(Document::getStarNum);
+        Long count = documentMapper.selectCount(wrapper, true);
+        Assertions.assertEquals(21L, count);
     }
 
     @Test
@@ -498,7 +515,9 @@ public class AllTest {
         // 测试混合查询的另一种方式
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchQuery(FieldUtils.val(Document::getCreator), "老汉"));
-        searchSourceBuilder.size(BaseEsConstants.DEFAULT_SIZE);
+        Optional.ofNullable(EntityInfoHelper.getEntityInfo(Document.class))
+                .flatMap(i -> Optional.ofNullable(i.getMaxResultWindow()))
+                .ifPresent(searchSourceBuilder::size);
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.setSearchSourceBuilder(searchSourceBuilder);
         List<Document> documents = documentMapper.selectList(wrapper);
@@ -541,7 +560,7 @@ public class AllTest {
     public void testConditionFilter() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq(Document::getStarNum, 10)
-                .filter(i -> i.eq(Document::getTitle, "测试文档10"));
+                .filter().eq(Document::getTitle, "测试文档10");
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(1, documents.size());
     }
@@ -550,8 +569,8 @@ public class AllTest {
     @Order(6)
     public void testConditionNot() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.in(Document::getStarNum, 10,11,12,13)
-                .not(i->i.eq(Document::getTitle,"测试文档10").eq(Document::getTitle,"测试文档11"));
+        wrapper.in(Document::getStarNum, 10, 11, 12, 13)
+                .and(i -> i.not().eq(Document::getTitle, "测试文档10").not().eq(Document::getTitle, "测试文档11"));
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(2, documents.size());
     }
@@ -919,4 +938,5 @@ public class AllTest {
                 .or(i -> i.eq("business_type", 2).in("state", 2, 3));
         documentMapper.selectList(wrapper);
     }
+
 }

@@ -80,6 +80,21 @@ public interface Query<Children, T, R> extends Serializable {
     }
 
     /**
+     * 设置最小得分 低于此分值的文档将不召回
+     *
+     * @param score 最小得分
+     * @return wrapper
+     */
+    Children minScore(Float score);
+
+    /**
+     * 开启计算得分 默认值为关闭状态
+     *
+     * @return wrapper
+     */
+    Children trackScores();
+
+    /**
      * 设置不查询字段
      *
      * @param columns 不查询字段,支持多字段
@@ -115,5 +130,24 @@ public interface Query<Children, T, R> extends Serializable {
      * @return wrapper
      */
     Children index(boolean condition, String... indexNames);
+
+    /**
+     * 设置查询偏好
+     *
+     * @param preference 偏好
+     * @return wrapper
+     */
+    default Children preference(String preference) {
+        return preference(true, preference);
+    }
+
+    /**
+     * 设置查询偏好
+     *
+     * @param condition  条件
+     * @param preference 偏好
+     * @return wrapper
+     */
+    Children preference(boolean condition, String preference);
 
 }

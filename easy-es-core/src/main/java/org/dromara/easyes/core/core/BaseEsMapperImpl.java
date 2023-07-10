@@ -1,18 +1,5 @@
 package org.dromara.easyes.core.core;
 
-import org.dromara.easyes.annotation.rely.FieldStrategy;
-import org.dromara.easyes.annotation.rely.IdType;
-import org.dromara.easyes.common.constants.BaseEsConstants;
-import org.dromara.easyes.common.enums.EsQueryTypeEnum;
-import org.dromara.easyes.common.enums.MethodEnum;
-import org.dromara.easyes.common.utils.*;
-import org.dromara.easyes.core.biz.*;
-import org.dromara.easyes.core.cache.BaseCache;
-import org.dromara.easyes.core.cache.GlobalConfigCache;
-import org.dromara.easyes.core.toolkit.EntityInfoHelper;
-import org.dromara.easyes.core.toolkit.FieldUtils;
-import org.dromara.easyes.core.toolkit.IndexUtils;
-import org.dromara.easyes.core.toolkit.PageHelper;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializeFilter;
@@ -21,6 +8,20 @@ import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.http.util.EntityUtils;
+import org.dromara.easyes.annotation.rely.FieldStrategy;
+import org.dromara.easyes.annotation.rely.IdType;
+import org.dromara.easyes.common.constants.BaseEsConstants;
+import org.dromara.easyes.common.enums.EsQueryTypeEnum;
+import org.dromara.easyes.common.enums.MethodEnum;
+import org.dromara.easyes.common.enums.RefreshPolicy;
+import org.dromara.easyes.common.utils.*;
+import org.dromara.easyes.core.biz.*;
+import org.dromara.easyes.core.cache.BaseCache;
+import org.dromara.easyes.core.cache.GlobalConfigCache;
+import org.dromara.easyes.core.toolkit.EntityInfoHelper;
+import org.dromara.easyes.core.toolkit.FieldUtils;
+import org.dromara.easyes.core.toolkit.IndexUtils;
+import org.dromara.easyes.core.toolkit.PageHelper;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -89,6 +90,11 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     @Setter
     private Class<T> entityClass;
+
+    @Override
+    public Class<T> getEntityClass() {
+        return entityClass;
+    }
 
     @Override
     public Boolean existsIndex(String indexName) {
@@ -187,6 +193,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     public String executeDSL(String dsl, String indexName) {
         Assert.notNull(indexName, "indexName must not null");
         Request request = new Request(MethodEnum.GET.name(), indexName + DSL_ENDPOINT);
+        request.setJsonEntity(dsl);
         Response response = client.getLowLevelClient().performRequest(request);
         return EntityUtils.toString(response.getEntity());
     }
@@ -221,6 +228,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     public String getSource(Wrapper<T> wrapper) {
         // 获取由本框架生成的es查询参数 用于验证生成语法的正确性
         SearchRequest searchRequest = new SearchRequest(getIndexNames(wrapper.indexNames));
+        Optional.ofNullable(wrapper.preference).ifPresent(searchRequest::preference);
         Optional.ofNullable(getRouting()).ifPresent(searchRequest::routing);
         SearchSourceBuilder searchSourceBuilder = WrapperProcessor.buildSearchSourceBuilder(wrapper, entityClass);
         searchRequest.source(searchSourceBuilder);
@@ -302,6 +310,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             // 不去重,直接count获取,效率更高
             CountRequest countRequest = new CountRequest(getIndexNames(wrapper.indexNames));
             Optional.ofNullable(getRouting()).ifPresent(countRequest::routing);
+            Optional.ofNullable(wrapper.preference).ifPresent(countRequest::preference);
             QueryBuilder queryBuilder = Optional.ofNullable(wrapper.searchSourceBuilder)
                     .map(SearchSourceBuilder::query)
                     .orElseGet(() -> WrapperProcessor.initBoolQueryBuilder(wrapper.paramQueue, entityClass));
@@ -379,6 +388,13 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     @Override
     public Integer delete(Wrapper<T> wrapper) {
         DeleteByQueryRequest request = new DeleteByQueryRequest(getIndexNames(wrapper.indexNames));
+        EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
+        Optional.ofNullable(entityInfo)
+                .flatMap(i->Optional.ofNullable(i.getMaxResultWindow()))
+                .ifPresent(request::setBatchSize);
+        if (RefreshPolicy.IMMEDIATE.getValue().equals(getRefreshPolicy())) {
+            request.setRefresh(true);
+        }
         Optional.ofNullable(getRouting()).ifPresent(request::setRouting);
         BoolQueryBuilder boolQueryBuilder = WrapperProcessor.initBoolQueryBuilder(wrapper.paramQueue, entityClass);
         request.setQuery(boolQueryBuilder);
@@ -472,28 +488,6 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         Arrays.stream(getIndexNames(indexNames))
                 .forEach(indexName -> result.addAll(doSelectBatchIds(idList, indexName)));
         return result;
-    }
-
-    private List<T> doSelectBatchIds(Collection<? extends Serializable> idList, String indexName) {
-        // 构造查询参数
-        List<String> stringIdList = idList.stream().map(Object::toString).collect(Collectors.toList());
-        SearchRequest searchRequest = new SearchRequest(getIndexNames(indexName));
-        Optional.ofNullable(getRouting()).ifPresent(searchRequest::routing);
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-        sourceBuilder.query(QueryBuilders.termsQuery(DEFAULT_ES_ID_NAME, stringIdList));
-        sourceBuilder.size(idList.size());
-        searchRequest.source(sourceBuilder);
-
-        // 请求es获取数据
-        SearchHit[] searchHitArray = getSearchHitArray(searchRequest);
-        if (ArrayUtils.isEmpty(searchHitArray)) {
-            return new ArrayList<>(0);
-        }
-
-        // 批量解析数据
-        return Arrays.stream(searchHitArray)
-                .map(this::parseOne)
-                .collect(Collectors.toList());
     }
 
     @Override
@@ -792,6 +786,36 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         return doBulkRequest(bulkRequest, RequestOptions.DEFAULT);
     }
 
+
+    /**
+     * 执行根据id批量查询
+     *
+     * @param idList    id数组
+     * @param indexName 索引名
+     * @return 数据
+     */
+    private List<T> doSelectBatchIds(Collection<? extends Serializable> idList, String indexName) {
+        // 构造查询参数
+        List<String> stringIdList = idList.stream().map(Object::toString).collect(Collectors.toList());
+        SearchRequest searchRequest = new SearchRequest(getIndexNames(indexName));
+        Optional.ofNullable(getRouting()).ifPresent(searchRequest::routing);
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        sourceBuilder.query(QueryBuilders.termsQuery(DEFAULT_ES_ID_NAME, stringIdList));
+        sourceBuilder.size(idList.size());
+        searchRequest.source(sourceBuilder);
+
+        // 请求es获取数据
+        SearchHit[] searchHitArray = getSearchHitArray(searchRequest);
+        if (ArrayUtils.isEmpty(searchHitArray)) {
+            return new ArrayList<>(0);
+        }
+
+        // 批量解析数据
+        return Arrays.stream(searchHitArray)
+                .map(this::parseOne)
+                .collect(Collectors.toList());
+    }
+
     /**
      * 执行根据id查询
      *
@@ -829,6 +853,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 构建es restHighLevelClient 查询参数
         SearchRequest searchRequest = new SearchRequest(getIndexNames(wrapper.indexNames));
         Optional.ofNullable(getRouting()).ifPresent(searchRequest::routing);
+        Optional.ofNullable(wrapper.preference).ifPresent(searchRequest::preference);
 
         // 用户在wrapper中指定的混合查询条件优先级最高
         SearchSourceBuilder searchSourceBuilder = Optional.ofNullable(wrapper.searchSourceBuilder)
@@ -882,6 +907,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 构建查询条件
         SearchRequest searchRequest = new SearchRequest(indexName);
         Optional.ofNullable(getRouting()).ifPresent(searchRequest::routing);
+        Optional.ofNullable(wrapper.preference).ifPresent(searchRequest::preference);
         SearchSourceBuilder searchSourceBuilder;
         if (Objects.isNull(wrapper.searchSourceBuilder)) {
             searchSourceBuilder = new SearchSourceBuilder();
@@ -894,7 +920,10 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             }
             searchSourceBuilder.fetchSource(includes, null);
             searchSourceBuilder.trackTotalHits(true);
-            searchSourceBuilder.size(GlobalConfigCache.getGlobalConfig().getDbConfig().getBatchUpdateThreshold());
+            int size = Optional.ofNullable(entityInfo)
+                    .map(EntityInfo::getMaxResultWindow)
+                    .orElse(GlobalConfigCache.getGlobalConfig().getDbConfig().getBatchUpdateThreshold());
+            searchSourceBuilder.size(size);
             BoolQueryBuilder boolQueryBuilder = WrapperProcessor.initBoolQueryBuilder(wrapper.paramQueue, entityClass);
             searchSourceBuilder.query(boolQueryBuilder);
         } else {
@@ -1150,6 +1179,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private SearchHit[] getSearchHitArray(Wrapper<T> wrapper) {
         SearchRequest searchRequest = new SearchRequest(getIndexNames(wrapper.indexNames));
         Optional.ofNullable(getRouting()).ifPresent(searchRequest::routing);
+        Optional.ofNullable(wrapper.preference).ifPresent(searchRequest::preference);
 
         // 用户在wrapper中指定的混合查询条件优先级最高
         SearchSourceBuilder searchSourceBuilder = Objects.isNull(wrapper.searchSourceBuilder) ?

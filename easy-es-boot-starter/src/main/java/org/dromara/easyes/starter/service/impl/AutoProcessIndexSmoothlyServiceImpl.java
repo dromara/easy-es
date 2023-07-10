@@ -10,6 +10,7 @@ import org.dromara.easyes.core.toolkit.IndexUtils;
 import org.dromara.easyes.starter.service.AutoProcessIndexService;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ import static org.dromara.easyes.common.constants.BaseEsConstants.SO_SUFFIX;
  **/
 @Service
 @ConditionalOnClass(RestHighLevelClient.class)
+@ConditionalOnExpression("'${easy-es.address:x}'!='x'")
 @ConditionalOnProperty(prefix = "easy-es", name = {"enable"}, havingValue = "true", matchIfMissing = true)
 public class AutoProcessIndexSmoothlyServiceImpl implements AutoProcessIndexService {
     @Override

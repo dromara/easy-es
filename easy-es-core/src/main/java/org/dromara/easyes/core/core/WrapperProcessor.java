@@ -136,8 +136,7 @@ public class WrapperProcessor {
                 setBool(bool, queryBuilder, param.getPrevQueryType());
                 break;
             case QUERY_STRING:
-                realField = getRealFieldAndSuffix(param.getColumn(), fieldTypeMap, mappingColumnMap);
-                queryBuilder = QueryBuilders.queryStringQuery(realField).boost(param.getBoost());
+                queryBuilder = QueryBuilders.queryStringQuery(param.getColumn()).boost(param.getBoost());
                 setBool(bool, queryBuilder, param.getPrevQueryType());
                 break;
             case PREFIX:
@@ -335,12 +334,19 @@ public class WrapperProcessor {
         // 设置查询或不查询字段
         setFetchSource(wrapper, mappingColumnMap, searchSourceBuilder);
 
+        // 设置排除_score 小于 min_score 中指定的最小值的文档
+        Optional.ofNullable(wrapper.minScore).ifPresent(searchSourceBuilder::minScore);
+
+        // 设置自定义排序时(如 脚本里面使用 _score) 是否计算分数
+        Optional.ofNullable(wrapper.trackScores).ifPresent(searchSourceBuilder::trackScores);
+
         // 设置聚合参数
         setAggregations(wrapper, mappingColumnMap, searchSourceBuilder);
 
         // 设置查询起止参数
         Optional.ofNullable(wrapper.from).ifPresent(searchSourceBuilder::from);
-        MyOptional.ofNullable(wrapper.size).ifPresent(searchSourceBuilder::size, DEFAULT_SIZE);
+        MyOptional.ofNullable(wrapper.size).ifPresent(searchSourceBuilder::size,
+                entityInfo.getMaxResultWindow() != null ? entityInfo.getMaxResultWindow() : DEFAULT_SIZE);
 
         // 根据全局配置决定是否开启全部查询
         if (GlobalConfigCache.getGlobalConfig().getDbConfig().isEnableTrackTotalHits()) {
@@ -556,7 +562,7 @@ public class WrapperProcessor {
                 aggregationBuilder = AggregationBuilders.sum(name).field(realField);
                 break;
             case TERMS:
-                aggregationBuilder = AggregationBuilders.terms(name).field(realField).size(Integer.MAX_VALUE);
+                aggregationBuilder = AggregationBuilders.terms(name).field(realField);
                 break;
             default:
                 throw new UnsupportedOperationException("不支持的聚合类型,参见AggregationTypeEnum");
