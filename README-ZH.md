@@ -60,6 +60,7 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,全自动�
 - **零额外学习成本:** 开发者只要会国内最受欢迎的Mybatis-Plus语法,即可无缝迁移至Easy-Es
 - **降低开发者门槛:** 即便是只了解ES基础的初学者也可以轻松驾驭ES完成绝大多数需求的开发
 - **功能强大:** 支持MySQL的几乎全部功能,且对ES特有的分词,权重,高亮,嵌套,地理位置Geo,Ip地址查询等功能都支持
+- **语法优雅:** 所有条件构造器均支持Lambda风格链式编程，编程体验和代码可读性大幅提升
 - **安全可靠:** 墨菲安全扫描零风险,且代码单元测试综合覆盖率高达95%以上.
 - **完善的中英文文档:** 提供了中英文双语操作文档,文档全面可靠,帮助您节省更多时间
 - **...**
@@ -106,12 +107,12 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,全自动�
 
 # 相关链接 | Links
 
-- [Switch To English](https://github.com/dromara/easy-es/edit/main/README.md)
+- [Switch To English](https://gitee.com/easy-es/easy-es/blob/master/README_EN.md)
 - [功能示例](https://gitee.com/dromara/easy-es/tree/master/easy-es-sample)
-- [Springboot集成Demo](https://www.easy-es.cn/pages/12283a/)
+- [Springboot集成Demo](https://gitee.com/easy-es/easy-es-springboot-demo)
 
 # Latest Version: [![Maven Central](https://img.shields.io/github/v/release/xpc1024/easy-es?include_prereleases&logo=xpc&style=plastic)](https://search.maven.org/search?q=g:io.github.xpc1024%20a:easy-*)
-
+---
 **Maven:**
 ``` xml
 <dependency>
@@ -125,15 +126,25 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,全自动�
 compile group: 'org.dromara.easy-es', name: 'easy-es-boot-starter', version: 'Latest Version'
 ```
 
+# 荣誉 | Honour
+
+> Easy-Es是一个持续成长和精进的开源框架,感谢大家一路支持,也感谢多方平台多我们努力的认可,我们会继续努力,用更好的产品力回报每一位支持者!
+
+
+<img alt="zsxq" src="https://iknow.hs.net/1b003ee7-dbfb-4cb8-9b30-de6136218faf.jpg">
+
+
 # 其他开源项目 | Other Project
 
 - [健身计划一键生成系统](https://gitee.com/easy-es/fit-plan)
 
 # 期望 | Futures
+---
 
 > 欢迎提出更好的意见，帮助完善 Easy-Es
 
 # 版权 | License
+---
 
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
@@ -149,6 +160,7 @@ QQ | 微信:252645816
 
 # 捐赠 | Donate
 
+
 [捐赠记录,感谢你们的支持！](https://easy-es.cn/pages/b52ac5/)
 
 > 您的支持是鼓励我们前行的动力，无论金额多少都足够表达您这份心意。
@@ -159,10 +171,11 @@ QQ | 微信:252645816
 
 > 我们的广告投放商,如果您期望Easy-Es能够走得更远,不妨点击下图,支持一下我们的广告商Thanks♪(･ω･)ﾉ
 
-<a href="https://www.mingdao.com?s=utm_69&utm_source=easy-es&utm_medium=banner&utm_campaign=github&utm_content=IT%E8%B5%8B%E8%83%BD%E4%B8%9A%E5%8A%A1
-">
+<a href="https://www.mingdao.com?s=utm_70&utm_source=easy-es&utm_medium=banner&utm_campaign=gitee&utm_content=IT%E8%B5%8B%E8%83%BD%E4%B8%9A%E5%8A%A1">
   <img alt="ad" src="https://iknow.hs.net/26a6e238-8b23-463c-8cf9-f62cc3f52e0f.png">
 </a>
+
+
 
 # 赞助商 | Sponsor
 
@@ -170,4 +183,14 @@ QQ | 微信:252645816
 
 <a href="http://apifox.cn/a103easyse">
   <img alt="ad" src="https://iknow.hs.net/a26897a9-d408-4985-9ed6-b3180ea6ed98.png">
+</a>
+
+
+# 周边好物 | Good things
+
+
+> 老汉为社区量身打造的专属T恤,感兴趣的老板们可以点击下图链接了解详情
+
+<a href="https://www.easy-es.cn/pages/1a810c/">
+  <img alt="ad" src="https://iknow.hs.net/ac784337-0b57-4885-9875-e1879bff47dc.jpg">
 </a>
