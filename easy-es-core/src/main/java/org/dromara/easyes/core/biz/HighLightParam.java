@@ -1,8 +1,8 @@
 package org.dromara.easyes.core.biz;
 
-import org.dromara.easyes.annotation.rely.HighLightTypeEnum;
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.experimental.Accessors;
+import org.dromara.easyes.annotation.rely.HighLightTypeEnum;
 
 /**
  * 高亮参数
@@ -10,12 +10,16 @@ import lombok.Data;
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 @Data
-@AllArgsConstructor
+@Accessors(chain = true)
 public class HighLightParam {
     /**
      * 高亮字段截取长度,默认为100
      */
-    private int fragmentSize;
+    private Integer fragmentSize;
+    /**
+     * 搜索返回的高亮片段数量 默认全部返回
+     */
+    private Integer numberOfFragments;
     /**
      * 前置标签
      */

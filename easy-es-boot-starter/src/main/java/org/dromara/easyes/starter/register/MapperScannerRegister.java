@@ -100,7 +100,4 @@ public class MapperScannerRegister implements ImportBeanDefinitionRegistrar, Res
         this.environment = environment;
     }
 
-    public static void main(String[] args) {
-        System.out.println("252645816, add and become muscle man! >".length());
-    }
 }

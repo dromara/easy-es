@@ -10,10 +10,10 @@ import lombok.SneakyThrows;
 import org.apache.http.util.EntityUtils;
 import org.dromara.easyes.annotation.rely.FieldStrategy;
 import org.dromara.easyes.annotation.rely.IdType;
+import org.dromara.easyes.annotation.rely.RefreshPolicy;
 import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.common.enums.EsQueryTypeEnum;
 import org.dromara.easyes.common.enums.MethodEnum;
-import org.dromara.easyes.common.enums.RefreshPolicy;
 import org.dromara.easyes.common.utils.*;
 import org.dromara.easyes.core.biz.*;
 import org.dromara.easyes.core.cache.BaseCache;
@@ -390,7 +390,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         DeleteByQueryRequest request = new DeleteByQueryRequest(getIndexNames(wrapper.indexNames));
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
         Optional.ofNullable(entityInfo)
-                .flatMap(i->Optional.ofNullable(i.getMaxResultWindow()))
+                .flatMap(i -> Optional.ofNullable(i.getMaxResultWindow()))
                 .ifPresent(request::setBatchSize);
         if (RefreshPolicy.IMMEDIATE.getValue().equals(getRefreshPolicy())) {
             request.setRefresh(true);
@@ -1058,7 +1058,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             Map<String, String> highlightFieldMap = getHighlightFieldMap();
             Map<String, HighlightField> highlightFields = searchHit.getHighlightFields();
             highlightFields.forEach((key, value) -> {
-                String highLightValue = Arrays.stream(value.getFragments()).findFirst().map(Text::string).orElse(BaseEsConstants.EMPTY_STR);
+                String highLightValue = Arrays.stream(value.getFragments()).map(Text::string).collect(Collectors.joining());
                 setHighlightValue(entity, highlightFieldMap.get(key), highLightValue);
             });
         }
@@ -1485,7 +1485,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                 && searchResponse.getShardFailures() != null
                 && searchResponse.getShardFailures().length > ZERO) {
             String errorMsg = searchResponse.getShardFailures()[0].toString();
-            throw ExceptionUtils.eee("es响应出错，search response failed ,failedShards: " + errorMsg);
+            throw ExceptionUtils.eee("search response failed ,failedShards: " + errorMsg);
         }
     }
 
@@ -1495,7 +1495,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @return 刷新策略
      */
     private String getRefreshPolicy() {
-        return GlobalConfigCache.getGlobalConfig().getDbConfig().getRefreshPolicy().getValue();
+        // 防止傻狍子用户在全局中把刷新策略修改为GLOBAL
+        final RefreshPolicy refreshPolicy = EntityInfoHelper.getEntityInfo(entityClass).getRefreshPolicy();
+        return refreshPolicy.equals(RefreshPolicy.GLOBAL) ? RefreshPolicy.NONE.getValue() : refreshPolicy.getValue();
     }
 
     /**

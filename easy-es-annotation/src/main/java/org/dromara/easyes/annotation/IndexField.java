@@ -1,7 +1,6 @@
 package org.dromara.easyes.annotation;
 
 
-
 import org.dromara.easyes.annotation.rely.*;
 
 import java.lang.annotation.ElementType;
@@ -79,6 +78,20 @@ public @interface IndexField {
      * @return 是否忽略大小写
      */
     boolean ignoreCase() default false;
+
+    /**
+     * 长度超过ignore_above设置的字符串将不会被索引或存储 keyword_text默认值为256
+     *
+     * @return 索引字段最大长度
+     */
+    int ignoreAbove() default -1;
+
+    /**
+     * 用于指定浮点数字段的缩放因子 缩放因子用于将浮点数值映射到整数值以进行存储和索引,取值范围是 1 到 10000 针对BigDecimal类型字段,不指定时默认值为 100
+     *
+     * @return 缩放因子
+     */
+    int scalingFactor() default -1;
 
     /**
      * 默认嵌套类

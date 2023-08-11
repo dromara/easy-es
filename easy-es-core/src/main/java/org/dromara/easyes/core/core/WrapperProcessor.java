@@ -416,6 +416,7 @@ public class WrapperProcessor {
                 highlightBuilder.fragmentSize(highLightParam.getFragmentSize());
                 highlightBuilder.preTags(highLightParam.getPreTag());
                 highlightBuilder.postTags(highLightParam.getPostTag());
+                Optional.ofNullable(highLightParam.getNumberOfFragments()).ifPresent(highlightBuilder::numOfFragments);
             }
         });
         searchSourceBuilder.highlighter(highlightBuilder);
@@ -534,6 +535,11 @@ public class WrapperProcessor {
 
         }
         Optional.ofNullable(root).ifPresent(searchSourceBuilder::aggregation);
+
+        if (!GlobalConfigCache.getGlobalConfig().getDbConfig().isEnableAggHits()) {
+            // 配置关闭了聚合返回结果集Hits, 可提升查询效率
+            wrapper.size = ZERO;
+        }
     }
 
     /**

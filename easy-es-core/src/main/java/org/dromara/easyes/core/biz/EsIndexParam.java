@@ -2,6 +2,8 @@ package org.dromara.easyes.core.biz;
 
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * 索引相关参数
  * <p>
@@ -26,6 +28,10 @@ public class EsIndexParam {
      */
     private Boolean fieldData;
     /**
+     * 浮点数字段的缩放因子
+     */
+    private Integer scalingFactor;
+    /**
      * 分词器
      */
     private String analyzer;
@@ -46,6 +52,10 @@ public class EsIndexParam {
      */
     private boolean ignoreCase;
     /**
+     * 字段最大索引长度 默认256
+     */
+    private Integer ignoreAbove;
+    /**
      * 父名称
      */
     private String parentName;
@@ -53,4 +63,35 @@ public class EsIndexParam {
      * 子名称
      */
     private String childName;
+    /**
+     * 内部字段列表
+     */
+    private List<InnerFieldParam> innerFieldParamList;
+
+    /**
+     * 内部段参数
+     */
+    @Data
+    public static class InnerFieldParam {
+        /**
+         * 内部字段名称
+         */
+        private String column;
+        /**
+         * 内部字段类型
+         */
+        private String fieldType;
+        /**
+         * 内部分词器
+         */
+        private String analyzer;
+        /**
+         * 内部查询分词器
+         */
+        private String searchAnalyzer;
+        /**
+         * 内部字段最大索引长度
+         */
+        private Integer ignoreAbove;
+    }
 }

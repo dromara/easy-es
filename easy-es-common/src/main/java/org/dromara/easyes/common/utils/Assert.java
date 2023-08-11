@@ -61,7 +61,26 @@ public class Assert {
         }
     }
 
+    public static void notBlank(String str, String message) {
+        if (str == null || str.isEmpty() || !containsText(str)) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+
+    private static boolean containsText(CharSequence str) {
+        int strLen = str.length();
+
+        for (int i = 0; i < strLen; ++i) {
+            if (!Character.isWhitespace(str.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static boolean isEmpty(Object[] array) {
         return array == null || array.length == 0;
     }
+
 }

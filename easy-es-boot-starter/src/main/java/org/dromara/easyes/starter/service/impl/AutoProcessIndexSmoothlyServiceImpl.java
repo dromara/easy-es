@@ -82,7 +82,7 @@ public class AutoProcessIndexSmoothlyServiceImpl implements AutoProcessIndexServ
         }
 
         //  迁移数据至新创建的索引
-        boolean isDataMigrationSuccess = doDataMigration(entityInfo.getIndexName(), releaseIndexName, client);
+        boolean isDataMigrationSuccess = doDataMigration(entityInfo.getIndexName(), releaseIndexName, entityInfo.getMaxResultWindow(), client);
         if (!isDataMigrationSuccess) {
             LogUtils.error("migrate data failed", "oldIndex:" + entityInfo.getIndexName(), "releaseIndex:" + releaseIndexName);
             return Boolean.FALSE;
@@ -106,7 +106,7 @@ public class AutoProcessIndexSmoothlyServiceImpl implements AutoProcessIndexServ
         entityInfo.setIndexName(releaseIndexName);
 
         // 将新索引名称记录至ee-distribute-lock索引中,以便在分布式环境下其它机器能够感知到
-        IndexUtils.saveReleaseIndex(releaseIndexName,client);
+        IndexUtils.saveReleaseIndex(releaseIndexName, client);
 
         // done.
         return Boolean.TRUE;
@@ -122,8 +122,8 @@ public class AutoProcessIndexSmoothlyServiceImpl implements AutoProcessIndexServ
         }
     }
 
-    private boolean doDataMigration(String oldIndexName, String releaseIndexName, RestHighLevelClient client) {
-        return IndexUtils.reindex(client, oldIndexName, releaseIndexName);
+    private boolean doDataMigration(String oldIndexName, String releaseIndexName, Integer maxResultWindow, RestHighLevelClient client) {
+        return IndexUtils.reindex(client, oldIndexName, releaseIndexName, maxResultWindow);
     }
 
     private boolean doCreateIndex(EntityInfo entityInfo, RestHighLevelClient client) {

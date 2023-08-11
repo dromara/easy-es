@@ -240,4 +240,13 @@ public interface BaseEsConstants {
     String CUSTOM_FILTER = "index.analysis.normalizer.lowercase_normalizer.filter";
     String NORMALIZER = "normalizer";
     String LOWERCASE_NORMALIZER = "lowercase_normalizer";
+
+    /**
+     * 默认缩放因子
+     */
+    Integer DEFAULT_SCALING_FACTOR = 100;
+    /**
+     * 缩放因子索引字段名称
+     */
+    String SCALING_FACTOR_FIELD = "scaling_factor";
 }

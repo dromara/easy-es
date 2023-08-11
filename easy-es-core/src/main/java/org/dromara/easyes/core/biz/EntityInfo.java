@@ -2,6 +2,7 @@ package org.dromara.easyes.core.biz;
 
 import org.dromara.easyes.annotation.rely.IdType;
 import org.dromara.easyes.annotation.rely.JoinField;
+import org.dromara.easyes.annotation.rely.RefreshPolicy;
 import org.dromara.easyes.common.constants.BaseEsConstants;
 import com.alibaba.fastjson.PropertyNamingStrategy;
 import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
@@ -177,6 +178,10 @@ public class EntityInfo {
      */
     private final Map<Class<?>, List<SerializeFilter>> classSimplePropertyPreFilterMap = new HashMap<>();
 
+    /**
+     * 数据刷新策略
+     */
+    private RefreshPolicy refreshPolicy;
     /**
      * 获取需要进行查询的字段列表
      *

@@ -38,6 +38,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -75,7 +76,7 @@ public class AllTest {
         document.setEsId("1");
         document.setCaseTest("Test");
         document.setTitle("测试文档1");
-        document.setContent("测试内容1");
+        document.setContent("测试内容1我是大家发达酸辣粉家里都是测试阿拉拉肥发的是就测试时风刀霜剑阿凯刘非打死了交付率及时点法律就反倒是测测试初拉力肌肥大来极氪吉利发送代理费逻辑逻辑发骚鸡,测试发力了哦哦我");
         document.setCreator("老汉1");
         document.setIpAddress("192.168.1.1");
         document.setLocation("40.171975,116.587105");
@@ -85,9 +86,11 @@ public class AllTest {
         Rectangle rectangle = new Rectangle(39.084509D, 41.187328D, 70.610461D, 20.498353D);
         document.setGeoLocation(rectangle.toString());
         document.setStarNum(1);
+        document.setMultiField("葡萄糖酸钙口服溶液");
+        document.setEnglish("Calcium Gluconate");
+        document.setBigNum(new BigDecimal("66.66"));
         int successCount = documentMapper.insert(document);
         Assertions.assertEquals(successCount, 1);
-
     }
 
     @Test
@@ -878,6 +881,21 @@ public class AllTest {
         wrapper.geoShape(Document::getGeoLocation, circle, ShapeRelation.DISJOINT);
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(22, documents.size());
+    }
+
+    @Test
+    @Order(6)
+    public void testMultiFieldSelect() {
+        // 药品 中文名叫葡萄糖酸钙口服溶液 英文名叫 Calcium Gluconate 汉语拼音为 putaotangsuangaikoufurongye
+        // 用户可以通过模糊检索,例如输入 Calcium 或 葡萄糖 或 putaotang时对应药品均可以被检索到
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.match("english", "Calcium")
+                .or()
+                .match("multi_field.zh", "葡萄糖")
+                .or()
+                .match("multi_field.pinyin", "putaotang");
+        List<Document> documents = documentMapper.selectList(wrapper);
+        System.out.println(documents);
     }
 
     // 4.删除

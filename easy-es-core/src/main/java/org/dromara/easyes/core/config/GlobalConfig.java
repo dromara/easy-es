@@ -4,8 +4,8 @@ package org.dromara.easyes.core.config;
 import lombok.Data;
 import org.dromara.easyes.annotation.rely.FieldStrategy;
 import org.dromara.easyes.annotation.rely.IdType;
+import org.dromara.easyes.annotation.rely.RefreshPolicy;
 import org.dromara.easyes.common.enums.ProcessIndexStrategyEnum;
-import org.dromara.easyes.common.enums.RefreshPolicy;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import static org.dromara.easyes.common.constants.BaseEsConstants.EMPTY_STR;
@@ -79,13 +79,17 @@ public class GlobalConfig {
          */
         private boolean enableTrackTotalHits = true;
         /**
-         * data refresh policy 数据刷新策略,默认为NONE
+         * data refresh policy 数据刷新策略,es默认的数据刷新策略为NONE
          */
         private RefreshPolicy refreshPolicy = RefreshPolicy.NONE;
         /**
          * Batch update threshold 10000 by default 批量更新阈值 默认值为1万
          */
         private Integer batchUpdateThreshold = 10000;
+        /**
+         * Whether to turn on aggregation to return result set data, and turning off aggregation by default, to return only the aggregation results in the bucket can improve query efficiency. 是否开启聚合返回结果集数据,默认关闭 聚合仅返回桶中的聚合结果 可以提升查询效率
+         */
+        private boolean enableAggHits = false;
         /**
          * Whether to intelligently add the. keyword suffix to the field. This configuration is enabled by default. The field type is KEYWORD only for annotation configuration_ The String field of TEXT or unconfigured type takes effect and only takes effect when the query requires that the field be of keyword type, so it is called smart! 是否智能为字段添加.keyword后缀 默认开启 此配置仅对注解配置字段类型为KEYWORD_TEXT或未配置类型的String字段生效，并且只会在查询要求该字段必须为keyword类型的查询中才生效，因此谓之智能!
          */

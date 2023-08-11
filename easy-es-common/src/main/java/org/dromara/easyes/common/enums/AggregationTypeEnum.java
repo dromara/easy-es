@@ -1,5 +1,6 @@
 package org.dromara.easyes.common.enums;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -8,7 +9,6 @@ import lombok.Getter;
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
-@Getter
 @AllArgsConstructor
 public enum AggregationTypeEnum {
     /**
@@ -35,5 +35,6 @@ public enum AggregationTypeEnum {
     /**
      * 聚合类型英文名
      */
+    @Getter
     private final String value;
 }

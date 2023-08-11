@@ -8,10 +8,8 @@ import org.dromara.easyes.annotation.*;
 import org.dromara.easyes.annotation.rely.DefaultNestedClass;
 import org.dromara.easyes.annotation.rely.FieldType;
 import org.dromara.easyes.annotation.rely.IdType;
-import org.dromara.easyes.common.utils.ClassUtils;
-import org.dromara.easyes.common.utils.FastJsonUtils;
-import org.dromara.easyes.common.utils.ReflectionKit;
-import org.dromara.easyes.common.utils.StringUtils;
+import org.dromara.easyes.annotation.rely.RefreshPolicy;
+import org.dromara.easyes.common.utils.*;
 import org.dromara.easyes.core.biz.EntityFieldInfo;
 import org.dromara.easyes.core.biz.EntityInfo;
 import org.dromara.easyes.core.biz.HighLightParam;
@@ -105,14 +103,14 @@ public class EntityInfoHelper {
         List<Field> list = getAllFields(clazz);
         // 标记是否读取到主键
         boolean isReadPK = false;
-        // 是否存在 @TableId 注解
-        boolean existTableId = isExistIndexId(list);
+        // 是否存在 @IndexId 注解
+        boolean existsIndexId = isExistIndexId(list);
 
         List<EntityFieldInfo> fieldList = new ArrayList<>();
         for (Field field : list) {
             // 主键ID 初始化
             if (!isReadPK) {
-                if (existTableId) {
+                if (existsIndexId) {
                     isReadPK = initIndexIdWithAnnotation(dbConfig, entityInfo, field);
                 } else {
                     isReadPK = initIndexIdWithoutAnnotation(dbConfig, entityInfo, field);
@@ -251,8 +249,8 @@ public class EntityInfoHelper {
                                                         Field field, EntityInfo entityInfo) {
         boolean hasAnnotation = false;
 
-        // 初始化封装IndexField注解信息
-        if (field.isAnnotationPresent(IndexField.class)) {
+        // 初始化封装IndexField及MultiIndexField注解信息
+        if (field.isAnnotationPresent(IndexField.class) || field.isAnnotationPresent(MultiIndexField.class)) {
             initIndexFieldAnnotation(dbConfig, entityInfo, field, fieldList);
             hasAnnotation = true;
         }
@@ -293,60 +291,78 @@ public class EntityInfoHelper {
      */
     private static void initIndexFieldAnnotation(GlobalConfig.DbConfig dbConfig, EntityInfo entityInfo,
                                                  Field field, List<EntityFieldInfo> fieldList) {
-        IndexField tableField = field.getAnnotation(IndexField.class);
-        if (tableField.exist()) {
+        MultiIndexField multiIndexField = field.getAnnotation(MultiIndexField.class);
+        IndexField indexField = Optional.ofNullable(multiIndexField).map(MultiIndexField::mainIndexField)
+                .orElse(field.getAnnotation(IndexField.class));
+        if (indexField.exist()) {
             // 存在字段处理
-            EntityFieldInfo entityFieldInfo = new EntityFieldInfo(dbConfig, field, tableField);
+            EntityFieldInfo entityFieldInfo = new EntityFieldInfo(dbConfig, field, indexField);
+
             // 自定义字段名及驼峰下划线转换
             String mappingColumn;
-            if (!StringUtils.isBlank(tableField.value().trim())) {
+            if (!StringUtils.isBlank(indexField.value().trim())) {
                 // 自定义注解指定的名称优先级最高
-                entityInfo.getMappingColumnMap().putIfAbsent(field.getName(), tableField.value());
-                entityInfo.getColumnMappingMap().putIfAbsent(tableField.value(), field.getName());
-                mappingColumn = tableField.value();
+                entityInfo.getMappingColumnMap().putIfAbsent(field.getName(), indexField.value());
+                entityInfo.getColumnMappingMap().putIfAbsent(indexField.value(), field.getName());
+                mappingColumn = indexField.value();
             } else {
                 // 下划线驼峰
                 mappingColumn = initMappingColumnMapAndGet(dbConfig, entityInfo, field);
             }
 
+            // 缩放因子
+            if (MINUS_ONE != indexField.scalingFactor()) {
+                entityFieldInfo.setScalingFactor(indexField.scalingFactor());
+            }
+
             // 日期格式化
-            if (StringUtils.isNotBlank(tableField.dateFormat())) {
-                entityFieldInfo.setDateFormat(tableField.dateFormat());
+            if (StringUtils.isNotBlank(indexField.dateFormat())) {
+                entityFieldInfo.setDateFormat(indexField.dateFormat());
             }
 
             // 是否忽略大小写
-            FieldType fieldType = FieldType.getByType(IndexUtils.getEsFieldType(tableField.fieldType(), field.getType().getSimpleName()));
+            FieldType fieldType = FieldType.getByType(IndexUtils.getEsFieldType(indexField.fieldType(), field.getType().getSimpleName()));
             if (FieldType.KEYWORD.equals(fieldType)) {
                 // 仅对keyword类型设置,其它类型es不支持
-                entityFieldInfo.setIgnoreCase(tableField.ignoreCase());
+                entityFieldInfo.setIgnoreCase(indexField.ignoreCase());
             }
+
+            // 最大索引长度
+            if (indexField.ignoreAbove() > ZERO) {
+                entityFieldInfo.setIgnoreAbove(indexField.ignoreAbove());
+            }
+
             // 其它
             entityFieldInfo.setMappingColumn(mappingColumn);
-            entityFieldInfo.setAnalyzer(tableField.analyzer());
-            entityFieldInfo.setSearchAnalyzer(tableField.searchAnalyzer());
+            entityFieldInfo.setAnalyzer(indexField.analyzer());
+            entityFieldInfo.setSearchAnalyzer(indexField.searchAnalyzer());
             entityFieldInfo.setFieldType(fieldType);
-            entityFieldInfo.setFieldData(tableField.fieldData());
+            entityFieldInfo.setFieldData(indexField.fieldData());
             entityFieldInfo.setColumnType(field.getType().getSimpleName());
             entityInfo.getFieldTypeMap().putIfAbsent(field.getName(), fieldType.getType());
 
             // 父子类型
-            if (FieldType.JOIN.equals(tableField.fieldType())) {
-                entityFieldInfo.setParentName(tableField.parentName());
-                entityFieldInfo.setChildName(tableField.childName());
+            if (FieldType.JOIN.equals(indexField.fieldType())) {
+                entityFieldInfo.setParentName(indexField.parentName());
+                entityFieldInfo.setChildName(indexField.childName());
 
                 entityInfo.setJoinFieldName(mappingColumn);
-                entityInfo.setJoinFieldClass(tableField.joinFieldClass());
-                entityInfo.getPathClassMap().putIfAbsent(field.getName(), tableField.joinFieldClass());
-                processNested(tableField.joinFieldClass(), dbConfig, entityInfo);
+                entityInfo.setJoinFieldClass(indexField.joinFieldClass());
+                entityInfo.getPathClassMap().putIfAbsent(field.getName(), indexField.joinFieldClass());
+                processNested(indexField.joinFieldClass(), dbConfig, entityInfo);
             }
+
+            // 处理内部字段
+            InnerIndexField[] innerIndexFields = Optional.ofNullable(multiIndexField).map(MultiIndexField::otherIndexFields).orElse(null);
+            processInnerField(innerIndexFields, entityFieldInfo);
 
             fieldList.add(entityFieldInfo);
 
             // 嵌套类处理
-            if (DefaultNestedClass.class != tableField.nestedClass()) {
+            if (DefaultNestedClass.class != indexField.nestedClass()) {
                 // 嵌套类
-                entityInfo.getPathClassMap().putIfAbsent(field.getName(), tableField.nestedClass());
-                processNested(tableField.nestedClass(), dbConfig, entityInfo);
+                entityInfo.getPathClassMap().putIfAbsent(field.getName(), indexField.nestedClass());
+                processNested(indexField.nestedClass(), dbConfig, entityInfo);
             }
 
         } else {
@@ -379,8 +395,15 @@ public class EntityInfoHelper {
         entityInfo.getHighlightFieldMap().putIfAbsent(realHighLightField, mappingField);
 
         // 封装高亮参数
-        HighLightParam highLightParam =
-                new HighLightParam(highLight.fragmentSize(), highLight.preTag(), highLight.postTag(), realHighLightField, highLight.highLightType());
+        HighLightParam highLightParam = new HighLightParam();
+        highLightParam.setFragmentSize(highLight.fragmentSize())
+                .setPreTag(highLight.preTag())
+                .setPostTag(highLight.postTag())
+                .setHighLightField(realHighLightField)
+                .setHighLightType(highLight.highLightType());
+        if (MINUS_ONE != highLight.numberOfFragments() && highLight.numberOfFragments() > ZERO) {
+            highLightParam.setNumberOfFragments(highLight.numberOfFragments());
+        }
         entityInfo.getHighLightParams().add(highLightParam);
     }
 
@@ -404,8 +427,10 @@ public class EntityInfoHelper {
             String mappingColumn;
             FieldType fieldType;
             // 处理TableField注解
-            IndexField tableField = field.getAnnotation(IndexField.class);
-            if (Objects.isNull(tableField)) {
+            MultiIndexField multiIndexField = field.getAnnotation(MultiIndexField.class);
+            IndexField indexField = Optional.ofNullable(multiIndexField).map(MultiIndexField::mainIndexField)
+                    .orElse(field.getAnnotation(IndexField.class));
+            if (Objects.isNull(indexField)) {
                 mappingColumn = getMappingColumn(dbConfig, field);
                 EntityFieldInfo entityFieldInfo = new EntityFieldInfo(dbConfig, field);
                 entityFieldInfo.setMappingColumn(mappingColumn);
@@ -414,36 +439,46 @@ public class EntityInfoHelper {
                 entityFieldInfo.setColumnType(field.getType().getSimpleName());
                 entityFieldInfoList.add(entityFieldInfo);
             } else {
-                if (tableField.exist()) {
+                if (indexField.exist()) {
                     // 子嵌套,递归处理
-                    if (DefaultNestedClass.class != tableField.nestedClass()) {
-                        entityInfo.getPathClassMap().putIfAbsent(field.getName(), tableField.nestedClass());
-                        processNested(tableField.nestedClass(), dbConfig, entityInfo);
+                    if (DefaultNestedClass.class != indexField.nestedClass()) {
+                        entityInfo.getPathClassMap().putIfAbsent(field.getName(), indexField.nestedClass());
+                        processNested(indexField.nestedClass(), dbConfig, entityInfo);
                     }
 
                     // 字段名称
-                    if (StringUtils.isNotBlank(tableField.value().trim())) {
-                        mappingColumn = tableField.value();
+                    if (StringUtils.isNotBlank(indexField.value().trim())) {
+                        mappingColumn = indexField.value();
                     } else {
                         mappingColumn = getMappingColumn(dbConfig, field);
                     }
 
                     // 设置实体字段信息
-                    EntityFieldInfo entityFieldInfo = new EntityFieldInfo(dbConfig, field, tableField);
-                    fieldType = FieldType.NONE.equals(tableField.fieldType()) ? FieldType.KEYWORD_TEXT : tableField.fieldType();
+                    EntityFieldInfo entityFieldInfo = new EntityFieldInfo(dbConfig, field, indexField);
+                    fieldType = FieldType.NONE.equals(indexField.fieldType()) ? FieldType.KEYWORD_TEXT : indexField.fieldType();
                     entityFieldInfo.setMappingColumn(mappingColumn);
                     entityFieldInfo.setFieldType(fieldType);
-                    entityFieldInfo.setFieldData(tableField.fieldData());
+                    entityFieldInfo.setFieldData(indexField.fieldData());
                     entityFieldInfo.setColumnType(fieldType.getType());
-                    entityFieldInfo.setAnalyzer(tableField.analyzer());
-                    entityFieldInfo.setSearchAnalyzer(tableField.searchAnalyzer());
+                    entityFieldInfo.setAnalyzer(indexField.analyzer());
+                    entityFieldInfo.setSearchAnalyzer(indexField.searchAnalyzer());
                     if (FieldType.KEYWORD.equals(fieldType)) {
                         // 仅对keyword类型设置,其它类型es不支持
-                        entityFieldInfo.setIgnoreCase(tableField.ignoreCase());
+                        entityFieldInfo.setIgnoreCase(indexField.ignoreCase());
                     }
-                    if (StringUtils.isNotBlank(tableField.dateFormat())) {
-                        entityFieldInfo.setDateFormat(tableField.dateFormat());
+                    if (StringUtils.isNotBlank(indexField.dateFormat())) {
+                        entityFieldInfo.setDateFormat(indexField.dateFormat());
                     }
+
+                    // 缩放因子
+                    if (MINUS_ONE != indexField.scalingFactor()) {
+                        entityFieldInfo.setScalingFactor(indexField.scalingFactor());
+                    }
+
+                    // 处理内部字段
+                    InnerIndexField[] innerIndexFields = Optional.ofNullable(multiIndexField).map(MultiIndexField::otherIndexFields).orElse(null);
+                    processInnerField(innerIndexFields, entityFieldInfo);
+
                     entityFieldInfoList.add(entityFieldInfo);
                 } else {
                     mappingColumn = getMappingColumn(dbConfig, field);
@@ -461,6 +496,31 @@ public class EntityInfoHelper {
         entityInfo.getNestedClassMappingColumnMap().putIfAbsent(nestedClass, mappingColumnMap);
         entityInfo.getNestedClassFieldTypeMap().putIfAbsent(nestedClass, fieldTypeMap);
         entityInfo.getNestedFieldListMap().put(nestedClass, entityFieldInfoList);
+    }
+
+    /**
+     * 处理内部字段
+     *
+     * @param innerIndexFields 内部字段注解数组
+     * @param entityFieldInfo  内部字段信息
+     */
+    private static void processInnerField(InnerIndexField[] innerIndexFields, EntityFieldInfo entityFieldInfo) {
+        if (ArrayUtils.isNotEmpty(innerIndexFields)) {
+            List<EntityFieldInfo.InnerFieldInfo> innerFieldInfoList = new ArrayList<>();
+            Arrays.stream(innerIndexFields).forEach(innerField -> {
+                Assert.notBlank(innerField.suffix(), "The Annotation MultiIndexField.InnerIndexField.value must has text");
+                EntityFieldInfo.InnerFieldInfo innerFieldInfo = new EntityFieldInfo.InnerFieldInfo();
+                innerFieldInfo.setColumn(innerField.suffix());
+                innerFieldInfo.setFieldType(innerField.fieldType());
+                innerFieldInfo.setAnalyzer(innerField.analyzer());
+                innerFieldInfo.setSearchAnalyzer(innerField.searchAnalyzer());
+                if (innerField.ignoreAbove() > ZERO) {
+                    innerFieldInfo.setIgnoreAbove(innerField.ignoreAbove());
+                }
+                innerFieldInfoList.add(innerFieldInfo);
+            });
+            entityFieldInfo.setInnerFieldInfoList(innerFieldInfoList);
+        }
     }
 
 
@@ -616,6 +676,11 @@ public class EntityInfoHelper {
             entityInfo.setReplicasNum(table.replicasNum());
             entityInfo.setChild(table.child());
             entityInfo.setChildClass(table.childClass());
+            RefreshPolicy refreshPolicy = table.refreshPolicy();
+            if (RefreshPolicy.GLOBAL.equals(refreshPolicy)) {
+                refreshPolicy = dbConfig.getRefreshPolicy();
+            }
+            entityInfo.setRefreshPolicy(refreshPolicy);
         }
 
         String targetIndexName = indexName;
@@ -655,4 +720,5 @@ public class EntityInfoHelper {
         }
         return mappingColumn;
     }
+
 }

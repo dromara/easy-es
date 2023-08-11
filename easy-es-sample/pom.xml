@@ -9,7 +9,7 @@
     <parent>
         <groupId>org.dromara.easy-es</groupId>
         <artifactId>easy-es</artifactId>
-        <version>2.0.0-beta3</version>
+        <version>2.0.0-beta4</version>
     </parent>
 
     <properties>

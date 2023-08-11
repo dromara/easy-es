@@ -20,9 +20,9 @@ import static org.dromara.easyes.annotation.rely.AnnotationConstants.*;
 @Target(ElementType.FIELD)
 public @interface HighLight {
     /**
-     * 指定的高亮字段名称
+     * 高亮内容映射字段的名称
      *
-     * @return 高亮字段名称
+     * @return 高亮内容映射字段的名称
      */
     String mappingField() default "";
 
@@ -32,6 +32,13 @@ public @interface HighLight {
      * @return 高亮字段截取长度
      */
     int fragmentSize() default DEFAULT_FRAGMENT_SIZE;
+
+    /**
+     * 搜索返回的高亮片段数量,默认全部返回
+     *
+     * @return 高亮片段数量
+     */
+    int numberOfFragments() default -1;
 
     /**
      * 高亮前置标签

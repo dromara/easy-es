@@ -1,16 +1,17 @@
 package org.dromara.easyes.core.biz;
 
-import org.dromara.easyes.annotation.IndexField;
-import org.dromara.easyes.annotation.rely.FieldStrategy;
-import org.dromara.easyes.annotation.rely.FieldType;
-import org.dromara.easyes.core.config.GlobalConfig;
 import com.alibaba.fastjson.serializer.NameFilter;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import org.dromara.easyes.annotation.IndexField;
+import org.dromara.easyes.annotation.rely.FieldStrategy;
+import org.dromara.easyes.annotation.rely.FieldType;
+import org.dromara.easyes.core.config.GlobalConfig;
 
 import java.lang.reflect.Field;
+import java.util.List;
 
 /**
  * es实体字段信息
@@ -36,6 +37,10 @@ public class EntityFieldInfo {
      */
     private String mappingColumn;
     /**
+     * 缩放因子
+     */
+    private Integer scalingFactor;
+    /**
      * 字段在es中的存储类型
      */
     private FieldType fieldType;
@@ -47,6 +52,10 @@ public class EntityFieldInfo {
      * 字段是否忽略大小写，默认不忽略 为true时则忽略大小写
      */
     private boolean ignoreCase;
+    /**
+     * 字段最大索引长度
+     */
+    private Integer ignoreAbove;
     /**
      * 分词器
      */
@@ -87,6 +96,11 @@ public class EntityFieldInfo {
     private NameFilter nameFilter;
 
     /**
+     * 内部字段列表
+     */
+    private List<InnerFieldInfo> innerFieldInfoList;
+
+    /**
      * 存在 TableField 注解时, 使用的构造函数
      *
      * @param dbConfig   索引配置
@@ -95,7 +109,6 @@ public class EntityFieldInfo {
      */
     public EntityFieldInfo(GlobalConfig.DbConfig dbConfig, Field field, IndexField tableField) {
         this.column = field.getName();
-
         // 优先使用单个字段注解，否则使用全局配置
         if (tableField.strategy() == FieldStrategy.DEFAULT) {
             this.fieldStrategy = dbConfig.getFieldStrategy();
@@ -113,6 +126,33 @@ public class EntityFieldInfo {
     public EntityFieldInfo(GlobalConfig.DbConfig dbConfig, Field field) {
         this.fieldStrategy = dbConfig.getFieldStrategy();
         this.column = field.getName();
+    }
+
+    /**
+     * 内部字段
+     */
+    @Data
+    public static class InnerFieldInfo {
+        /**
+         * 内部字段名
+         */
+        private String column;
+        /**
+         * 内部字段类型
+         */
+        private FieldType fieldType;
+        /**
+         * 内部字段分词器
+         */
+        private String analyzer;
+        /**
+         * 内部字段查询分词器
+         */
+        private String searchAnalyzer;
+        /**
+         * 字段最大索引长度
+         */
+        private Integer ignoreAbove;
     }
 
 }
