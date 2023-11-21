@@ -187,7 +187,7 @@ String indexName = "document";
 </br>
 
 <a href="http://www.yunchengxc.com/">
-  <img alt="ad" src="https://iknow.hs.net/a6aa6dca-3e70-4f05-8260-563230ed8185.png">
+  <img alt="ad" src="https://iknow.hs.net/ea88661b-3d02-4dba-aacb-8907a4ca8f11.jpg">
 </a>
 
 ## Donate
