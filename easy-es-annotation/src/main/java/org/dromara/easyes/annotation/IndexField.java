@@ -24,7 +24,7 @@ public @interface IndexField {
     String value() default "";
 
     /**
-     * 是否为数据库表字段 默认 true 存在，false 不存在
+     * 是否为索引字段 默认 true 存在，false 不存在
      *
      * @return 存在
      */
@@ -85,6 +85,13 @@ public @interface IndexField {
      * @return 索引字段最大长度
      */
     int ignoreAbove() default -1;
+
+    /**
+     * 向量的维度大小，不能超过2048 且非负 字段类型为dense_vector时必须指定此字段值,否则索引无法正确创建
+     *
+     * @return 向量的维度大小
+     */
+    int dims() default -1;
 
     /**
      * 用于指定浮点数字段的缩放因子 缩放因子用于将浮点数值映射到整数值以进行存储和索引,取值范围是 1 到 10000 针对BigDecimal类型字段,不指定时默认值为 100

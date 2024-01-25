@@ -136,6 +136,7 @@ public class Document {
     /**
      * 复合字段,此注解和SpringData中的MultiField用法类似 适用于对同一个字段通过多种分词器检索的场景
      */
+    @HighLight
     @MultiIndexField(mainIndexField = @IndexField(fieldType = FieldType.KEYWORD),
             otherIndexFields = {@InnerIndexField(suffix = "zh", fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART),
                     @InnerIndexField(suffix = "pinyin", fieldType = FieldType.TEXT, analyzer = Analyzer.PINYIN)})
@@ -144,4 +145,10 @@ public class Document {
      * 英文名
      */
     private String english;
+
+    /**
+     * 稠密向量类型，dims 非负 最大为2048
+     */
+    @IndexField(fieldType = FieldType.DENSE_VECTOR, dims = 3)
+    private double[] vector;
 }

@@ -1,14 +1,14 @@
 package org.dromara.easyes.core.biz;
 
-import org.dromara.easyes.annotation.rely.IdType;
-import org.dromara.easyes.annotation.rely.JoinField;
-import org.dromara.easyes.annotation.rely.RefreshPolicy;
-import org.dromara.easyes.common.constants.BaseEsConstants;
 import com.alibaba.fastjson.PropertyNamingStrategy;
 import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
 import com.alibaba.fastjson.serializer.SerializeFilter;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.dromara.easyes.annotation.rely.IdType;
+import org.dromara.easyes.annotation.rely.JoinField;
+import org.dromara.easyes.annotation.rely.RefreshPolicy;
+import org.dromara.easyes.common.constants.BaseEsConstants;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -124,7 +124,11 @@ public class EntityInfo {
     /**
      * 当前主类的高亮字段列表
      */
-    private List<HighLightParam> highLightParams = new ArrayList<>();
+    private List<HighLightParam> highlightParams = new ArrayList<>();
+    /**
+     * 嵌套类-高亮字段列表
+     */
+    private Map<Class<?>, List<HighLightParam>> nestedHighLightParamsMap = new HashMap<>();
     /**
      * fastjson 字段命名策略
      */
@@ -137,6 +141,10 @@ public class EntityInfo {
      * 实体字段->高亮返回结果 键值对
      */
     private final Map<String, String> highlightFieldMap = new HashMap<>();
+    /**
+     * 嵌套类 实体字段->高亮返回结果字段
+     */
+    private final Map<Class<?>, Map<String, String>> nestedHighlightFieldMap = new HashMap<>();
     /**
      * 实体字段名->es字段类型
      */
@@ -182,6 +190,7 @@ public class EntityInfo {
      * 数据刷新策略
      */
     private RefreshPolicy refreshPolicy;
+
     /**
      * 获取需要进行查询的字段列表
      *
@@ -224,7 +233,7 @@ public class EntityInfo {
     public Map<String, String> getNestedMappingColumnMapByPath(String path) {
         return Optional.ofNullable(pathClassMap.get(path))
                 .map(nestedClassMappingColumnMap::get)
-                .orElse(new HashMap<>(0));
+                .orElse(Collections.emptyMap());
     }
 
 

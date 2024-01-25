@@ -69,6 +69,10 @@ public class EntityFieldInfo {
      */
     private String dateFormat;
     /**
+     * 向量的维度大小，不能超过2048
+     */
+    private Integer dims;
+    /**
      * 字段策略 默认，自判断 null
      */
     private final FieldStrategy fieldStrategy;

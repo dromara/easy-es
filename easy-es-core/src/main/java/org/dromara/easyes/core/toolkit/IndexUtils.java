@@ -58,16 +58,39 @@ import static org.dromara.easyes.common.constants.BaseEsConstants.*;
  **/
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class IndexUtils {
-
+    /**
+     * 多字段索引名
+     */
     private static final String FIELDS_KEY;
+    /**
+     * ignore_above默认值
+     */
     private static final int DEFAULT_IGNORE_ABOVE;
+    /**
+     * ignore_above 字段的索引名
+     */
     private static final String IGNORE_ABOVE_KEY;
-
+    /**
+     * index.analysis.normalizer.lowercase_normalizer.type值
+     */
+    private static final String CUSTOM;
+    /**
+     * 忽略index.analysis.normalizer.lowercase_normalizer.filter
+     */
+    private static final String LOWERCASE;
+    /**
+     * dims索引字段名
+     */
+    private static final String DIMS_KEY;
 
     static {
         FIELDS_KEY = "fields";
         DEFAULT_IGNORE_ABOVE = 256;
         IGNORE_ABOVE_KEY = "ignore_above";
+        CUSTOM = "custom";
+        LOWERCASE = "lowercase";
+        DIMS_KEY = "dims";
+
     }
 
     /**
@@ -114,8 +137,8 @@ public class IndexUtils {
                         .findFirst()
                         .ifPresent(i -> {
                             // 只要有其中一个字段加了忽略大小写,则在索引中创建此自定义配置,否则无需创建,不浪费资源
-                            settings.put(CUSTOM_TYPE, "custom");
-                            settings.put(CUSTOM_FILTER, "lowercase");
+                            settings.put(CUSTOM_TYPE, CUSTOM);
+                            settings.put(CUSTOM_FILTER, LOWERCASE);
                         });
             }
 
@@ -451,6 +474,11 @@ public class IndexUtils {
                 info.put(SCALING_FACTOR_FIELD, scalingFactor);
             }
 
+            // dense_vector数据类型,须设置dims
+            if (FieldType.DENSE_VECTOR.getType().equals(indexParam.getFieldType())) {
+                Optional.ofNullable(indexParam.getDims()).ifPresent(dims -> info.put(DIMS_KEY, dims));
+            }
+
             // 设置权重
             Optional.ofNullable(indexParam.getBoost()).ifPresent(boost -> info.put(BOOST_KEY, indexParam.getBoost()));
 
@@ -483,7 +511,7 @@ public class IndexUtils {
                 indexParam.getInnerFieldParamList().forEach(innerFieldParam -> {
                     Map<String, Object> innerInfo = new HashMap<>();
                     if (FieldType.KEYWORD_TEXT.getType().equals(innerFieldParam.getFieldType())) {
-                        ExceptionUtils.eee("The fieldType FieldType.KEYWORD_TEXT just for mainIndexField, can not be used in @InnerIndexField");
+                        throw ExceptionUtils.eee("The fieldType FieldType.KEYWORD_TEXT just for mainIndexField, can not be used in @InnerIndexField");
                     }
                     innerInfo.put(TYPE, innerFieldParam.getFieldType());
                     boolean innerContainsTextType = FieldType.TEXT.getType().equals(innerFieldParam.getFieldType()) ||
@@ -592,7 +620,7 @@ public class IndexUtils {
             List<EntityFieldInfo> childFieldList = Optional.ofNullable(entityInfo.getChildClass())
                     .flatMap(childClass -> Optional.ofNullable(EntityInfoHelper.getEntityInfo(childClass))
                             .map(EntityInfo::getFieldList))
-                    .orElse(new ArrayList<>(0));
+                    .orElse(Collections.emptyList());
             if (!CollectionUtils.isEmpty(childFieldList)) {
                 childFieldList.forEach(child -> {
                     // 添加子文档中除JoinField以外的字段
@@ -615,6 +643,7 @@ public class IndexUtils {
                 esIndexParam.setFieldName(field.getMappingColumn());
                 esIndexParam.setDateFormat(field.getDateFormat());
                 esIndexParam.setScalingFactor(field.getScalingFactor());
+                esIndexParam.setDims(field.getDims());
                 if (FieldType.NESTED.equals(field.getFieldType())) {
                     esIndexParam.setNestedClass(entityInfo.getPathClassMap().get(field.getColumn()));
                 }

@@ -755,6 +755,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * @param param 参数
      */
     private void processJoin(Param param) {
+        // 重置前一节点类型
         if (!paramQueue.isEmpty()) {
             Param prev = paramQueue.peekLast();
             if (OR.equals(prev.getQueryTypeEnum())) {

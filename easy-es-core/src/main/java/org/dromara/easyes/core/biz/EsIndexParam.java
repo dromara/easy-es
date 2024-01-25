@@ -48,6 +48,14 @@ public class EsIndexParam {
      */
     private String dateFormat;
     /**
+     * 向量的维度大小，不能超过2048
+     */
+    private Integer dims;
+    /**
+     * 相似度算法 例如 dot_product BM25 等
+     */
+    private String similarity;
+    /**
      * 字段是否忽略大小写，默认不忽略 为true时则忽略大小写
      */
     private boolean ignoreCase;

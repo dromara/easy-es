@@ -246,15 +246,40 @@ public class WrapperProcessor {
                 break;
             case NESTED:
                 realField = getRealField(param.getColumn(), mappingColumnMap);
-                String[] split = param.getColumn().split("\\.");
-                queryBuilder = getBool(children, QueryBuilders.boolQuery(), entityInfo, split[split.length - 1]);
-                queryBuilder = QueryBuilders.nestedQuery(realField, queryBuilder, (ScoreMode) param.getVal());
-                setBool(bool, queryBuilder, param.getPrevQueryType());
+                String[] split = param.getColumn().split(SIGN);
+                String path = split[split.length - 1];
+                queryBuilder = getBool(children, QueryBuilders.boolQuery(), entityInfo, path);
+                NestedQueryBuilder nestedQueryBuilder = QueryBuilders.nestedQuery(realField, queryBuilder, (ScoreMode) param.getVal());
+                // 设置嵌套类型高亮查询参数
+                setNestedHighlight(path, param.getColumn(), nestedQueryBuilder, entityInfo);
+                // 设置bool查询参数
+                setBool(bool, nestedQueryBuilder, param.getPrevQueryType());
                 break;
             default:
                 // just ignore,almost never happen
                 throw ExceptionUtils.eee("非法参数类型");
         }
+    }
+
+    /**
+     * 设置嵌套类型高亮查询参数
+     *
+     * @param path               嵌套path
+     * @param column             字段
+     * @param nestedQueryBuilder 嵌套查询条件构造器
+     * @param entityInfo         实体信息缓存
+     */
+    private static void setNestedHighlight(String path, String column, NestedQueryBuilder nestedQueryBuilder, EntityInfo entityInfo) {
+        // 嵌套类型的高亮查询语句构造
+        Class<?> pathClass = entityInfo.getPathClassMap().get(path);
+        Optional.ofNullable(pathClass)
+                .flatMap(i -> Optional.ofNullable(entityInfo.getNestedHighLightParamsMap().get(i)))
+                .ifPresent(i -> {
+                    // 嵌套类型高亮字段名需要完整的path 例如users.faqs 所以此处用param.column而非path
+                    HighlightBuilder highlightBuilder = initHighlightBuilder(i, column);
+                    Optional.ofNullable(highlightBuilder)
+                            .ifPresent(p -> nestedQueryBuilder.innerHit(new InnerHitBuilder().setHighlightBuilder(p)));
+                });
     }
 
     /**
@@ -282,8 +307,10 @@ public class WrapperProcessor {
     /**
      * 递归获取子节点的bool
      *
-     * @param paramList 子节点参数列表
-     * @param builder   新的根bool
+     * @param paramList  子节点参数列表
+     * @param builder    新的根bool
+     * @param entityInfo 实体信息缓存
+     * @param path       路径
      * @return 子节点bool合集, 统一封装至入参builder中
      */
     private static BoolQueryBuilder getBool(List<Param> paramList, BoolQueryBuilder builder, EntityInfo entityInfo, String path) {
@@ -298,9 +325,9 @@ public class WrapperProcessor {
             // 嵌套类型
             Class<?> clazz = entityInfo.getPathClassMap().get(path);
             mappingColumnMap = Optional.ofNullable(entityInfo.getNestedClassMappingColumnMap().get(clazz))
-                    .orElse(new HashMap<>(0));
+                    .orElse(Collections.emptyMap());
             fieldTypeMap = Optional.ofNullable(entityInfo.getNestedClassFieldTypeMap().get(clazz))
-                    .orElse(new HashMap<>(0));
+                    .orElse(Collections.emptyMap());
         } else {
             mappingColumnMap = entityInfo.getMappingColumnMap();
             fieldTypeMap = entityInfo.getFieldTypeMap();
@@ -326,7 +353,7 @@ public class WrapperProcessor {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
         // 设置高亮
-        setHighLight(entityInfo.getHighLightParams(), searchSourceBuilder);
+        setHighLight(entityInfo.getHighlightParams(), searchSourceBuilder);
 
         // 设置用户指定的各种排序规则
         setSort(wrapper, mappingColumnMap, searchSourceBuilder);
@@ -404,12 +431,23 @@ public class WrapperProcessor {
             return;
         }
 
+        // 初始化高亮参数
+        HighlightBuilder highlightBuilder = initHighlightBuilder(highLightParams, null);
+        Optional.ofNullable(highlightBuilder).ifPresent(searchSourceBuilder::highlighter);
+    }
+
+    private static HighlightBuilder initHighlightBuilder(List<HighLightParam> highLightParams, String path) {
+        if (CollectionUtils.isEmpty(highLightParams)) {
+            return null;
+        }
         // 封装高亮参数
         HighlightBuilder highlightBuilder = new HighlightBuilder();
         highLightParams.forEach(highLightParam -> {
             if (StringUtils.isNotBlank(highLightParam.getHighLightField())) {
-                //field
-                HighlightBuilder.Field field = new HighlightBuilder.Field(highLightParam.getHighLightField());
+                // 嵌套类型 须追加其完整path前缀
+                String highlightField = Optional.ofNullable(path).map(i -> i + STR_SIGN + highLightParam.getHighLightField())
+                        .orElse(highLightParam.getHighLightField());
+                HighlightBuilder.Field field = new HighlightBuilder.Field(highlightField);
                 field.highlighterType(highLightParam.getHighLightType().getValue());
                 highlightBuilder.field(field);
 
@@ -419,7 +457,7 @@ public class WrapperProcessor {
                 Optional.ofNullable(highLightParam.getNumberOfFragments()).ifPresent(highlightBuilder::numOfFragments);
             }
         });
-        searchSourceBuilder.highlighter(highlightBuilder);
+        return highlightBuilder;
     }
 
 

@@ -18,6 +18,7 @@ import org.dromara.easyes.common.utils.*;
 import org.dromara.easyes.core.biz.*;
 import org.dromara.easyes.core.cache.BaseCache;
 import org.dromara.easyes.core.cache.GlobalConfigCache;
+import org.dromara.easyes.core.config.GlobalConfig;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.core.toolkit.FieldUtils;
 import org.dromara.easyes.core.toolkit.IndexUtils;
@@ -155,16 +156,16 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     }
 
     @Override
-    public Boolean refresh() {
+    public Integer refresh() {
         return this.refresh(EntityInfoHelper.getEntityInfo(entityClass).getIndexName());
     }
 
     @Override
-    public Boolean refresh(String... indexNames) {
+    public Integer refresh(String... indexNames) {
         RefreshRequest request = new RefreshRequest(indexNames);
         try {
             RefreshResponse refresh = client.indices().refresh(request, RequestOptions.DEFAULT);
-            return refresh.getSuccessfulShards() == Arrays.stream(indexNames).count();
+            return refresh.getSuccessfulShards();
         } catch (IOException e) {
             e.printStackTrace();
             throw ExceptionUtils.eee("refresh index exception e", e);
@@ -515,7 +516,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 请求es获取数据
         SearchHit[] searchHits = getSearchHitArray(wrapper);
         if (ArrayUtils.isEmpty(searchHits)) {
-            return new ArrayList<>(0);
+            return Collections.emptyList();
         }
 
         // 批量解析
@@ -807,7 +808,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 请求es获取数据
         SearchHit[] searchHitArray = getSearchHitArray(searchRequest);
         if (ArrayUtils.isEmpty(searchHitArray)) {
-            return new ArrayList<>(0);
+            return Collections.emptyList();
         }
 
         // 批量解析数据
@@ -1053,15 +1054,18 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 解析json
         T entity = JSON.parseObject(searchHit.getSourceAsString(), entityClass, entityInfo.getExtraProcessor());
 
-        // 高亮字段处理
-        if (CollectionUtils.isNotEmpty(entityInfo.getHighLightParams())) {
+        // 主类中高亮字段处理
+        Map<String, HighlightField> highlightFields = searchHit.getHighlightFields();
+        if (CollectionUtils.isNotEmpty(entityInfo.getHighlightParams()) && CollectionUtils.isNotEmpty(highlightFields)) {
             Map<String, String> highlightFieldMap = getHighlightFieldMap();
-            Map<String, HighlightField> highlightFields = searchHit.getHighlightFields();
             highlightFields.forEach((key, value) -> {
                 String highLightValue = Arrays.stream(value.getFragments()).map(Text::string).collect(Collectors.joining());
                 setHighlightValue(entity, highlightFieldMap.get(key), highLightValue);
             });
         }
+
+        // 嵌套类中的高亮处理
+        setInnerHighlight(searchHit, entity, entityInfo.getNestedHighlightFieldMap());
 
         // 得分字段处理
         setScore(entity, searchHit.getScore(), entityInfo);
@@ -1077,6 +1081,102 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
         return entity;
     }
+
+
+    /**
+     * 设置嵌套类型中的高亮
+     *
+     * @param searchHit               查询结果
+     * @param root                    主实体对象
+     * @param nestedHighlightFieldMap 字段缓存
+     */
+    private void setInnerHighlight(SearchHit searchHit, T root, Map<Class<?>, Map<String, String>> nestedHighlightFieldMap) {
+        // 遍历innerHits 批量设置
+        if (CollectionUtils.isEmpty(searchHit.getInnerHits())) {
+            return;
+        }
+        searchHit.getInnerHits()
+                .forEach((k, v) -> {
+                    SearchHit[] hits = v.getHits();
+                    Arrays.stream(hits).forEach(hit -> {
+                        SearchHit.NestedIdentity nestedIdentity = hit.getNestedIdentity();
+                        Map<String, HighlightField> highlightFields = hit.getHighlightFields();
+                        if (CollectionUtils.isNotEmpty(highlightFields) && nestedIdentity != null) {
+                            highlightFields.forEach((k1, v1) -> {
+                                String highLightContent = Arrays.stream(v1.getFragments()).map(Text::string).collect(Collectors.joining());
+                                SearchHit.NestedIdentity tmpNestedIdentity = nestedIdentity;
+                                List<String> pathList = new ArrayList<>();
+                                while (tmpNestedIdentity != null) {
+                                    Optional.ofNullable(tmpNestedIdentity.getField()).ifPresent(field -> pathList.add(field.toString()));
+                                    tmpNestedIdentity = tmpNestedIdentity.getChild();
+                                }
+                                String highLightField = k1.replace(String.join(STR_SIGN, pathList) + STR_SIGN, EMPTY_STR);
+                                processInnerHighlight(nestedIdentity.getField().string(), root, nestedIdentity,
+                                        highLightField, highLightContent, nestedHighlightFieldMap);
+                            });
+                        }
+                    });
+                });
+    }
+
+    /**
+     * 递归处理嵌套类中的高亮
+     *
+     * @param path                    嵌套类路径
+     * @param root
+     * @param nestedIdentity          嵌套路径
+     * @param highlightField          高亮字段
+     * @param highlightContent        高亮内容
+     * @param nestedHighlightFieldMap 字段缓存
+     */
+    private void processInnerHighlight(String path, Object root, SearchHit.NestedIdentity nestedIdentity, String highlightField,
+                                       String highlightContent, Map<Class<?>, Map<String, String>> nestedHighlightFieldMap) {
+        // 反射, 获取嵌套对象
+        Method method = BaseCache.getterMethod(root.getClass(), nestedIdentity.getField().string());
+        Object invoke = null;
+        try {
+            invoke = method.invoke(root);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            LogUtils.error("processInnerHighlight invoke error, class:%s,methodName:%s",
+                    root.getClass().getSimpleName(), nestedIdentity.getField().string());
+        }
+
+        // 嵌套对象为容器的情况
+        if (invoke instanceof Collection) {
+            Collection<?> coll = (Collection<?>) invoke;
+            Iterator<?> iterator = coll.iterator();
+            int i = 0;
+            while (iterator.hasNext()) {
+                Object next = iterator.next();
+                // 不在nestedIdentity中的项无需处理
+                if (i == nestedIdentity.getOffset()) {
+                    if (path.equals(nestedIdentity.getField().string())) {
+                        final SearchHit.NestedIdentity child = nestedIdentity.getChild();
+                        if (child != null) {
+                            // 递归 对子项执行相同操作
+                            processInnerHighlight(child.getField().string(), next, child, highlightField, highlightContent, nestedHighlightFieldMap);
+                        } else {
+                            // 已找到需要被高亮的叶子节点
+                            String realHighlightField = Optional.ofNullable(nestedHighlightFieldMap.get(next.getClass()))
+                                    .map(highlightFieldMap -> highlightFieldMap.get(highlightField)).orElse(highlightField);
+                            setHighlightValue(next, realHighlightField, highlightContent);
+                        }
+                    }
+                }
+                i++;
+            }
+        } else {
+            // 不太可能发生, 因为非容器的嵌套类型无意义,可以直接大宽表,但考虑到健壮性,仍针对个别傻狍子用户兼容处理
+            Object finalInvoke = invoke;
+            Optional.ofNullable(finalInvoke).ifPresent(i -> {
+                String realHighlightField = Optional.ofNullable(nestedHighlightFieldMap.get(finalInvoke.getClass()))
+                        .map(highlightFieldMap -> highlightFieldMap.get(highlightField)).orElse(highlightField);
+                setHighlightValue(i, realHighlightField, highlightContent);
+            });
+        }
+    }
+
 
     /**
      * 设置距离
@@ -1395,9 +1495,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param highlightField 高亮返回字段
      * @param value          高亮结果值
      */
-    private void setHighlightValue(T entity, String highlightField, String value) {
+    private void setHighlightValue(Object entity, String highlightField, String value) {
         try {
-            Method invokeMethod = BaseCache.setterMethod(entityClass, highlightField);
+            Method invokeMethod = BaseCache.setterMethod(entity.getClass(), highlightField);
             invokeMethod.invoke(entity, value);
         } catch (Throwable e) {
             LogUtils.formatError("setHighlightValue error,entity:%s,highlightField:%s,value:%s,e:%s",
@@ -1450,12 +1550,18 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param countRequest 统计数量查询参数
      */
     private void printCountDSL(CountRequest countRequest) {
-        if (GlobalConfigCache.getGlobalConfig().isPrintDsl() && Objects.nonNull(countRequest)) {
-            Optional.ofNullable(countRequest.query())
-                    .ifPresent(source -> LogUtils.info(BaseEsConstants.COUNT_DSL_PREFIX
-                            + "\nindex-name: " + org.springframework.util.StringUtils.arrayToCommaDelimitedString(countRequest.indices())
-                            + "\nDSL：" + source));
-        }
+//        GlobalConfig globalConfig = GlobalConfigCache.getGlobalConfig();
+//        if (.isPrintDsl() && Objects.nonNull(countRequest)){
+//            Optional.ofNullable(countRequest.query())
+//                    .ifPresent(source -> {
+//                        String prefix = globalConfig.isIKunMode() ? I_KUN_PREFIX : DSL_PREFIX;
+//                        LogUtils.info(BaseEsConstants.COUNT_DSL_PREFIX
+//                                + "\nindex-name: " + org.springframework.util.StringUtils.arrayToCommaDelimitedString(countRequest.indices())
+//                                + "\nDSL：" + source)
+//                    });
+//        }
+        Optional.ofNullable(countRequest.query())
+                .ifPresent(i -> doPrint(i.toString(), countRequest.indices()));
     }
 
     /**
@@ -1464,11 +1570,15 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param searchRequest es查询请求参数
      */
     private void printDSL(SearchRequest searchRequest) {
-        if (GlobalConfigCache.getGlobalConfig().isPrintDsl() && Objects.nonNull(searchRequest)) {
-            Optional.ofNullable(searchRequest.source())
-                    .ifPresent(source -> LogUtils.info(BaseEsConstants.DSL_PREFIX
-                            + "\nindex-name: " + org.springframework.util.StringUtils.arrayToCommaDelimitedString(searchRequest.indices())
-                            + "\nDSL：" + source));
+        Optional.ofNullable(searchRequest.source())
+                .ifPresent(i -> doPrint(i.toString(), searchRequest.indices()));
+    }
+
+    private void doPrint(String source, String[] indices) {
+        GlobalConfig globalConfig = GlobalConfigCache.getGlobalConfig();
+        if (globalConfig.isPrintDsl()) {
+            String prefix = globalConfig.isIKunMode() ? I_KUN_PREFIX : DSL_PREFIX;
+            LogUtils.info(prefix + "\nindex-name: " + String.join(",", indices) + "\nDSL：" + source);
         }
     }
 
@@ -1497,7 +1607,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     private String getRefreshPolicy() {
         // 防止傻狍子用户在全局中把刷新策略修改为GLOBAL
         final RefreshPolicy refreshPolicy = EntityInfoHelper.getEntityInfo(entityClass).getRefreshPolicy();
-        return refreshPolicy.equals(RefreshPolicy.GLOBAL) ? RefreshPolicy.NONE.getValue() : refreshPolicy.getValue();
+        return RefreshPolicy.GLOBAL.equals(refreshPolicy) ? RefreshPolicy.NONE.getValue() : refreshPolicy.getValue();
     }
 
     /**

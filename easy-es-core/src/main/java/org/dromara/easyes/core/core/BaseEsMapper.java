@@ -92,19 +92,19 @@ public interface BaseEsMapper<T> {
     /**
      * 刷新索引
      *
-     * @return 是否刷新成功
+     * @return 刷新成功分片总数
      * @author 社区roin贡献 ee作者整合提交
      */
-    Boolean refresh();
+    Integer refresh();
 
     /**
-     * 刷新指定索引
+     * 批量刷新指定索引列表
      *
      * @param indexNames 索引名称
-     * @return 是否刷新成功
+     * @return 刷新成功分片总数
      * @author 社区roin贡献 ee作者整合提交
      */
-    Boolean refresh(String... indexNames);
+    Integer refresh(String... indexNames);
 
     /**
      * 执行SQL语句

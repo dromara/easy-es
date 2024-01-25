@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * searchAfter测试
@@ -32,9 +33,38 @@ public class SearchAfterTest {
         //重现bug需要注释掉searchAfter中对from的校验
 //        lambdaEsQueryWrapper.from(10);
         SAPageInfo<Document> saPageInfo = documentMapper.searchAfterPage(lambdaEsQueryWrapper, null, 10);
+
         //第一页
         System.out.println(saPageInfo);
         Assertions.assertEquals(10, saPageInfo.getList().size());
+    }
+
+    @Test
+    public void test1() {
+        documentMapper.createIndex();
+        for (int i = 0; i < 30; i++) {
+            Document document = new Document();
+            document.setEsId(String.valueOf(i));
+            document.setTitle("测试标题" + i);
+            document.setContent("测试内容" + i);
+            documentMapper.insert(document);
+        }
+    }
+
+    @Test
+    public void test2() {
+        LambdaEsQueryWrapper<Document> wrapper = EsWrappers.lambdaQuery(Document.class);
+        wrapper.match(Document::getContent, "测试");
+        wrapper.orderByDesc(Document::getEsId);
+
+        // 第一页,可传null,查完把saPageInfo返回给前端
+        SAPageInfo<Document> saPageInfo = documentMapper.searchAfterPage(wrapper, null, 10);
+        System.out.println(saPageInfo);
+
+        // 第二页,从saPageInfo中把上一次的nextSearchAfter回传给后端
+        List<Object> nextSearchAfter = saPageInfo.getNextSearchAfter();
+        SAPageInfo<Document> saPageInfo1 = documentMapper.searchAfterPage(wrapper, nextSearchAfter, 10);
+        System.out.println(saPageInfo1);
     }
 
 }
