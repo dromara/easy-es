@@ -84,7 +84,7 @@ String indexName = "document";
         }
 ```
 
-> The above is just a simple query demonstration. The more complex the actual query scene, the better the effect, which can save 3-5 times the amount of code on average.
+> The above is just a simple query demonstration. The more complex the actual query scene, the better the effect, which can save 3-80 times the amount of code on average.
 ## Getting started
 
 -   Add Easy-Es dependency
