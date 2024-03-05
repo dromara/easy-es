@@ -25,6 +25,7 @@ import org.springframework.context.ApplicationContext;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 代理类
@@ -56,7 +57,7 @@ public class MapperFactoryBean<T> implements FactoryBean<T> {
     @Override
     public T getObject() throws Exception {
 
-        EsMapperProxy<T> esMapperProxy = new EsMapperProxy<>(mapperInterface);
+        EsMapperProxy<T> esMapperProxy = new EsMapperProxy<>(mapperInterface, new ConcurrentHashMap<>());
 
         // 获取实体类
         Class<?> entityClass = TypeUtils.getInterfaceT(mapperInterface, 0);
