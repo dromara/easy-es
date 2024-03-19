@@ -4,11 +4,9 @@ import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
 import com.alibaba.fastjson.serializer.NameFilter;
 import com.alibaba.fastjson.serializer.SerializeFilter;
 import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
+import lombok.SneakyThrows;
 import org.dromara.easyes.annotation.*;
-import org.dromara.easyes.annotation.rely.DefaultNestedClass;
-import org.dromara.easyes.annotation.rely.FieldType;
-import org.dromara.easyes.annotation.rely.IdType;
-import org.dromara.easyes.annotation.rely.RefreshPolicy;
+import org.dromara.easyes.annotation.rely.*;
 import org.dromara.easyes.common.utils.*;
 import org.dromara.easyes.core.biz.EntityFieldInfo;
 import org.dromara.easyes.core.biz.EntityInfo;
@@ -18,8 +16,11 @@ import org.dromara.easyes.core.cache.GlobalConfigCache;
 import org.dromara.easyes.core.config.GlobalConfig;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static org.dromara.easyes.common.constants.BaseEsConstants.*;
 
@@ -29,6 +30,10 @@ import static org.dromara.easyes.common.constants.BaseEsConstants.*;
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 public class EntityInfoHelper {
+    /**
+     * 获取索引settings方法名
+     */
+    private final static String GET_SETTINGS_METHOD = "getSettings";
     /**
      * 储存反射类表信息
      */
@@ -50,7 +55,7 @@ public class EntityInfoHelper {
             return entityInfo;
         }
         // 尝试获取父类缓存
-        Class currentClass = clazz;
+        Class<?> currentClass = clazz;
         while (null == entityInfo && Object.class != currentClass) {
             currentClass = currentClass.getSuperclass();
             entityInfo = ENTITY_INFO_CACHE.get(ClassUtils.getUserClass(currentClass));
@@ -81,12 +86,66 @@ public class EntityInfoHelper {
         entityInfo = new EntityInfo();
         // 初始化表名(索引名)相关
         initIndexName(clazz, globalConfig, entityInfo);
+        // 初始化索引settings相关
+        initSettings(clazz, entityInfo);
         // 初始化字段相关
         initIndexFields(clazz, globalConfig, entityInfo);
+        // 初始化封装@Join父子类型注解信息
+        initJoin(clazz, globalConfig, entityInfo);
 
         // 放入缓存
         ENTITY_INFO_CACHE.put(clazz, entityInfo);
         return entityInfo;
+    }
+
+    /**
+     * 初始化父子类型相关信息
+     *
+     * @param clazz        实体类
+     * @param globalConfig 全局配置
+     * @param entityInfo   实体信息
+     */
+    private static void initJoin(Class<?> clazz, GlobalConfig globalConfig, EntityInfo entityInfo) {
+        Join join = clazz.getAnnotation(Join.class);
+        if (join == null || ArrayUtils.isEmpty(join.nodes())) {
+            return;
+        }
+        boolean camelCase = globalConfig.getDbConfig().isMapUnderscoreToCamelCase();
+        String joinFieldName = camelToUnderline(JoinField.class.getSimpleName(), camelCase);
+        entityInfo.setJoinFieldName(joinFieldName);
+
+        String joinAlias = StringUtils.isBlank(join.rootAlias()) ? clazz.getSimpleName() : join.rootAlias();
+        String underlineJoinAlias = camelToUnderline(joinAlias, camelCase);
+        entityInfo.setJoinAlias(underlineJoinAlias);
+
+        Map<String, List<String>> relationMap = entityInfo.getRelationMap();
+        Arrays.stream(join.nodes())
+                .forEach(child -> {
+                    String parentAlias = StringUtils.isBlank(child.parentAlias()) ? child.parentClass().getSimpleName().toLowerCase() : child.parentAlias();
+                    String underlineParentAlias = camelToUnderline(parentAlias, camelCase);
+                    List<String> childAliases = ArrayUtils.isEmpty(child.childAliases()) ?
+                            Arrays.stream(child.childClasses()).map(Class::getSimpleName).map(i -> camelToUnderline(i.toLowerCase(), camelCase)).distinct().collect(Collectors.toList()) :
+                            Arrays.stream(child.childAliases()).map(i -> camelToUnderline(i, camelCase)).collect(Collectors.toList());
+                    relationMap.put(underlineParentAlias, childAliases);
+
+                    // 在join-父加载时预加载join-子信息
+                    AtomicInteger index = new AtomicInteger(0);
+                    Arrays.stream(child.childClasses()).forEach(childClass -> {
+                        EntityInfo childEntityInfo = EntityInfoHelper.getEntityInfo(childClass);
+                        childEntityInfo.setChild(true);
+                        childEntityInfo.setIndexName(entityInfo.getIndexName());
+                        childEntityInfo.setJoinFieldName(joinFieldName);
+                        childEntityInfo.setParentJoinAlias(parentAlias);
+
+                        // 将join-子信息加入到join-父中以备创建索引之需
+                        if (CollectionUtils.isNotEmpty(childEntityInfo.getFieldList())) {
+                            entityInfo.getChildFieldList().addAll(childEntityInfo.getFieldList());
+                        }
+
+                        // 将join-父信息加入到join-子中 已备CRUD数据之需
+                        childEntityInfo.setJoinAlias(childAliases.get(index.getAndIncrement()));
+                    });
+                });
     }
 
 
@@ -156,14 +215,6 @@ public class EntityInfoHelper {
         entityInfo.getNestedNotSerializeField()
                 .forEach((k, v) -> Optional.ofNullable(FastJsonUtils.getSimplePropertyPreFilter(k, v))
                         .ifPresent(preFilters::add));
-
-        // 父子类型的字段序列化过滤器
-        if (!entityInfo.isChild()) {
-            Set<String> notSerialField = new HashSet<>();
-            notSerialField.add(PARENT);
-            Optional.ofNullable(FastJsonUtils.getSimplePropertyPreFilter(entityInfo.getJoinFieldClass(), notSerialField))
-                    .ifPresent(preFilters::add);
-        }
 
         // 添加fastjson NameFilter 针对驼峰以及下划线转换
         addNameFilter(entityInfo, preFilters);
@@ -345,17 +396,6 @@ public class EntityInfoHelper {
             entityFieldInfo.setFieldData(indexField.fieldData());
             entityFieldInfo.setColumnType(field.getType().getSimpleName());
             entityInfo.getFieldTypeMap().putIfAbsent(field.getName(), fieldType.getType());
-
-            // 父子类型
-            if (FieldType.JOIN.equals(indexField.fieldType())) {
-                entityFieldInfo.setParentName(indexField.parentName());
-                entityFieldInfo.setChildName(indexField.childName());
-
-                entityInfo.setJoinFieldName(mappingColumn);
-                entityInfo.setJoinFieldClass(indexField.joinFieldClass());
-                entityInfo.getPathClassMap().putIfAbsent(field.getName(), indexField.joinFieldClass());
-                processNested(indexField.joinFieldClass(), dbConfig, entityInfo);
-            }
 
             // 处理内部字段
             InnerIndexField[] innerIndexFields = Optional.ofNullable(multiIndexField).map(MultiIndexField::otherIndexFields).orElse(null);
@@ -745,15 +785,8 @@ public class EntityInfoHelper {
             } else {
                 indexName = tableName;
             }
-            if (StringUtils.isNotBlank(table.routing())) {
-                entityInfo.setRouting(table.routing());
-            }
-            entityInfo.setMaxResultWindow(table.maxResultWindow());
+
             entityInfo.setAliasName(table.aliasName());
-            entityInfo.setShardsNum(table.shardsNum());
-            entityInfo.setReplicasNum(table.replicasNum());
-            entityInfo.setChild(table.child());
-            entityInfo.setChildClass(table.childClass());
             RefreshPolicy refreshPolicy = table.refreshPolicy();
             if (RefreshPolicy.GLOBAL.equals(refreshPolicy)) {
                 refreshPolicy = dbConfig.getRefreshPolicy();
@@ -766,6 +799,36 @@ public class EntityInfoHelper {
             targetIndexName = tablePrefix + targetIndexName;
         }
         entityInfo.setIndexName(targetIndexName);
+    }
+
+    /**
+     * 初始化索引settings
+     *
+     * @param clazz      实体类
+     * @param entityInfo 实体信息
+     */
+
+    @SneakyThrows
+    private static void initSettings(Class<?> clazz, EntityInfo entityInfo) {
+        Settings settings = clazz.getAnnotation(Settings.class);
+        Optional.ofNullable(settings).ifPresent(i -> {
+            entityInfo.getSettingsMap().put(REPLICAS_FIELD, i.replicasNum());
+            entityInfo.getSettingsMap().put(SHARDS_FIELD, i.shardsNum());
+            entityInfo.getSettingsMap().put(MAX_RESULT_WINDOW_FIELD, i.maxResultWindow());
+            if (StringUtils.isNotBlank(i.refreshInterval())) {
+                entityInfo.getSettingsMap().put(REFRESH_INTERVAL_FIELD, i.refreshInterval());
+            }
+        });
+        Class<? extends DefaultSettingsProvider> provider = settings == null ? DefaultSettingsProvider.class : settings.settingsProvider();
+        Object instance = provider.getConstructor(new Class[]{}).newInstance(new Object[]{});
+        Method method = provider.getDeclaredMethod(GET_SETTINGS_METHOD);
+        Object invoke = method.invoke(instance);
+        if (invoke instanceof Map) {
+            Map<String, Object> settingsMap = (Map<String, Object>) invoke;
+            if (CollectionUtils.isNotEmpty(settingsMap)) {
+                settingsMap.forEach((k, v) -> entityInfo.getSettingsMap().putIfAbsent(k, v));
+            }
+        }
     }
 
     /**
@@ -797,6 +860,20 @@ public class EntityInfoHelper {
             mappingColumn = StringUtils.camelToUnderline(field.getName());
         }
         return mappingColumn;
+    }
+
+    /**
+     * 根据配置,驼峰转下划线
+     *
+     * @param origin    原始字段
+     * @param camelCase 是否转换
+     * @return 转换后字段
+     */
+    private static String camelToUnderline(String origin, boolean camelCase) {
+        if (camelCase) {
+            origin = StringUtils.camelToUnderline(origin);
+        }
+        return origin;
     }
 
 }

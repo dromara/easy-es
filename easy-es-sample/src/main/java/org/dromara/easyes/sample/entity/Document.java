@@ -2,10 +2,7 @@ package org.dromara.easyes.sample.entity;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-import org.dromara.easyes.annotation.HighLight;
-import org.dromara.easyes.annotation.IndexField;
-import org.dromara.easyes.annotation.IndexId;
-import org.dromara.easyes.annotation.IndexName;
+import org.dromara.easyes.annotation.*;
 import org.dromara.easyes.annotation.rely.Analyzer;
 import org.dromara.easyes.annotation.rely.FieldStrategy;
 import org.dromara.easyes.annotation.rely.FieldType;
@@ -18,7 +15,8 @@ import org.dromara.easyes.annotation.rely.IdType;
  **/
 @Data
 @Accessors(chain = true)
-@IndexName(value = "easyes_document", shardsNum = 3, replicasNum = 2, keepGlobalPrefix = true, maxResultWindow = 100)
+@Settings(shardsNum = 3, replicasNum = 2, maxResultWindow = 1000)
+@IndexName(value = "easyes_document", keepGlobalPrefix = true)
 public class Document {
     /**
      * es中的唯一id,如果你想自定义es中的id为你提供的id,比如MySQL中的id,请将注解中的type指定为customize或直接在全局配置文件中指定,如此id便支持任意数据类型)

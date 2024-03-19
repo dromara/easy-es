@@ -63,14 +63,7 @@ public class EsIndexParam {
      * 字段最大索引长度 默认256
      */
     private Integer ignoreAbove;
-    /**
-     * 父名称
-     */
-    private String parentName;
-    /**
-     * 子名称
-     */
-    private String childName;
+
     /**
      * 内部字段列表
      */

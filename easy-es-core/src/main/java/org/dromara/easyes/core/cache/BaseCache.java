@@ -110,8 +110,7 @@ public class BaseCache {
                         method = b.get(BaseEsConstants.IS_FUNC_PREFIX + FieldUtils.firstToUpperCase(methodName));
                     }
                     return method;
-                })
-                .orElseThrow(() -> ExceptionUtils.eee("no such method:", entityClass, methodName));
+                }).orElseThrow(() -> ExceptionUtils.eee("no such method, entityClass: %s, method:%s", entityClass, methodName));
     }
 
     /**

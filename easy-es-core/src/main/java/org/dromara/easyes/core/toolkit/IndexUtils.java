@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.dromara.easyes.annotation.rely.Analyzer;
-import org.dromara.easyes.annotation.rely.DefaultChildClass;
 import org.dromara.easyes.annotation.rely.FieldType;
 import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.common.enums.JdkDataTypeEnum;
@@ -29,7 +28,6 @@ import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.GetIndexResponse;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
@@ -90,7 +88,6 @@ public class IndexUtils {
         CUSTOM = "custom";
         LOWERCASE = "lowercase";
         DIMS_KEY = "dims";
-
     }
 
     /**
@@ -120,15 +117,8 @@ public class IndexUtils {
     public static boolean createIndex(RestHighLevelClient client, EntityInfo entityInfo, CreateIndexParam indexParam) {
         CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexParam.getIndexName());
         // 设置settings信息
+        Map<String, Object> settingsMap = entityInfo.getSettingsMap();
         if (Objects.isNull(indexParam.getSettings())) {
-            // 分片个副本信息
-            Settings.Builder settings = Settings.builder();
-            Optional.ofNullable(indexParam.getShardsNum()).ifPresent(shards -> settings.put(BaseEsConstants.SHARDS_FIELD, shards));
-            Optional.ofNullable(indexParam.getReplicasNum()).ifPresent(replicas -> settings.put(BaseEsConstants.REPLICAS_FIELD, replicas));
-
-            // 最大返回个数
-            Optional.ofNullable(indexParam.getMaxResultWindow()).ifPresent(maxResultWindow -> settings.put(MAX_RESULT_WINDOW_FIELD, maxResultWindow));
-
             // 忽略大小写配置
             if (CollectionUtils.isNotEmpty(indexParam.getEsIndexParamList())) {
                 indexParam.getEsIndexParamList()
@@ -137,12 +127,11 @@ public class IndexUtils {
                         .findFirst()
                         .ifPresent(i -> {
                             // 只要有其中一个字段加了忽略大小写,则在索引中创建此自定义配置,否则无需创建,不浪费资源
-                            settings.put(CUSTOM_TYPE, CUSTOM);
-                            settings.put(CUSTOM_FILTER, LOWERCASE);
+                            settingsMap.put(CUSTOM_TYPE, CUSTOM);
+                            settingsMap.put(CUSTOM_FILTER, LOWERCASE);
                         });
             }
-
-            createIndexRequest.settings(settings);
+            createIndexRequest.settings(settingsMap);
         } else {
             // 用户自定义settings
             createIndexRequest.settings(indexParam.getSettings());
@@ -412,6 +401,15 @@ public class IndexUtils {
                 .orElse(new GlobalConfig.DbConfig());
 
         initInfo(entityInfo, dbConfig, properties, indexParamList);
+
+        // 父子类型
+        if (CollectionUtils.isNotEmpty(entityInfo.getRelationMap())) {
+            Map<String, Object> join = new HashMap<>();
+            join.put(TYPE, JOIN_TYPE);
+            join.put(RELATIONS, entityInfo.getRelationMap());
+            properties.put(entityInfo.getJoinFieldName(), join);
+        }
+
         mapping.put(BaseEsConstants.PROPERTIES, properties);
         return mapping;
     }
@@ -482,19 +480,11 @@ public class IndexUtils {
             // 设置权重
             Optional.ofNullable(indexParam.getBoost()).ifPresent(boost -> info.put(BOOST_KEY, indexParam.getBoost()));
 
-            // 设置父子类型关系
-            if (FieldType.JOIN.getType().equals(indexParam.getFieldType())) {
-                Map<String, Object> relation = new HashMap<>(1);
-                relation.put(indexParam.getParentName(), indexParam.getChildName());
-                info.put(EAGER_GLOBAL_ORDINALS_KEY, Boolean.TRUE);
-                info.put(BaseEsConstants.RELATIONS, relation);
-            }
-
             // 设置嵌套类型
             if (FieldType.NESTED.getType().equals(indexParam.getFieldType())) {
                 // 递归
                 List<EntityFieldInfo> nestedFields = entityInfo.getNestedFieldListMap().get(indexParam.getNestedClass());
-                List<EsIndexParam> esIndexParams = initIndexParam(entityInfo, nestedFields, true);
+                List<EsIndexParam> esIndexParams = initIndexParam(entityInfo, nestedFields);
                 Map<String, Object> nested = initInfo(entityInfo, dbConfig, new HashMap<>(), esIndexParams);
                 info.put(BaseEsConstants.PROPERTIES, nested);
             }
@@ -586,7 +576,13 @@ public class IndexUtils {
      */
     public static CreateIndexParam getCreateIndexParam(EntityInfo entityInfo) {
         // 初始化字段信息参数
-        List<EsIndexParam> esIndexParamList = initIndexParam(entityInfo, entityInfo.getFieldList(), false);
+        List<EsIndexParam> esIndexParamList = initIndexParam(entityInfo, entityInfo.getFieldList());
+
+        // 追加join父子类型字段信息
+        if (CollectionUtils.isNotEmpty(entityInfo.getChildFieldList())) {
+            List<EsIndexParam> childEsIndexParamList = initIndexParam(entityInfo, entityInfo.getChildFieldList());
+            esIndexParamList.addAll(childEsIndexParamList);
+        }
 
         // 设置创建参数
         CreateIndexParam createIndexParam = new CreateIndexParam();
@@ -599,6 +595,10 @@ public class IndexUtils {
 
         // 如果有设置新索引名称,则用新索引名覆盖原索引名进行创建
         Optional.ofNullable(entityInfo.getReleaseIndexName()).ifPresent(createIndexParam::setIndexName);
+
+        // settingsMap
+        Optional.ofNullable(entityInfo.getSettingsMap()).ifPresent(createIndexParam::setSettingsMap);
+
         return createIndexParam;
     }
 
@@ -607,29 +607,11 @@ public class IndexUtils {
      *
      * @param entityInfo 实体信息
      * @param fieldList  字段列表
-     * @param isNested   是否嵌套
      * @return 索引参数列表
      */
-    public static List<EsIndexParam> initIndexParam(EntityInfo entityInfo, List<EntityFieldInfo> fieldList, boolean isNested) {
+    public static List<EsIndexParam> initIndexParam(EntityInfo entityInfo, List<EntityFieldInfo> fieldList) {
         List<EntityFieldInfo> copyFieldList = new ArrayList<>();
         copyFieldList.addAll(fieldList);
-        // 针对子文档处理, 嵌套类无需重复追加
-        boolean addChild = !DefaultChildClass.class.equals(entityInfo.getChildClass()) && !isNested;
-        if (addChild) {
-            // 追加子文档信息
-            List<EntityFieldInfo> childFieldList = Optional.ofNullable(entityInfo.getChildClass())
-                    .flatMap(childClass -> Optional.ofNullable(EntityInfoHelper.getEntityInfo(childClass))
-                            .map(EntityInfo::getFieldList))
-                    .orElse(Collections.emptyList());
-            if (!CollectionUtils.isEmpty(childFieldList)) {
-                childFieldList.forEach(child -> {
-                    // 添加子文档中除JoinField以外的字段
-                    if (!entityInfo.getJoinFieldName().equals(child.getMappingColumn())) {
-                        copyFieldList.add(child);
-                    }
-                });
-            }
-        }
 
         List<EsIndexParam> esIndexParamList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(copyFieldList)) {
@@ -656,8 +638,6 @@ public class IndexUtils {
                     }
                 }
                 esIndexParam.setIgnoreCase(field.isIgnoreCase());
-                Optional.ofNullable(field.getParentName()).ifPresent(esIndexParam::setParentName);
-                Optional.ofNullable(field.getChildName()).ifPresent(esIndexParam::setChildName);
 
                 // 内部字段处理
                 final List<EntityFieldInfo.InnerFieldInfo> innerFieldInfoList = field.getInnerFieldInfoList();
@@ -691,18 +671,8 @@ public class IndexUtils {
      * @return 是否需要更新索引
      */
     public static boolean isIndexNeedChange(EsIndexInfo esIndexInfo, EntityInfo entityInfo) {
-        if (!entityInfo.getShardsNum().equals(esIndexInfo.getShardsNum())) {
-            return Boolean.TRUE;
-        }
-        if (!entityInfo.getReplicasNum().equals(esIndexInfo.getReplicasNum())) {
-            return Boolean.TRUE;
-        }
-        if (!entityInfo.getMaxResultWindow().equals(esIndexInfo.getMaxResultWindow())) {
-            return Boolean.TRUE;
-        }
-
         // 根据当前实体类及自定义注解配置, 生成最新的Mapping信息
-        List<EsIndexParam> esIndexParamList = IndexUtils.initIndexParam(entityInfo, entityInfo.getFieldList(), false);
+        List<EsIndexParam> esIndexParamList = IndexUtils.initIndexParam(entityInfo, entityInfo.getFieldList());
 
         Map<String, Object> mapping = IndexUtils.initMapping(entityInfo, esIndexParamList);
 
@@ -802,7 +772,17 @@ public class IndexUtils {
                             Optional.ofNullable(sourceAsMap.get(ACTIVE_INDEX_KEY))
                                     .ifPresent(indexName -> {
                                         if (indexName instanceof String) {
-                                            EntityInfoHelper.getEntityInfo(entityClass).setIndexName((String) indexName);
+                                            String releaseIndexName = (String) indexName;
+                                            EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
+                                            entityInfo.setIndexName(releaseIndexName);
+
+                                            // 父子类型,须将所有子孙文档的索引也激活为最新索引
+                                            entityInfo.getRelationClassMap().forEach((k, v) -> {
+                                                Optional.ofNullable(EntityInfoHelper.getEntityInfo(k)).ifPresent(i -> i.setIndexName(releaseIndexName));
+                                                if (CollectionUtils.isNotEmpty(v)) {
+                                                    v.forEach(node -> Optional.ofNullable(EntityInfoHelper.getEntityInfo(node)).ifPresent(i -> i.setIndexName(releaseIndexName)));
+                                                }
+                                            });
                                             activated.set(Boolean.TRUE);
                                         }
                                     });

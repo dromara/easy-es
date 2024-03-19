@@ -5,20 +5,28 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import org.dromara.easyes.annotation.*;
 import org.dromara.easyes.annotation.rely.*;
+import org.dromara.easyes.test.settings.MySettingsProvider;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * es 数据模型
+ * es 数据模型 其中Join父子类型结构如下所示
+ * <pre>
+ *         Document
+ *       /          \
+ *    Comment       Author
+ *                      \
+ *                    Contact
+ * </pre>
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 @Data
 @Accessors(chain = true)
-@IndexName(value = "easyes_document", shardsNum = 3, replicasNum = 2,
-        keepGlobalPrefix = true, childClass = Comment.class, routing = "testRouting",
-        refreshPolicy = RefreshPolicy.IMMEDIATE)
+@Settings(shardsNum = 3, replicasNum = 2, settingsProvider = MySettingsProvider.class)
+@IndexName(value = "easyes_document", keepGlobalPrefix = true, refreshPolicy = RefreshPolicy.IMMEDIATE)
+@Join(nodes = {@Node(parentClass = Document.class, childClasses = {Author.class, Comment.class}), @Node(parentClass = Author.class, childClasses = Contact.class)})
 public class Document {
     /**
      * es中的唯一id,字段名随便起,我这里演示用esId,你也可以用id(推荐),bizId等.
@@ -105,11 +113,6 @@ public class Document {
     @IndexField(fieldType = FieldType.NESTED, nestedClass = User.class)
     private List<User> users;
 
-    /**
-     * 父子类型 须通过注解在父文档及子文档的实体类中指明其类型为Join,及其父名称和子名称
-     */
-    @IndexField(fieldType = FieldType.JOIN, parentName = "document", childName = "comment")
-    private JoinField joinField;
     /**
      * es返回的得分字段,字段名字随便取,只要加了@Score注解即可
      */

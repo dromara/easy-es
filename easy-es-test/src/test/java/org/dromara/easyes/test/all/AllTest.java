@@ -59,6 +59,7 @@ import static org.dromara.easyes.common.constants.BaseEsConstants.KEYWORD_SUFFIX
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class AllTest {
+
     @Resource
     private DocumentMapper documentMapper;
 
@@ -146,6 +147,7 @@ public class AllTest {
         LambdaEsUpdateWrapper<Document> wrapper = new LambdaEsUpdateWrapper<>();
         wrapper.eq(Document::getTitle, "测试文档2");
         wrapper.set(Document::getContent, "测试文档内容2的内容被更新了");
+
         int count = documentMapper.update(null, wrapper);
         Assertions.assertEquals(1, count);
     }
@@ -167,6 +169,7 @@ public class AllTest {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.termQuery(FieldUtils.val(Document::getTitle) + KEYWORD_SUFFIX, "测试文档2"));
         wrapper.setSearchSourceBuilder(searchSourceBuilder);
+
         Document document = new Document();
         document.setContent("测试文档内容2的内容再次被更新了");
         int count = documentMapper.update(document, wrapper);
@@ -805,6 +808,7 @@ public class AllTest {
 
         LambdaEsQueryWrapper<Document> wrapper1 = new LambdaEsQueryWrapper<>();
         wrapper1.multiMatchQuery("更新", Document::getContent, Document::getCreator);
+
         List<Document> documents1 = documentMapper.selectList(wrapper1);
         Assertions.assertEquals(1, documents1.size());
     }
@@ -944,6 +948,7 @@ public class AllTest {
     public void testDeleteByWrapper() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉");
+
         int count = documentMapper.delete(wrapper);
         Assertions.assertEquals(18, count);
     }

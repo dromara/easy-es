@@ -6,6 +6,7 @@ import org.elasticsearch.common.geo.GeoDistance;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.aggregations.BucketOrder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
@@ -13,8 +14,8 @@ import org.elasticsearch.search.sort.SortOrder;
 import java.io.Serializable;
 import java.util.*;
 
-import static org.dromara.easyes.common.constants.BaseEsConstants.DEFAULT_BOOST;
 import static java.util.stream.Collectors.toList;
+import static org.dromara.easyes.common.constants.BaseEsConstants.DEFAULT_BOOST;
 
 /**
  * 高阶语法相关
@@ -1704,4 +1705,45 @@ public interface Func<Children, R> extends Serializable {
      * @return wrapper
      */
     Children mix(boolean condition, QueryBuilder queryBuilder);
+
+
+    /**
+     * 聚合桶排序
+     *
+     * @param bucketOrder 排序规则
+     * @return wrapper
+     */
+    default Children bucketOrder(BucketOrder bucketOrder) {
+        return bucketOrder(true, bucketOrder);
+    }
+
+    /**
+     * 聚合桶排序
+     *
+     * @param condition   条件
+     * @param bucketOrder 桶排序规则
+     * @return wrapper
+     */
+    default Children bucketOrder(boolean condition, BucketOrder bucketOrder) {
+        return bucketOrder(condition, Arrays.asList(bucketOrder));
+    }
+
+    /**
+     * 聚合桶排序
+     *
+     * @param bucketOrders 排序规则列表
+     * @return wrapper
+     */
+    default Children bucketOrder(List<BucketOrder> bucketOrders) {
+        return bucketOrder(true, bucketOrders);
+    }
+
+    /**
+     * 聚合桶排序
+     *
+     * @param condition    条件
+     * @param bucketOrders 排序规则列表
+     * @return wrapper
+     */
+    Children bucketOrder(boolean condition, List<BucketOrder> bucketOrders);
 }

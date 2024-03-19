@@ -132,6 +132,25 @@ public interface Query<Children, T, R> extends Serializable {
     Children index(boolean condition, String... indexNames);
 
     /**
+     * 设置当前操作的路由
+     *
+     * @param routing 路由
+     * @return wrapper
+     */
+    default Children routing(String routing) {
+        return routing(true, routing);
+    }
+
+    /**
+     * 设置当前操作的路由
+     *
+     * @param condition 条件
+     * @param routing   路由
+     * @return wrapper
+     */
+    Children routing(boolean condition, String routing);
+
+    /**
      * 设置查询偏好
      *
      * @param preference 偏好

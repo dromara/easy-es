@@ -104,6 +104,10 @@ public interface BaseEsConstants {
      */
     String MAX_RESULT_WINDOW_FIELD = "index.max_result_window";
     /**
+     * 索引的刷新间隔
+     */
+    String REFRESH_INTERVAL_FIELD = "refresh_interval";
+    /**
      * 索引特性
      */
     String PROPERTIES = "properties";
@@ -269,4 +273,8 @@ public interface BaseEsConstants {
      * path分隔符 不转义
      */
     String STR_SIGN = ".";
+    /**
+     * 父子类型索引v
+     */
+    String JOIN_TYPE = "join";
 }
