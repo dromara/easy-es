@@ -61,7 +61,8 @@ public enum FieldType {
     COMPLETION("completion"),
     TOKEN("token"),
     ATTACHMENT("attachment"),
-    PERCOLATOR("percolator");
+    PERCOLATOR("percolator"),
+    DENSE_VECTOR("dense_vector");
 
     private String type;
 

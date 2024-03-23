@@ -1,10 +1,12 @@
 package org.dromara.easyes.test.entity;
 
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.dromara.easyes.annotation.HighLight;
 import org.dromara.easyes.annotation.IndexField;
+import org.dromara.easyes.annotation.InnerIndexField;
+import org.dromara.easyes.annotation.MultiIndexField;
 import org.dromara.easyes.annotation.rely.Analyzer;
 import org.dromara.easyes.annotation.rely.FieldType;
 
@@ -17,13 +19,25 @@ import java.util.Set;
  **/
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class User {
-    @IndexField(value = "user_name", fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART)
+    /**
+     * 用户名
+     */
+    @HighLight(mappingField = "highlightUsername")
+    @MultiIndexField(mainIndexField = @IndexField("user_name"),
+    otherIndexFields = {
+            @InnerIndexField(suffix = "ik", fieldType = FieldType.TEXT, analyzer = Analyzer.IK_MAX_WORD),
+            @InnerIndexField(suffix = "py", fieldType = FieldType.TEXT, analyzer = Analyzer.PINYIN)
+    })
     private String username;
+    /**
+     * 年龄
+     */
     @IndexField(fieldType = FieldType.INTEGER)
     private Integer age;
-
+    /**
+     * 密码
+     */
     @IndexField(fieldType = FieldType.KEYWORD)
     private String password;
     /**
@@ -31,4 +45,15 @@ public class User {
      */
     @IndexField(fieldType = FieldType.NESTED, nestedClass = Faq.class)
     private Set<Faq> faqs;
+    /**
+     * 高亮显示的内容
+     */
+    private String highlightUsername;
+
+    public User(String username, Integer age, String password, Set<Faq> faqs) {
+        this.username = username;
+        this.age = age;
+        this.password = password;
+        this.faqs = faqs;
+    }
 }

@@ -15,6 +15,10 @@ public interface BaseEsConstants {
      */
     String ENABLE_BANNER = "easy-es.banner";
     /**
+     * 是否开启iKun模式
+     */
+    String ENABLE_I_KUN_MODE = "easy-es.global-config.i-kun-mode";
+    /**
      * 默认主键名称
      */
     String DEFAULT_ID_NAME = "id";
@@ -56,6 +60,10 @@ public interface BaseEsConstants {
      */
     String COLON = ":";
     /**
+     * 逗号
+     */
+    String COMMA = ",";
+    /**
      * 百分号
      */
     String PERCENT_SIGN = "%";
@@ -95,6 +103,10 @@ public interface BaseEsConstants {
      * 最大返回个数字段
      */
     String MAX_RESULT_WINDOW_FIELD = "index.max_result_window";
+    /**
+     * 索引的刷新间隔
+     */
+    String REFRESH_INTERVAL_FIELD = "refresh_interval";
     /**
      * 索引特性
      */
@@ -139,6 +151,10 @@ public interface BaseEsConstants {
      * DSL语句前缀
      */
     String DSL_PREFIX = "===> Execute By Easy-Es: ";
+    /**
+     * DSL语句
+     */
+    String I_KUN_PREFIX = "===> 鸡你太美提醒您, 以下内容由Easy-Es执行:";
     /**
      * count DSL语句前缀
      */
@@ -249,4 +265,16 @@ public interface BaseEsConstants {
      * 缩放因子索引字段名称
      */
     String SCALING_FACTOR_FIELD = "scaling_factor";
+    /**
+     * path分隔符
+     */
+    String SIGN = "\\.";
+    /**
+     * path分隔符 不转义
+     */
+    String STR_SIGN = ".";
+    /**
+     * 父子类型索引v
+     */
+    String JOIN_TYPE = "join";
 }

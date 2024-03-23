@@ -1,7 +1,6 @@
 package org.dromara.easyes.test.entity;
 
 
-
 import lombok.Data;
 import org.dromara.easyes.annotation.IndexField;
 import org.dromara.easyes.annotation.IndexName;
@@ -16,7 +15,6 @@ import org.dromara.easyes.annotation.rely.JoinField;
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 @Data
-@IndexName(child = true)
 public class Comment {
     /**
      * 评论id
@@ -25,11 +23,6 @@ public class Comment {
     /**
      * 评论内容
      */
-    @IndexField(fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART, searchAnalyzer = Analyzer.IK_SMART)
+    @IndexField(fieldType = FieldType.KEYWORD)
     private String commentContent;
-    /**
-     * 父子关系字段
-     */
-    @IndexField(fieldType = FieldType.JOIN)
-    private JoinField joinField;
 }

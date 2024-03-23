@@ -92,19 +92,19 @@ public interface BaseEsMapper<T> {
     /**
      * 刷新索引
      *
-     * @return 是否刷新成功
+     * @return 刷新成功分片总数
      * @author 社区roin贡献 ee作者整合提交
      */
-    Boolean refresh();
+    Integer refresh();
 
     /**
-     * 刷新指定索引
+     * 批量刷新指定索引列表
      *
      * @param indexNames 索引名称
-     * @return 是否刷新成功
+     * @return 刷新成功分片总数
      * @author 社区roin贡献 ee作者整合提交
      */
-    Boolean refresh(String... indexNames);
+    Integer refresh(String... indexNames);
 
     /**
      * 执行SQL语句
@@ -222,6 +222,25 @@ public interface BaseEsMapper<T> {
     Integer insert(T entity);
 
     /**
+     * 插入一条记录 可指定路由
+     *
+     * @param routing 路由
+     * @param entity  插入的数据对象
+     * @return 成功条数
+     */
+    Integer insert(String routing, T entity);
+
+    /**
+     * 父子类型 插入一条记录 可指定路由, 父id
+     *
+     * @param routing  路由
+     * @param parentId 父id
+     * @param entity   插入的数据对象
+     * @return 成功条数
+     */
+    Integer insert(String routing, String parentId, T entity);
+
+    /**
      * 插入一条记录,可指定多索引插入
      *
      * @param entity     插入的数据对象
@@ -229,6 +248,27 @@ public interface BaseEsMapper<T> {
      * @return 总成功条数
      */
     Integer insert(T entity, String... indexNames);
+
+    /**
+     * 插入数据,可指定路由及多索引插入
+     *
+     * @param routing    路由
+     * @param entity     插入的数据对象
+     * @param indexNames 指定插入的索引名数组
+     * @return 总成功条数
+     */
+    Integer insert(String routing, T entity, String... indexNames);
+
+    /**
+     * 父子类型 插入数据,可指定路由,父id及多索引插入
+     *
+     * @param routing    路由
+     * @param parentId   父id
+     * @param entity     插入的数据对象
+     * @param indexNames 指定插入的索引名数组
+     * @return 总成功条数
+     */
+    Integer insert(String routing, String parentId, T entity, String... indexNames);
 
     /**
      * 批量插入
@@ -239,13 +279,53 @@ public interface BaseEsMapper<T> {
     Integer insertBatch(Collection<T> entityList);
 
     /**
-     * 批量插入
+     * 批量插入 可指定路由
+     *
+     * @param routing    路由
+     * @param entityList 插入的数据对象列表
+     * @return 总成功条数
+     */
+    Integer insertBatch(String routing, Collection<T> entityList);
+
+    /**
+     * 父子类型 批量插入 可指定路由, 父id
+     *
+     * @param routing    路由
+     * @param parentId   父id
+     * @param entityList 插入的数据对象列表
+     * @return 总成功条数
+     */
+    Integer insertBatch(String routing, String parentId, Collection<T> entityList);
+
+    /**
+     * 批量插入 可指定多索引
      *
      * @param entityList 插入的数据对象列表
      * @param indexNames 指定插入的索引名数组
      * @return 总成功条数
      */
     Integer insertBatch(Collection<T> entityList, String... indexNames);
+
+    /**
+     * 批量插入 可指定路由及多索引
+     *
+     * @param routing    路由
+     * @param entityList 插入的数据对象列表
+     * @param indexNames 指定插入的索引名数组
+     * @return 总成功条数
+     */
+    Integer insertBatch(String routing, Collection<T> entityList, String... indexNames);
+
+    /**
+     * 父子类型 批量插入 可指定路由,父id及多索引
+     *
+     * @param routing    路由
+     * @param parentId   父id
+     * @param entityList 插入的数据对象列表
+     * @param indexNames 指定插入的索引名数组
+     * @return 总成功条数
+     */
+    Integer insertBatch(String routing, String parentId, Collection<T> entityList, String... indexNames);
 
     /**
      * 根据 ID 删除
@@ -256,13 +336,32 @@ public interface BaseEsMapper<T> {
     Integer deleteById(Serializable id);
 
     /**
-     * 根据 ID 删除
+     * 根据 ID 删除 可指定路由
+     *
+     * @param routing 路由
+     * @param id      主键
+     * @return 成功条数
+     */
+    Integer deleteById(String routing, Serializable id);
+
+    /**
+     * 根据 ID 删除 可指定多索引
      *
      * @param id         主键
      * @param indexNames 指定删除的索引名数组
      * @return 总成功条数
      */
     Integer deleteById(Serializable id, String... indexNames);
+
+    /**
+     * 根据 ID 删除 可指定路由及多索引
+     *
+     * @param routing    路由
+     * @param id         主键
+     * @param indexNames 指定删除的索引名数组
+     * @return 总成功条数
+     */
+    Integer deleteById(String routing, Serializable id, String... indexNames);
 
 
     /**
@@ -274,6 +373,15 @@ public interface BaseEsMapper<T> {
     Integer deleteBatchIds(Collection<? extends Serializable> idList);
 
     /**
+     * 删除（根据ID 批量删除）可指定路由
+     *
+     * @param routing 路由
+     * @param idList  主键列表
+     * @return 总成功条数
+     */
+    Integer deleteBatchIds(String routing, Collection<? extends Serializable> idList);
+
+    /**
      * 删除（根据ID 批量删除）
      *
      * @param idList     主键列表
@@ -281,6 +389,16 @@ public interface BaseEsMapper<T> {
      * @return 总成功条数
      */
     Integer deleteBatchIds(Collection<? extends Serializable> idList, String... indexNames);
+
+    /**
+     * 删除（根据ID 批量删除） 可指定路由及多索引
+     *
+     * @param routing    路由
+     * @param idList     主键列表
+     * @param indexNames 指定删除的索引名数组
+     * @return 总成功条数
+     */
+    Integer deleteBatchIds(String routing, Collection<? extends Serializable> idList, String... indexNames);
 
     /**
      * 根据 entity 条件，删除记录
@@ -299,13 +417,32 @@ public interface BaseEsMapper<T> {
     Integer updateById(T entity);
 
     /**
-     * 根据 ID 更新
+     * 根据 ID 更新 可指定路由
+     *
+     * @param routing 路由
+     * @param entity  更新对象
+     * @return 总成功条数
+     */
+    Integer updateById(String routing, T entity);
+
+    /**
+     * 根据 ID 更新 可指定多索引
      *
      * @param entity     更新对象
      * @param indexNames 指定更新的索引名称数组
      * @return 总成功条数
      */
     Integer updateById(T entity, String... indexNames);
+
+    /**
+     * 根据 ID 更新 可指定路由和多索引
+     *
+     * @param routing    路由
+     * @param entity     更新对象
+     * @param indexNames 指定更新的索引名称数组
+     * @return 总成功条数
+     */
+    Integer updateById(String routing, T entity, String... indexNames);
 
     /**
      * 根据ID 批量更新
@@ -316,13 +453,32 @@ public interface BaseEsMapper<T> {
     Integer updateBatchByIds(Collection<T> entityList);
 
     /**
-     * 根据ID 批量更新
+     * 根据ID 批量更新 可指定路由
+     *
+     * @param routing    路由
+     * @param entityList 更新对象列表
+     * @return 总成功条数
+     */
+    Integer updateBatchByIds(String routing, Collection<T> entityList);
+
+    /**
+     * 根据ID 批量更新 可指定多索引
      *
      * @param entityList 更新对象列表
      * @param indexNames 指定更新的索引名称数组
      * @return 总成功条数
      */
     Integer updateBatchByIds(Collection<T> entityList, String... indexNames);
+
+    /**
+     * 根据ID 批量更新 可指定路由及多索引
+     *
+     * @param routing    路由
+     * @param entityList 更新对象列表
+     * @param indexNames 指定更新的索引名称数组
+     * @return 总成功条数
+     */
+    Integer updateBatchByIds(String routing, Collection<T> entityList, String... indexNames);
 
     /**
      * 根据 whereEntity 条件，更新记录
@@ -342,13 +498,32 @@ public interface BaseEsMapper<T> {
     T selectById(Serializable id);
 
     /**
-     * 根据 ID 查询
+     * 根据 ID 查询 可指定路由
+     *
+     * @param routing 路由
+     * @param id      主键
+     * @return 指定的返回对象
+     */
+    T selectById(String routing, Serializable id);
+
+    /**
+     * 根据 ID 查询 可指定多索引
      *
      * @param id         主键
      * @param indexNames 指定查询的索引名数组
      * @return 指定的返回对象
      */
     T selectById(Serializable id, String... indexNames);
+
+    /**
+     * 根据 ID 查询 可指定路由及多索引
+     *
+     * @param routing    路由
+     * @param id         主键
+     * @param indexNames 指定查询的索引名数组
+     * @return 指定的返回对象
+     */
+    T selectById(String routing, Serializable id, String... indexNames);
 
     /**
      * 查询（根据ID 批量查询）
@@ -359,13 +534,32 @@ public interface BaseEsMapper<T> {
     List<T> selectBatchIds(Collection<? extends Serializable> idList);
 
     /**
-     * 查询（根据ID 批量查询）
+     * 查询（根据ID 批量查询） 可指定路由
+     *
+     * @param routing 路由
+     * @param idList  主键列表
+     * @return 指定的返回对象列表
+     */
+    List<T> selectBatchIds(String routing, Collection<? extends Serializable> idList);
+
+    /**
+     * 查询（根据ID 批量查询） 可指定多索引
      *
      * @param idList     主键列表
      * @param indexNames 指定查询的索引名数组
      * @return 指定的返回对象列表
      */
     List<T> selectBatchIds(Collection<? extends Serializable> idList, String... indexNames);
+
+    /**
+     * 查询（根据ID 批量查询） 可指定路由及多索引
+     *
+     * @param routing    路由
+     * @param idList     主键列表
+     * @param indexNames 指定查询的索引名数组
+     * @return 指定的返回对象列表
+     */
+    List<T> selectBatchIds(String routing, Collection<? extends Serializable> idList, String... indexNames);
 
     /**
      * 根据 entity 条件，查询一条记录
