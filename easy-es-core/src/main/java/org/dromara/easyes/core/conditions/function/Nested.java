@@ -171,6 +171,8 @@ public interface Nested<Param, Children> extends Serializable {
 
 
     /**
+     * 父子类型-根据父查子匹配 返回父文档
+     *
      * @param type     索引中 子join字段的名字
      * @param consumer 嵌套条件函数
      * @return wrapper
@@ -180,7 +182,7 @@ public interface Nested<Param, Children> extends Serializable {
     }
 
     /**
-     * 嵌套类型查询
+     * 父子类型-根据父查子匹配 返回父文档
      *
      * @param type      索引中 子join字段的名字
      * @param consumer  嵌套条件函数
@@ -192,7 +194,7 @@ public interface Nested<Param, Children> extends Serializable {
     }
 
     /**
-     * 嵌套类型查询
+     * 父子类型-根据父查子匹配 返回父文档
      *
      * @param condition 执行条件
      * @param type      索引中 子join字段的名字

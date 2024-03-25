@@ -7,13 +7,15 @@ import org.dromara.easyes.core.biz.OrderByParam;
 import org.dromara.easyes.core.biz.SAPageInfo;
 import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
 import org.dromara.easyes.core.conditions.update.LambdaEsUpdateWrapper;
-import org.dromara.easyes.core.core.EsWrappers;
+import org.dromara.easyes.core.kernel.EsWrappers;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.core.toolkit.FieldUtils;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
 import org.dromara.easyes.test.mapper.DocumentMapper;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.HttpAsyncResponseConsumerFactory;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.geo.GeoDistance;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.geo.ShapeRelation;
@@ -925,6 +927,18 @@ public class AllTest {
 
         List<Document> Documents = documentMapper.selectList(wrapper);
         Assertions.assertFalse(Documents.isEmpty());
+    }
+
+    @Test
+    @Order(6)
+    public void testSetRequestOptions() {
+        // 可设置自定义请求参数,覆盖默认配置, 解决报错 entity content is too long [168583249] for the configured buffer limit [104857600]
+        RequestOptions.Builder options = RequestOptions.DEFAULT.toBuilder();
+        options.setHttpAsyncResponseConsumerFactory(
+                new HttpAsyncResponseConsumerFactory.HeapBufferedResponseConsumerFactory(4 * 104857600));
+        final RequestOptions requestOptions = options.build();
+        Boolean success = documentMapper.setRequestOptions(requestOptions);
+        Assertions.assertTrue(success);
     }
 
     // 4.删除

@@ -1,6 +1,6 @@
 package org.dromara.easyes.core.conditions.index;
 
-import org.dromara.easyes.core.core.EsChainWrapper;
+import org.dromara.easyes.core.kernel.EsChainWrapper;
 
 /**
  * 链式更新方法

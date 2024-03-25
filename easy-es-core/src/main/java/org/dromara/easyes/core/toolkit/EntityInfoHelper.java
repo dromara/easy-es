@@ -4,6 +4,7 @@ import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
 import com.alibaba.fastjson.serializer.NameFilter;
 import com.alibaba.fastjson.serializer.SerializeFilter;
 import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
+import com.alibaba.fastjson.serializer.ValueFilter;
 import lombok.SneakyThrows;
 import org.dromara.easyes.annotation.*;
 import org.dromara.easyes.annotation.rely.*;
@@ -17,6 +18,11 @@ import org.dromara.easyes.core.config.GlobalConfig;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -180,12 +186,12 @@ public class EntityInfoHelper {
             }
 
             // 有 @IndexField 等已知自定义注解的字段初始化
-            if (initIndexFieldWithAnnotation(dbConfig, fieldList, field, entityInfo)) {
+            if (initIndexFieldWithAnnotation(dbConfig, fieldList, field, entityInfo, clazz)) {
                 continue;
             }
 
             // 无 @IndexField 等已知自定义注解的字段初始化
-            initIndexFieldWithoutAnnotation(dbConfig, fieldList, field, entityInfo);
+            initIndexFieldWithoutAnnotation(dbConfig, fieldList, field, entityInfo, clazz);
         }
 
         // 字段列表
@@ -211,6 +217,10 @@ public class EntityInfoHelper {
                 FastJsonUtils.getSimplePropertyPreFilter(clazz, entityInfo.getNotSerializeField());
         Optional.ofNullable(entityClassPreFilter).ifPresent(preFilters::add);
 
+        // 日期等特殊字段过滤器
+        List<SerializeFilter> valueFilters = getValueFilter(entityInfo, clazz);
+        preFilters.addAll(valueFilters);
+
         // 嵌套类的字段序列化过滤器
         entityInfo.getNestedNotSerializeField()
                 .forEach((k, v) -> Optional.ofNullable(FastJsonUtils.getSimplePropertyPreFilter(k, v))
@@ -226,6 +236,38 @@ public class EntityInfoHelper {
     }
 
     /**
+     * 获取fastjson 值过滤器 针对日期等需要格式化及转换字段处理
+     *
+     * @param entityInfo 实体信息缓存
+     * @param clazz      对应类
+     * @return 过滤器
+     */
+    private static List<SerializeFilter> getValueFilter(EntityInfo entityInfo, Class<?> clazz) {
+        // 日期字段序列化过滤器
+        List<SerializeFilter> serializeFilters = new ArrayList<>();
+        Map<String, String> dateFormatMap = entityInfo.getClassDateFormatMap().get(clazz);
+        if (CollectionUtils.isEmpty(dateFormatMap)) {
+            return serializeFilters;
+        }
+
+        Map<Class<?>, Map<String, String>> nestedClassColumnMappingMap = entityInfo.getNestedClassColumnMappingMap();
+        SerializeFilter serializeFilter = (ValueFilter) (object, name, value) -> {
+            Map<String, String> nestedColumnMappingMap = nestedClassColumnMappingMap.get(object.getClass());
+            if (nestedColumnMappingMap != null) {
+                Map<String, String> nestedDateFormatMap = entityInfo.getClassDateFormatMap().get(object.getClass());
+                if (CollectionUtils.isEmpty(nestedDateFormatMap)) {
+                    return value;
+                }
+                return formatDate(name, value, nestedColumnMappingMap, nestedDateFormatMap);
+            } else {
+                return formatDate(name, value, entityInfo.getColumnMappingMap(), dateFormatMap);
+            }
+        };
+        serializeFilters.add(serializeFilter);
+        return serializeFilters;
+    }
+
+    /**
      * 预添加fastjson解析object时对非实体类字段的处理(比如自定义字段名,下划线等)
      *
      * @param entityInfo 实体信息
@@ -234,28 +276,68 @@ public class EntityInfoHelper {
         Map<String, String> columnMappingMap = entityInfo.getColumnMappingMap();
         Map<Class<?>, Map<String, String>> nestedClassColumnMappingMap = entityInfo.getNestedClassColumnMappingMap();
         ExtraProcessor extraProcessor = (object, key, value) -> {
-            // 主类
             Map<String, String> nestedColumnMappingMap = nestedClassColumnMappingMap.get(object.getClass());
             if (nestedColumnMappingMap != null) {
+                // 嵌套类
                 invokeExtraProcessor(nestedColumnMappingMap, object, key, value, object.getClass());
             } else {
-                // 嵌套类
+                // 主类
                 invokeExtraProcessor(columnMappingMap, object, key, value, object.getClass());
             }
         };
         entityInfo.setExtraProcessor(extraProcessor);
     }
 
+    /**
+     * fastjson字段转换 (由es中查询结果映射至对象)
+     *
+     * @param columnMappingMap 字段映射
+     * @param object           对象
+     * @param key              字段名
+     * @param value            字段值
+     * @param clazz            实体类
+     */
     private static void invokeExtraProcessor(Map<String, String> columnMappingMap, Object object, String key, Object value, Class<?> clazz) {
         Optional.ofNullable(columnMappingMap.get(key))
                 .flatMap(realMethodName -> Optional.ofNullable(BaseCache.setterMethod(clazz, realMethodName)))
                 .ifPresent(method -> {
                     try {
                         method.invoke(object, value);
+                    } catch (IllegalArgumentException illegalArgumentException) {
+                        illegalArgumentException.printStackTrace();
+                        // 日期类型失败按默认format格式重试 几乎不会走到这里,除非用户针对日期字段设置了别名
+                        reInvokeDate(object, value, method);
                     } catch (Throwable e) {
                         e.printStackTrace();
                     }
                 });
+    }
+
+    /**
+     * 日期类型重新反射
+     *
+     * @param object 对象
+     * @param value  值
+     * @param method 方法名
+     */
+    private static void reInvokeDate(Object object, Object value, Method method) {
+        if (value instanceof String) {
+            String paramTypeName = method.getParameterTypes()[0].getSimpleName();
+            Object parsed = null;
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT);
+            if (LocalDateTime.class.getSimpleName().equals(paramTypeName)) {
+                parsed = LocalDateTime.parse(value.toString(), formatter);
+            } else if (LocalDate.class.getSimpleName().equals(paramTypeName)) {
+                parsed = LocalDate.parse(value.toString(), formatter);
+            } else if (Date.class.getSimpleName().equals(paramTypeName)) {
+                parsed = Date.from(LocalDateTime.parse(value.toString(), formatter).atZone(ZoneId.systemDefault()).toInstant());
+            }
+            try {
+                method.invoke(object, parsed);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -297,12 +379,12 @@ public class EntityInfoHelper {
      * @return
      */
     private static boolean initIndexFieldWithAnnotation(GlobalConfig.DbConfig dbConfig, List<EntityFieldInfo> fieldList,
-                                                        Field field, EntityInfo entityInfo) {
+                                                        Field field, EntityInfo entityInfo, Class<?> clazz) {
         boolean hasAnnotation = false;
 
         // 初始化封装IndexField及MultiIndexField注解信息
         if (field.isAnnotationPresent(IndexField.class) || field.isAnnotationPresent(MultiIndexField.class)) {
-            initIndexFieldAnnotation(dbConfig, entityInfo, field, fieldList);
+            initIndexFieldAnnotation(dbConfig, entityInfo, clazz, field, fieldList);
             hasAnnotation = true;
         }
 
@@ -340,7 +422,7 @@ public class EntityInfoHelper {
      * @param field      字段
      * @param entityInfo 实体信息
      */
-    private static void initIndexFieldAnnotation(GlobalConfig.DbConfig dbConfig, EntityInfo entityInfo,
+    private static void initIndexFieldAnnotation(GlobalConfig.DbConfig dbConfig, EntityInfo entityInfo, Class<?> clazz,
                                                  Field field, List<EntityFieldInfo> fieldList) {
         MultiIndexField multiIndexField = field.getAnnotation(MultiIndexField.class);
         IndexField indexField = Optional.ofNullable(multiIndexField).map(MultiIndexField::mainIndexField)
@@ -366,10 +448,9 @@ public class EntityInfoHelper {
                 entityFieldInfo.setScalingFactor(indexField.scalingFactor());
             }
 
-            // 日期格式化
-            if (StringUtils.isNotBlank(indexField.dateFormat())) {
-                entityFieldInfo.setDateFormat(indexField.dateFormat());
-            }
+            // 日期格式化信息初始化
+            String format = StringUtils.isBlank(indexField.dateFormat()) ? DEFAULT_DATE_TIME_FORMAT : indexField.dateFormat();
+            initClassDateFormatMap(indexField.fieldType(), field.getName(), entityInfo, clazz, format);
 
             // 是否忽略大小写
             FieldType fieldType = FieldType.getByType(IndexUtils.getEsFieldType(indexField.fieldType(), field.getType().getSimpleName()));
@@ -549,6 +630,10 @@ public class EntityInfoHelper {
                 fieldType = FieldType.getByType(IndexUtils.getEsFieldType(FieldType.NONE, field.getType().getSimpleName()));
                 entityFieldInfo.setFieldType(fieldType);
                 entityFieldInfo.setColumnType(field.getType().getSimpleName());
+
+                // 日期类型,如果没加注解, 设置默认的日期format
+                initClassDateFormatMap(fieldType, field.getName(), entityInfo, nestedClass, DEFAULT_DATE_TIME_FORMAT);
+
                 entityFieldInfoList.add(entityFieldInfo);
             } else {
                 if (indexField.exist()) {
@@ -578,9 +663,10 @@ public class EntityInfoHelper {
                         // 仅对keyword类型设置,其它类型es不支持
                         entityFieldInfo.setIgnoreCase(indexField.ignoreCase());
                     }
-                    if (StringUtils.isNotBlank(indexField.dateFormat())) {
-                        entityFieldInfo.setDateFormat(indexField.dateFormat());
-                    }
+
+                    // 日期格式化信息初始化
+                    String format = StringUtils.isBlank(indexField.dateFormat()) ? DEFAULT_DATE_TIME_FORMAT : indexField.dateFormat();
+                    initClassDateFormatMap(indexField.fieldType(), field.getName(), entityInfo, nestedClass, format);
 
                     // 缩放因子
                     if (MINUS_ONE != indexField.scalingFactor()) {
@@ -651,7 +737,7 @@ public class EntityInfoHelper {
      * @param entityInfo 实体信息
      */
     private static void initIndexFieldWithoutAnnotation(GlobalConfig.DbConfig dbConfig, List<EntityFieldInfo> fieldList,
-                                                        Field field, EntityInfo entityInfo) {
+                                                        Field field, EntityInfo entityInfo, Class<?> clazz) {
         boolean isNotSerializedField = entityInfo.getNotSerializeField().contains(field.getName());
         if (isNotSerializedField) {
             return;
@@ -662,6 +748,15 @@ public class EntityInfoHelper {
         String mappingColumn = initMappingColumnMapAndGet(dbConfig, entityInfo, field);
         entityFieldInfo.setMappingColumn(mappingColumn);
         FieldType fieldType = FieldType.getByType(IndexUtils.getEsFieldType(FieldType.NONE, field.getType().getSimpleName()));
+
+        // 日期类型,如果没加注解, 设置默认的日期format
+        if (FieldType.DATE.equals(fieldType)) {
+            Map<Class<?>, Map<String, String>> classDateFormatMap = entityInfo.getClassDateFormatMap();
+            Map<String, String> dateFormatMap = Optional.ofNullable(classDateFormatMap.get(clazz)).orElse(new HashMap<>());
+            dateFormatMap.putIfAbsent(field.getName(), DEFAULT_DATE_TIME_FORMAT);
+            classDateFormatMap.putIfAbsent(clazz, dateFormatMap);
+        }
+
         entityInfo.getFieldTypeMap().putIfAbsent(field.getName(), fieldType.getType());
         entityFieldInfo.setColumnType(field.getType().getSimpleName());
         fieldList.add(entityFieldInfo);
@@ -843,6 +938,7 @@ public class EntityInfoHelper {
         // 自定义字段名及驼峰下划线转换
         String mappingColumn = getMappingColumn(dbConfig, field);
         entityInfo.getMappingColumnMap().putIfAbsent(field.getName(), mappingColumn);
+        entityInfo.getColumnMappingMap().putIfAbsent(mappingColumn, field.getName());
         return mappingColumn;
     }
 
@@ -874,6 +970,51 @@ public class EntityInfoHelper {
             origin = StringUtils.camelToUnderline(origin);
         }
         return origin;
+    }
+
+    /**
+     * 初始化类与日期格式化关系map
+     *
+     * @param fieldType  字段类型
+     * @param fieldName  字段名
+     * @param entityInfo 实体类信息缓存
+     * @param clazz      实体类
+     * @param dateFormat 日期格式化pattern
+     */
+    private static void initClassDateFormatMap(FieldType fieldType, String fieldName, EntityInfo entityInfo, Class<?> clazz, String dateFormat) {
+        if (FieldType.DATE.equals(fieldType)) {
+            Map<Class<?>, Map<String, String>> classDateFormatMap = entityInfo.getClassDateFormatMap();
+            Map<String, String> dateFormatMap = Optional.ofNullable(classDateFormatMap.get(clazz)).orElse(new HashMap<>());
+            dateFormatMap.putIfAbsent(fieldName, dateFormat);
+            classDateFormatMap.putIfAbsent(clazz, dateFormatMap);
+        }
+    }
+
+    /**
+     * 日期按注解中指定的pattern格式化
+     *
+     * @param name             字段名
+     * @param value            值
+     * @param columnMappingMap 字段与es索引字段映射关系map
+     * @param dateFormatMap    日期格式化patternMap
+     * @return 格式化后的日期
+     */
+    private static Object formatDate(String name, Object value, Map<String, String> columnMappingMap, Map<String, String> dateFormatMap) {
+        return Optional.ofNullable(columnMappingMap.get(name))
+                .flatMap(i -> Optional.ofNullable(dateFormatMap.get(i)))
+                .map(pattern -> {
+                    if (value instanceof Date) {
+                        SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+                        return sdf.format(value);
+                    } else if (value instanceof LocalDate) {
+                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern(pattern);
+                        return ((LocalDate) value).format(dtf);
+                    } else if (value instanceof LocalDateTime) {
+                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern(pattern);
+                        return ((LocalDateTime) value).format(dtf);
+                    }
+                    return value;
+                }).orElse(value);
     }
 
 }

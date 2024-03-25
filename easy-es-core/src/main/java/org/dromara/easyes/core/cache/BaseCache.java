@@ -4,7 +4,7 @@ import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.common.utils.CollectionUtils;
 import org.dromara.easyes.common.utils.ExceptionUtils;
 import org.dromara.easyes.core.biz.EntityInfo;
-import org.dromara.easyes.core.core.BaseEsMapperImpl;
+import org.dromara.easyes.core.kernel.BaseEsMapperImpl;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.core.toolkit.FieldUtils;
 import org.elasticsearch.client.RestHighLevelClient;

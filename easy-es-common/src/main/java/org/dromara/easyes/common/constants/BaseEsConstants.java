@@ -277,4 +277,8 @@ public interface BaseEsConstants {
      * 父子类型索引v
      */
     String JOIN_TYPE = "join";
+    /**
+     * 默认日期格式化格式
+     */
+    String DEFAULT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 }

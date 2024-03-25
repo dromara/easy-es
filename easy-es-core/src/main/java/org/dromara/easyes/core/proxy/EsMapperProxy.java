@@ -1,7 +1,7 @@
 package org.dromara.easyes.core.proxy;
 
 import org.dromara.easyes.core.cache.BaseCache;
-import org.dromara.easyes.core.core.BaseEsMapperImpl;
+import org.dromara.easyes.core.kernel.BaseEsMapperImpl;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;

@@ -3,7 +3,7 @@ package org.dromara.easyes.test.select;
 import org.dromara.easyes.common.enums.Link;
 import org.dromara.easyes.common.enums.Query;
 import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
-import org.dromara.easyes.core.core.EsWrappers;
+import org.dromara.easyes.core.kernel.EsWrappers;
 import org.dromara.easyes.core.toolkit.QueryUtils;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
