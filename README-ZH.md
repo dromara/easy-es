@@ -181,6 +181,12 @@ QQ | 微信:252645816
   <img alt="ad" src="https://iknow.hs.net/26a6e238-8b23-463c-8cf9-f62cc3f52e0f.png">
 </a>
 
+</br>
+
+<a href="https://www.jnpfsoft.com/index.html?from=easy-es/">
+  <img alt="ad" src="https://iknow.hs.net/a3b07ec6-c94e-48c5-b1b4-743a4d6ba09f.png">
+</a>
+
 
 # 赞助商 | Sponsor
 
