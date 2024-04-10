@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Configuration;
  * Copyright © 2022 xpc1024 All Rights Reserved
  **/
 @Data
-@Configuration
 @ConfigurationProperties(value = "easy-es")
 @ConditionalOnExpression("'${easy-es.address:x}'!='x'")
 @ConditionalOnProperty(prefix = "easy-es", name = {"enable"}, havingValue = "true", matchIfMissing = true)

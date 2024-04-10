@@ -1,6 +1,6 @@
 package org.dromara.easyes.sample.mapper;
 
-import org.dromara.easyes.core.core.BaseEsMapper;
+import org.dromara.easyes.core.kernel.BaseEsMapper;
 import org.dromara.easyes.sample.entity.Document;
 
 /**

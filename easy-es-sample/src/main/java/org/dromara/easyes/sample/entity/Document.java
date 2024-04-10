@@ -8,6 +8,8 @@ import org.dromara.easyes.annotation.rely.FieldStrategy;
 import org.dromara.easyes.annotation.rely.FieldType;
 import org.dromara.easyes.annotation.rely.IdType;
 
+import java.time.LocalDateTime;
+
 /**
  * es 数据模型
  * <p>
@@ -15,7 +17,7 @@ import org.dromara.easyes.annotation.rely.IdType;
  **/
 @Data
 @Accessors(chain = true)
-@Settings(shardsNum = 3, replicasNum = 2, maxResultWindow = 1000)
+@Settings(shardsNum = 3, replicasNum = 2)
 @IndexName(value = "easyes_document", keepGlobalPrefix = true)
 public class Document {
     /**
@@ -41,8 +43,8 @@ public class Document {
     /**
      * 创建时间
      */
-    @IndexField(fieldType = FieldType.DATE, dateFormat = "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis")
-    private String gmtCreate;
+    @IndexField(fieldType = FieldType.DATE, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime gmtCreate;
     /**
      * es中实际不存在的字段,但模型中加了,为了不和es映射,可以在此类型字段上加上 注解@TableField,并指明exist=false
      */

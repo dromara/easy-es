@@ -1,4 +1,4 @@
-package org.dromara.easyes.core.core;
+package org.dromara.easyes.core.kernel;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -15,6 +15,7 @@ import org.dromara.easyes.annotation.rely.RefreshPolicy;
 import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.common.enums.EsQueryTypeEnum;
 import org.dromara.easyes.common.enums.MethodEnum;
+import org.dromara.easyes.common.enums.OrderTypeEnum;
 import org.dromara.easyes.common.utils.*;
 import org.dromara.easyes.core.biz.*;
 import org.dromara.easyes.core.cache.BaseCache;
@@ -119,14 +120,14 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     @Override
     public Boolean createIndex() {
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
-        CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo);
+        CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo, entityClass);
         return IndexUtils.createIndex(client, entityInfo, createIndexParam);
     }
 
     @Override
     public Boolean createIndex(String indexName) {
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
-        CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo);
+        CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo, entityClass);
         if (StringUtils.isNotBlank(indexName)) {
             createIndexParam.setIndexName(indexName);
         }
@@ -165,7 +166,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     public Integer refresh(String... indexNames) {
         RefreshRequest request = new RefreshRequest(indexNames);
         try {
-            RefreshResponse refresh = client.indices().refresh(request, RequestOptions.DEFAULT);
+            RefreshResponse refresh = client.indices().refresh(request, getRequestOptions());
             return refresh.getSuccessfulShards();
         } catch (IOException e) {
             e.printStackTrace();
@@ -320,8 +321,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             CountResponse count;
             try {
                 printCountDSL(countRequest);
-                RequestOptions requestOptions = wrapper.requestOptions == null ? RequestOptions.DEFAULT : wrapper.requestOptions;
-                count = client.count(countRequest, requestOptions);
+                count = client.count(countRequest, getRequestOptions());
             } catch (IOException e) {
                 throw ExceptionUtils.eee("selectCount exception", e);
             }
@@ -461,9 +461,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         BoolQueryBuilder boolQueryBuilder = WrapperProcessor.initBoolQueryBuilder(wrapper.paramQueue, entityClass);
         request.setQuery(boolQueryBuilder);
         BulkByScrollResponse bulkResponse;
-        RequestOptions requestOptions = wrapper.requestOptions == null ? RequestOptions.DEFAULT : wrapper.requestOptions;
         try {
-            bulkResponse = client.deleteByQuery(request, requestOptions);
+            bulkResponse = client.deleteByQuery(request, getRequestOptions());
         } catch (IOException e) {
             throw ExceptionUtils.eee("delete error, dsl:%s", e, boolQueryBuilder.toString());
         }
@@ -635,6 +634,14 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean setRequestOptions(RequestOptions requestOptions) {
+        synchronized (this) {
+            EntityInfoHelper.getEntityInfo(entityClass).setRequestOptions(requestOptions);
+        }
+        return Boolean.TRUE;
+    }
+
     /**
      * 执行创建索引
      *
@@ -694,7 +701,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
 
         try {
-            AcknowledgedResponse acknowledgedResponse = client.indices().putMapping(putMappingRequest, RequestOptions.DEFAULT);
+            AcknowledgedResponse acknowledgedResponse = client.indices().putMapping(putMappingRequest, getRequestOptions());
             Assert.isTrue(acknowledgedResponse.isAcknowledged(), String.format("update index failed, index: %s", indexName));
         } catch (IOException e) {
             throw ExceptionUtils.eee("update index exception", e);
@@ -716,10 +723,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
         Optional.ofNullable(routing).ifPresent(indexRequest::routing);
         indexRequest.setRefreshPolicy(getRefreshPolicy());
-        RequestOptions requestOptions = wrapper.requestOptions == null ? RequestOptions.DEFAULT : wrapper.requestOptions;
 
         try {
-            IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
+            IndexResponse indexResponse = client.index(indexRequest, getRequestOptions());
             if (Objects.equals(indexResponse.status(), RestStatus.CREATED)) {
                 setId(entity, indexResponse.getId());
                 return BaseEsConstants.ONE;
@@ -754,8 +760,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         });
 
         // 执行批量请求并返回结果
-        RequestOptions requestOptions = wrapper.requestOptions == null ? RequestOptions.DEFAULT : wrapper.requestOptions;
-        return doBulkRequest(bulkRequest, RequestOptions.DEFAULT, entityList);
+        return doBulkRequest(bulkRequest, getRequestOptions(), entityList);
     }
 
 
@@ -771,10 +776,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         DeleteRequest deleteRequest = generateDelRequest(id, indexName);
         Optional.ofNullable(routing).ifPresent(deleteRequest::routing);
         deleteRequest.setRefreshPolicy(getRefreshPolicy());
-        RequestOptions requestOptions = wrapper.requestOptions == null ? RequestOptions.DEFAULT : wrapper.requestOptions;
-
         try {
-            DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
+            DeleteResponse deleteResponse = client.delete(deleteRequest, getRequestOptions());
             if (Objects.equals(deleteResponse.status(), RestStatus.OK)) {
                 return BaseEsConstants.ONE;
             }
@@ -801,8 +804,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             DeleteRequest deleteRequest = generateDelRequest(id, indexName);
             bulkRequest.add(deleteRequest);
         });
-        RequestOptions requestOptions = wrapper.requestOptions == null ? RequestOptions.DEFAULT : wrapper.requestOptions;
-        return doBulkRequest(bulkRequest, RequestOptions.DEFAULT);
+        return doBulkRequest(bulkRequest, getRequestOptions());
     }
 
     /**
@@ -819,11 +821,10 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         UpdateRequest updateRequest = buildUpdateRequest(entity, idValue, indexName);
         Optional.ofNullable(routing).ifPresent(updateRequest::routing);
         updateRequest.setRefreshPolicy(getRefreshPolicy());
-        RequestOptions requestOptions = wrapper.requestOptions == null ? RequestOptions.DEFAULT : wrapper.requestOptions;
 
         // 执行更新
         try {
-            UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
+            UpdateResponse updateResponse = client.update(updateRequest, getRequestOptions());
             if (Objects.equals(updateResponse.status(), RestStatus.OK)) {
                 return BaseEsConstants.ONE;
             }
@@ -854,7 +855,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         });
 
         // 执行批量请求
-        return doBulkRequest(bulkRequest, RequestOptions.DEFAULT);
+        return doBulkRequest(bulkRequest, getRequestOptions());
     }
 
     /**
@@ -896,7 +897,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
             bulkRequest.add(updateRequest);
         });
-        return doBulkRequest(bulkRequest, RequestOptions.DEFAULT);
+        return doBulkRequest(bulkRequest, getRequestOptions());
     }
 
 
@@ -985,7 +986,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 执行查询
         SearchResponse response;
         try {
-            response = client.search(searchRequest, RequestOptions.DEFAULT);
+            response = client.search(searchRequest, getRequestOptions());
         } catch (IOException e) {
             throw ExceptionUtils.eee("search exception", e);
         }
@@ -1046,7 +1047,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         printDSL(searchRequest);
         try {
             // 查询数据明细
-            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+            SearchResponse response = client.search(searchRequest, getRequestOptions());
             printResponseErrors(response);
             SearchHit[] searchHits = parseSearchHitArray(response);
             return Arrays.stream(searchHits)
@@ -1172,6 +1173,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     private T parseOne(SearchHit searchHit, Wrapper<T> wrapper) {
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
+
         // 解析json
         T entity = JSON.parseObject(searchHit.getSourceAsString(), entityClass, entityInfo.getExtraProcessor());
 
@@ -1192,7 +1194,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         setScore(entity, searchHit.getScore(), entityInfo);
 
         // 距离字段处理
-        setDistance(entity, searchHit.getSortValues(), entityInfo);
+        setDistance(entity, searchHit.getSortValues(), entityInfo, wrapper.baseSortParams);
 
         // id处理
         boolean includeId = WrapperProcessor.includeId(getRealIdFieldName(), wrapper);
@@ -1298,22 +1300,31 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
     }
 
+    private void setDistance(T entity, Object[] sortValues, EntityInfo entityInfo) {
+        setDistance(entity, sortValues, entityInfo, null);
+    }
 
     /**
      * 设置距离
      *
-     * @param entity     实体对象
-     * @param sortValues 排序值(含距离)
-     * @param entityInfo 实体信息
+     * @param entity         实体对象
+     * @param sortValues     排序值(含距离)
+     * @param entityInfo     实体信息
+     * @param baseSortParams 用户输入的排序参数
      */
-    private void setDistance(T entity, Object[] sortValues, EntityInfo entityInfo) {
+    private void setDistance(T entity, Object[] sortValues, EntityInfo entityInfo, List<BaseSortParam> baseSortParams) {
         List<String> distanceFields = entityInfo.getDistanceFields();
-        if (CollectionUtils.isEmpty(distanceFields) || ArrayUtils.isEmpty(sortValues)) {
+        if (CollectionUtils.isEmpty(distanceFields) || ArrayUtils.isEmpty(sortValues) || CollectionUtils.isEmpty(baseSortParams)) {
             return;
         }
 
         // 按排序器顺序封装排序字段值
-        for (int i = 0; i < sortValues.length; i++) {
+        for (int i = 0, geoFieldIndex = 0; i < sortValues.length; i++, geoFieldIndex++) {
+            if (OrderTypeEnum.GEO != baseSortParams.get(i).getOrderTypeEnum()) {
+                // 当前sortValue不是地理位置的排序值，geoFieldIndex不需要变动
+                geoFieldIndex--;
+                continue;
+            }
             Object sortValue = sortValues[i];
             if (!(sortValue instanceof Double)) {
                 continue;
@@ -1322,12 +1333,12 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             if (Double.isNaN(distance)) {
                 continue;
             }
-            Integer distanceDecimalPlaces = entityInfo.getDistanceDecimalPlaces().get(i);
+            Integer distanceDecimalPlaces = entityInfo.getDistanceDecimalPlaces().get(geoFieldIndex);
             if (distanceDecimalPlaces > ZERO) {
                 distance = NumericUtils.setDecimalPlaces(distance, distanceDecimalPlaces);
             }
             try {
-                Method invokeMethod = BaseCache.setterMethod(entity.getClass(), distanceFields.get(i));
+                Method invokeMethod = BaseCache.setterMethod(entity.getClass(), distanceFields.get(geoFieldIndex));
                 invokeMethod.invoke(entity, distance);
             } catch (Throwable e) {
                 // 遇到异常只提示, 不阻断流程 distance未设置不影核心业务
@@ -1382,7 +1393,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         printDSL(searchRequest);
         SearchResponse response;
         try {
-            response = client.search(searchRequest, RequestOptions.DEFAULT);
+            response = client.search(searchRequest, getRequestOptions());
         } catch (IOException e) {
             throw ExceptionUtils.eee("getSearchHitArray exception,searchRequest:%s", e, searchRequest.toString());
         }
@@ -1409,7 +1420,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         printDSL(searchRequest);
         SearchResponse response;
         try {
-            response = client.search(searchRequest, RequestOptions.DEFAULT);
+            response = client.search(searchRequest, getRequestOptions());
         } catch (IOException e) {
             throw ExceptionUtils.eee("getSearchHitArray IOException, searchRequest:%s", e, searchRequest.toString());
         }
@@ -1466,7 +1477,6 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 主类中的字段策略过滤
         SimplePropertyPreFilter simplePropertyPreFilter = FastJsonUtils.getSimplePropertyPreFilter(entity.getClass(), excludeColumn);
         Optional.ofNullable(simplePropertyPreFilter).ifPresent(serializeFilters::add);
-
         return JSON.toJSONString(entity, serializeFilters.toArray(new SerializeFilter[0]), SerializerFeature.WriteMapNullValue);
     }
 
@@ -1718,6 +1728,15 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 防止傻狍子用户在全局中把刷新策略修改为GLOBAL
         final RefreshPolicy refreshPolicy = Optional.ofNullable(EntityInfoHelper.getEntityInfo(entityClass).getRefreshPolicy()).orElse(RefreshPolicy.NONE);
         return RefreshPolicy.GLOBAL.equals(refreshPolicy) ? RefreshPolicy.NONE.getValue() : refreshPolicy.getValue();
+    }
+
+    /**
+     * 获取请求配置
+     *
+     * @return 请求配置
+     */
+    private RequestOptions getRequestOptions() {
+        return EntityInfoHelper.getEntityInfo(entityClass).getRequestOptions();
     }
 
 }

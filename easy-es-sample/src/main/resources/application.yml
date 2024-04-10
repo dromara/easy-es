@@ -1,7 +1,7 @@
 easy-es:
   enable: true
-  address: 346zh86807.zicp.fun:80
-  schema: https
+  address: 10.18.2.45:9200
+#  schema: https
 #  username: elastic
 #  password: WG7WVmuNMtM4GwNYkyWH
   keep-alive-millis: 18000

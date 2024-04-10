@@ -484,7 +484,7 @@ public class IndexUtils {
             if (FieldType.NESTED.getType().equals(indexParam.getFieldType())) {
                 // 递归
                 List<EntityFieldInfo> nestedFields = entityInfo.getNestedFieldListMap().get(indexParam.getNestedClass());
-                List<EsIndexParam> esIndexParams = initIndexParam(entityInfo, nestedFields);
+                List<EsIndexParam> esIndexParams = initIndexParam(entityInfo, indexParam.getNestedClass(), nestedFields);
                 Map<String, Object> nested = initInfo(entityInfo, dbConfig, new HashMap<>(), esIndexParams);
                 info.put(BaseEsConstants.PROPERTIES, nested);
             }
@@ -574,13 +574,13 @@ public class IndexUtils {
      * @param entityInfo 配置信息
      * @return 创建索引参数
      */
-    public static CreateIndexParam getCreateIndexParam(EntityInfo entityInfo) {
+    public static CreateIndexParam getCreateIndexParam(EntityInfo entityInfo, Class<?> clazz) {
         // 初始化字段信息参数
-        List<EsIndexParam> esIndexParamList = initIndexParam(entityInfo, entityInfo.getFieldList());
+        List<EsIndexParam> esIndexParamList = initIndexParam(entityInfo, clazz, entityInfo.getFieldList());
 
         // 追加join父子类型字段信息
         if (CollectionUtils.isNotEmpty(entityInfo.getChildFieldList())) {
-            List<EsIndexParam> childEsIndexParamList = initIndexParam(entityInfo, entityInfo.getChildFieldList());
+            List<EsIndexParam> childEsIndexParamList = initIndexParam(entityInfo, clazz, entityInfo.getChildFieldList());
             esIndexParamList.addAll(childEsIndexParamList);
         }
 
@@ -609,12 +609,13 @@ public class IndexUtils {
      * @param fieldList  字段列表
      * @return 索引参数列表
      */
-    public static List<EsIndexParam> initIndexParam(EntityInfo entityInfo, List<EntityFieldInfo> fieldList) {
+    public static List<EsIndexParam> initIndexParam(EntityInfo entityInfo, Class<?> clazz, List<EntityFieldInfo> fieldList) {
         List<EntityFieldInfo> copyFieldList = new ArrayList<>();
         copyFieldList.addAll(fieldList);
 
         List<EsIndexParam> esIndexParamList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(copyFieldList)) {
+            Map<String, String> dateFormatMap = entityInfo.getClassDateFormatMap().get(clazz);
             copyFieldList.forEach(field -> {
                 EsIndexParam esIndexParam = new EsIndexParam();
                 String esFieldType = IndexUtils.getEsFieldType(field.getFieldType(), field.getColumnType());
@@ -623,7 +624,6 @@ public class IndexUtils {
                     esIndexParam.setFieldData(field.isFieldData());
                 }
                 esIndexParam.setFieldName(field.getMappingColumn());
-                esIndexParam.setDateFormat(field.getDateFormat());
                 esIndexParam.setScalingFactor(field.getScalingFactor());
                 esIndexParam.setDims(field.getDims());
                 if (FieldType.NESTED.equals(field.getFieldType())) {
@@ -638,6 +638,11 @@ public class IndexUtils {
                     }
                 }
                 esIndexParam.setIgnoreCase(field.isIgnoreCase());
+
+                // 日期处理
+                Optional.ofNullable(dateFormatMap)
+                        .flatMap(i -> Optional.ofNullable(i.get(field.getColumn())))
+                        .ifPresent(esIndexParam::setDateFormat);
 
                 // 内部字段处理
                 final List<EntityFieldInfo.InnerFieldInfo> innerFieldInfoList = field.getInnerFieldInfoList();
@@ -668,11 +673,12 @@ public class IndexUtils {
      *
      * @param esIndexInfo es中的索引信息
      * @param entityInfo  配置中的索引信息
+     * @param clazz       实体类
      * @return 是否需要更新索引
      */
-    public static boolean isIndexNeedChange(EsIndexInfo esIndexInfo, EntityInfo entityInfo) {
+    public static boolean isIndexNeedChange(EsIndexInfo esIndexInfo, EntityInfo entityInfo, Class<?> clazz) {
         // 根据当前实体类及自定义注解配置, 生成最新的Mapping信息
-        List<EsIndexParam> esIndexParamList = IndexUtils.initIndexParam(entityInfo, entityInfo.getFieldList());
+        List<EsIndexParam> esIndexParamList = IndexUtils.initIndexParam(entityInfo, clazz, entityInfo.getFieldList());
 
         Map<String, Object> mapping = IndexUtils.initMapping(entityInfo, esIndexParamList);
 

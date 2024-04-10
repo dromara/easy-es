@@ -1,9 +1,8 @@
-package org.dromara.easyes.core.core;
+package org.dromara.easyes.core.kernel;
 
 
 import lombok.SneakyThrows;
 import org.dromara.easyes.core.biz.*;
-import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.search.aggregations.BucketOrder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -127,10 +126,6 @@ public abstract class Wrapper<T> implements Cloneable {
      * 用户自定义的searchSourceBuilder 用于混合查询
      */
     protected SearchSourceBuilder searchSourceBuilder;
-    /**
-     * 用户自定义的RequestOptions
-     */
-    protected RequestOptions requestOptions;
 
     /**
      * 浅拷贝当前条件构造器

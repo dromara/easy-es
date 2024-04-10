@@ -1,4 +1,4 @@
-package org.dromara.easyes.core.core;
+package org.dromara.easyes.core.kernel;
 
 import org.apache.lucene.search.join.ScoreMode;
 import org.dromara.easyes.annotation.rely.FieldType;
@@ -9,7 +9,6 @@ import org.dromara.easyes.common.utils.*;
 import org.dromara.easyes.core.biz.*;
 import org.dromara.easyes.core.conditions.function.*;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
-import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.geo.GeoDistance;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.geo.ShapeRelation;
@@ -552,14 +551,6 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
                 return typedThis;
             }
             this.preference = preference;
-        }
-        return typedThis;
-    }
-
-    @Override
-    public Children requestOptions(boolean condition, RequestOptions requestOptions) {
-        if (condition) {
-            this.requestOptions = requestOptions;
         }
         return typedThis;
     }

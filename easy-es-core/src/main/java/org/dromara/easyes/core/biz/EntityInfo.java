@@ -9,6 +9,7 @@ import org.dromara.easyes.annotation.rely.IdType;
 import org.dromara.easyes.annotation.rely.JoinField;
 import org.dromara.easyes.annotation.rely.RefreshPolicy;
 import org.dromara.easyes.common.constants.BaseEsConstants;
+import org.elasticsearch.client.RequestOptions;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -26,6 +27,10 @@ import static org.dromara.easyes.common.constants.BaseEsConstants.ZERO;
 @Data
 @Accessors(chain = true)
 public class EntityInfo {
+    /**
+     * 请求配置 默认值为官方内置的默认配置
+     */
+    private RequestOptions requestOptions = RequestOptions.DEFAULT;
     /**
      * 表主键ID 类型
      */
@@ -214,7 +219,11 @@ public class EntityInfo {
      * 通过自定义注解指定的索引settings
      */
     private final Map<String, Object> settingsMap = new HashMap<>();
-
+    /**
+     * 日期字段格式规则Map
+     */
+//    private Map<String, String> dateFormatMap = new HashMap<>();
+    private Map<Class<?>, Map<String, String>> classDateFormatMap = new HashMap<>();
 
     /**
      * 获取需要进行查询的字段列表
@@ -236,8 +245,17 @@ public class EntityInfo {
      * @return es中的字段名
      */
     public String getMappingColumn(String column) {
-        return Optional.ofNullable(mappingColumnMap.get(column))
-                .orElse(column);
+        return Optional.ofNullable(mappingColumnMap.get(column)).orElse(column);
+    }
+
+    /**
+     * 获取es字段映射实体字段名
+     *
+     * @param column es中的字段名
+     * @return 字段名
+     */
+    public String getColumnMapping(String column) {
+        return Optional.ofNullable(columnMappingMap.get(column)).orElse(column);
     }
 
     /**

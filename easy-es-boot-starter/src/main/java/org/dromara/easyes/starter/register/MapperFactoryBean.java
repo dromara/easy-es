@@ -3,7 +3,6 @@ package org.dromara.easyes.starter.register;
 import org.dromara.easyes.annotation.EsDS;
 import org.dromara.easyes.annotation.Intercepts;
 import org.dromara.easyes.common.enums.ProcessIndexStrategyEnum;
-import org.dromara.easyes.common.utils.CollectionUtils;
 import org.dromara.easyes.common.utils.LogUtils;
 import org.dromara.easyes.common.utils.RestHighLevelClientUtils;
 import org.dromara.easyes.common.utils.TypeUtils;
@@ -86,8 +85,8 @@ public class MapperFactoryBean<T> implements FactoryBean<T> {
         if (!ProcessIndexStrategyEnum.MANUAL.equals(globalConfig.getProcessIndexMode())) {
             // 父子类型,仅针对父类型创建索引,子类型不创建索引
             EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
-            boolean isParent = CollectionUtils.isNotEmpty(entityInfo.getRelationMap());
-            if (isParent) {
+            boolean isChild = entityInfo.isChild();
+            if (!isChild) {
                 AutoProcessIndexService autoProcessIndexService = indexStrategyFactory
                         .getByStrategyType(globalConfig.getProcessIndexMode().getStrategyType());
                 autoProcessIndexService.processIndexAsync(entityClass, client);

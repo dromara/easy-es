@@ -1,8 +1,8 @@
 package org.dromara.easyes.core.conditions.select;
 
 import org.dromara.easyes.common.params.SFunction;
-import org.dromara.easyes.core.core.AbstractChainWrapper;
-import org.dromara.easyes.core.core.BaseEsMapper;
+import org.dromara.easyes.core.kernel.AbstractChainWrapper;
+import org.dromara.easyes.core.kernel.BaseEsMapper;
 import org.dromara.easyes.core.conditions.function.Query;
 
 /**
