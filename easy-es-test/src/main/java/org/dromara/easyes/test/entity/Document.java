@@ -45,7 +45,7 @@ public class Document {
     /**
      * 文档内容,指定了类型及存储/查询分词器
      */
-    @HighLight(mappingField = "highlightContent", fragmentSize = 10, numberOfFragments = 2)
+    @HighLight(mappingField = "highlightContent", fragmentSize = 10, numberOfFragments = 2, requireFieldMatch = false, preTag = "<em>", postTag = "</em>")
     @IndexField(fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART, searchAnalyzer = Analyzer.IK_SMART)
     private String content;
     /**
@@ -86,6 +86,7 @@ public class Document {
     /**
      * 自定义字段名称
      */
+    @HighLight(preTag = "<nb>", postTag = "</nb>")
     @IndexField(value = "wu-la", fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART, searchAnalyzer = Analyzer.IK_SMART)
     private String customField;
 

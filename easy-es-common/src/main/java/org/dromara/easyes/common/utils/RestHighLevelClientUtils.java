@@ -12,7 +12,7 @@ public class RestHighLevelClientUtils {
 
     public static final String DEFAULT_DS = "DEFAULT_DS";
 
-    private static Map<String, RestHighLevelClient> restHighLevelClientMap = new ConcurrentHashMap<>();
+    private final static Map<String, RestHighLevelClient> restHighLevelClientMap = new ConcurrentHashMap<>();
 
     public RestHighLevelClientUtils() {
     }
@@ -22,13 +22,12 @@ public class RestHighLevelClientUtils {
             return restHighLevelClientMap.values()
                     .stream()
                     .findFirst()
-                    .orElseThrow(() -> ExceptionUtils.eee("找不到RestHighLevelClient,restHighLevelClientId:%s", restHighLevelClientId));
+                    .orElseThrow(() -> ExceptionUtils.eee("Could not found RestHighLevelClient,restHighLevelClientId:%s", restHighLevelClientId));
         }
         RestHighLevelClient restHighLevelClient = restHighLevelClientMap.get(restHighLevelClientId);
         if (restHighLevelClient == null) {
             LogUtils.formatError("restHighLevelClientId: %s can not find any data source, please check your config", restHighLevelClientId);
-            ExceptionUtils.eee("找不到RestHighLevelClient,restHighLevelClientId:%s", restHighLevelClientId);
-
+            throw ExceptionUtils.eee("Cloud not found RestHighLevelClient,restHighLevelClientId:%s", restHighLevelClientId);
         }
         return restHighLevelClient;
     }

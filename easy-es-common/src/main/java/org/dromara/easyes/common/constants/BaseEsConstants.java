@@ -260,7 +260,7 @@ public interface BaseEsConstants {
     /**
      * 默认缩放因子
      */
-    Integer DEFAULT_SCALING_FACTOR = 100;
+    Double DEFAULT_SCALING_FACTOR = 100.0;
     /**
      * 缩放因子索引字段名称
      */

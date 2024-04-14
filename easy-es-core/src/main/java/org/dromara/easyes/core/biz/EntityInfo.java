@@ -140,6 +140,10 @@ public class EntityInfo {
      */
     private boolean child = false;
     /**
+     * 父子类型是否开启急切全局序数
+     */
+    private boolean eagerGlobalOrdinals = true;
+    /**
      * 当前主类的高亮字段列表
      */
     private List<HighLightParam> highlightParams = new ArrayList<>();
@@ -206,7 +210,7 @@ public class EntityInfo {
     /**
      * 父子类型 join字段名字 K为父,v为子
      */
-    private final Map<String, List<String>> relationMap = new HashMap<>();
+    private final Map<String, Object> relationMap = new HashMap<>();
     /**
      * 父子类型 join字段类 K为父,v为子
      */
