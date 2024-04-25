@@ -104,6 +104,10 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,全自动�
 
 ![Architecture](https://iknow.hs.net/27fb40b8-22d4-45c2-92e0-1471112d5102.jpg)
 
+## 功能结构图 | Functional structure diagram
+
+![Function](https://iknow.hs.net/5fad565b-8b4e-4274-ab59-a74c3492ac9d.png)
+
 
 # 相关链接 | Links
 
@@ -178,7 +182,7 @@ QQ | 微信:252645816
 </br>
 
 <a href="https://www.mingdao.com?s=utm_70&utm_source=easy-es&utm_medium=banner&utm_campaign=gitee&utm_content=IT%E8%B5%8B%E8%83%BD%E4%B8%9A%E5%8A%A1">
-  <img alt="ad" src="https://iknow.hs.net/26a6e238-8b23-463c-8cf9-f62cc3f52e0f.png">
+  <img alt="ad" src="https://iknow.hs.net/00b4a54c-6505-4776-9232-f0a9d9768fac.jpg">
 </a>
 
 </br>

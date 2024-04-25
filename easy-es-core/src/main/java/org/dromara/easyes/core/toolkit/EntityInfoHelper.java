@@ -123,8 +123,9 @@ public class EntityInfoHelper {
         String joinAlias = StringUtils.isBlank(join.rootAlias()) ? clazz.getSimpleName() : join.rootAlias();
         String underlineJoinAlias = camelToUnderline(joinAlias, camelCase);
         entityInfo.setJoinAlias(underlineJoinAlias);
+        entityInfo.setEagerGlobalOrdinals(join.eagerGlobalOrdinals());
 
-        Map<String, List<String>> relationMap = entityInfo.getRelationMap();
+        Map<String, Object> relationMap = entityInfo.getRelationMap();
         Arrays.stream(join.nodes())
                 .forEach(child -> {
                     String parentAlias = StringUtils.isBlank(child.parentAlias()) ? child.parentClass().getSimpleName().toLowerCase() : child.parentAlias();
@@ -132,10 +133,12 @@ public class EntityInfoHelper {
                     List<String> childAliases = ArrayUtils.isEmpty(child.childAliases()) ?
                             Arrays.stream(child.childClasses()).map(Class::getSimpleName).map(i -> camelToUnderline(i.toLowerCase(), camelCase)).distinct().collect(Collectors.toList()) :
                             Arrays.stream(child.childAliases()).map(i -> camelToUnderline(i, camelCase)).collect(Collectors.toList());
-                    relationMap.put(underlineParentAlias, childAliases);
+                    // 大于1以数组形式置入,只有1个元素,则以object置入 否则会导致平滑模式下,从es中查询到的索引mapping与根据注解构造出的mapping结构有差异,被误判索引发生变动
+                    Object relation = childAliases.size() > ONE ? childAliases : childAliases.get(ZERO);
+                    relationMap.put(underlineParentAlias, relation);
 
                     // 在join-父加载时预加载join-子信息
-                    AtomicInteger index = new AtomicInteger(0);
+                    AtomicInteger index = new AtomicInteger(ZERO);
                     Arrays.stream(child.childClasses()).forEach(childClass -> {
                         EntityInfo childEntityInfo = EntityInfoHelper.getEntityInfo(childClass);
                         childEntityInfo.setChild(true);
@@ -574,7 +577,8 @@ public class EntityInfoHelper {
                 .setPreTag(highLight.preTag())
                 .setPostTag(highLight.postTag())
                 .setHighLightField(realHighLightField)
-                .setHighLightType(highLight.highLightType());
+                .setHighLightType(highLight.highLightType())
+                .setRequireFieldMatch(highLight.requireFieldMatch());
         if (MINUS_ONE != highLight.numberOfFragments() && highLight.numberOfFragments() > ZERO) {
             highlightParam.setNumberOfFragments(highLight.numberOfFragments());
         }

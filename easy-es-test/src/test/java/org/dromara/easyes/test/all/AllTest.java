@@ -231,6 +231,13 @@ public class AllTest {
 
     @Test
     @Order(6)
+    public void testDefaultMethod(){
+        List<Document> documents = documentMapper.testDefaultMethod();
+        Assertions.assertEquals(documents.size(),1);
+    }
+
+    @Test
+    @Order(6)
     public void testSelectById() {
         Document document = documentMapper.selectById(1);
         Assertions.assertEquals("1", document.getEsId());
@@ -837,7 +844,8 @@ public class AllTest {
     @Order(6)
     public void testHighLight() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.match(Document::getContent, "测试");
+        wrapper.match(Document::getContent, "测试")
+                .match(Document::getCustomField,"字段");
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertTrue(documents.get(0).getHighlightContent().contains("测试"));
     }

@@ -16,6 +16,13 @@ import static org.dromara.easyes.annotation.rely.AnnotationConstants.DEFAULT_JOI
 @Target(ElementType.TYPE)
 public @interface Join {
     /**
+     * 父子类型急切全局序数 默认值为true, 表示在创建索引时，会为该字段创建全局序数，从而加快搜索速度
+     *
+     * @return 是否开启急切全局序数
+     */
+    boolean eagerGlobalOrdinals() default true;
+
+    /**
      * join字段在es中的名字
      *
      * @return 索引中的join字段名称 默认为joinField

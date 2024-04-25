@@ -80,6 +80,10 @@ public class IndexUtils {
      * dims索引字段名
      */
     private static final String DIMS_KEY;
+    /**
+     * 急切全局系数,join父子类型默认字段
+     */
+    private static final String EAGER_GLOBAL_ORDINALS;
 
     static {
         FIELDS_KEY = "fields";
@@ -88,6 +92,7 @@ public class IndexUtils {
         CUSTOM = "custom";
         LOWERCASE = "lowercase";
         DIMS_KEY = "dims";
+        EAGER_GLOBAL_ORDINALS = "eager_global_ordinals";
     }
 
     /**
@@ -407,6 +412,7 @@ public class IndexUtils {
             Map<String, Object> join = new HashMap<>();
             join.put(TYPE, JOIN_TYPE);
             join.put(RELATIONS, entityInfo.getRelationMap());
+            join.put(EAGER_GLOBAL_ORDINALS, entityInfo.isEagerGlobalOrdinals());
             properties.put(entityInfo.getJoinFieldName(), join);
         }
 
@@ -468,7 +474,8 @@ public class IndexUtils {
 
             // scaled_float数据类型,须设置scaling_factor
             if (FieldType.SCALED_FLOAT.getType().equals(indexParam.getFieldType())) {
-                int scalingFactor = Optional.ofNullable(indexParam.getScalingFactor()).orElse(DEFAULT_SCALING_FACTOR);
+                Double scalingFactor = Optional.ofNullable(indexParam.getScalingFactor())
+                        .map(NumericUtils::formatNumberWithOneDecimal).orElse(DEFAULT_SCALING_FACTOR);
                 info.put(SCALING_FACTOR_FIELD, scalingFactor);
             }
 
@@ -572,6 +579,7 @@ public class IndexUtils {
      * 根据配置生成创建索引参数
      *
      * @param entityInfo 配置信息
+     * @param clazz      实体类
      * @return 创建索引参数
      */
     public static CreateIndexParam getCreateIndexParam(EntityInfo entityInfo, Class<?> clazz) {
@@ -606,6 +614,7 @@ public class IndexUtils {
      * 初始化索引参数
      *
      * @param entityInfo 实体信息
+     * @param clazz      实体类
      * @param fieldList  字段列表
      * @return 索引参数列表
      */
@@ -680,6 +689,13 @@ public class IndexUtils {
         // 根据当前实体类及自定义注解配置, 生成最新的Mapping信息
         List<EsIndexParam> esIndexParamList = IndexUtils.initIndexParam(entityInfo, clazz, entityInfo.getFieldList());
 
+        // 追加join父子类型字段信息
+        if (CollectionUtils.isNotEmpty(entityInfo.getChildFieldList())) {
+            List<EsIndexParam> childEsIndexParamList = initIndexParam(entityInfo, clazz, entityInfo.getChildFieldList());
+            esIndexParamList.addAll(childEsIndexParamList);
+        }
+
+        // 根据实体类注解信息构建mapping
         Map<String, Object> mapping = IndexUtils.initMapping(entityInfo, esIndexParamList);
 
         // 与查询到的已知index对比是否发生改变
@@ -863,5 +879,4 @@ public class IndexUtils {
             completableFuture.join();
         }
     }
-
 }

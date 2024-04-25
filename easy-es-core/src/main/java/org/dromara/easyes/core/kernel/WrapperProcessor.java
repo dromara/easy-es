@@ -452,13 +452,15 @@ public class WrapperProcessor {
                 // 嵌套类型 须追加其完整path前缀
                 String highlightField = Optional.ofNullable(path).map(i -> i + STR_SIGN + highLightParam.getHighLightField())
                         .orElse(highLightParam.getHighLightField());
-                HighlightBuilder.Field field = new HighlightBuilder.Field(highlightField);
+                HighlightBuilder.Field field = new HighlightBuilder.Field(highlightField)
+                        .preTags(highLightParam.getPreTag())
+                        .postTags(highLightParam.getPostTag());
                 field.highlighterType(highLightParam.getHighLightType().getValue());
+                if (Boolean.FALSE.equals(highLightParam.getRequireFieldMatch())) {
+                    field.requireFieldMatch(highLightParam.getRequireFieldMatch());
+                }
                 highlightBuilder.field(field);
-
                 highlightBuilder.fragmentSize(highLightParam.getFragmentSize());
-                highlightBuilder.preTags(highLightParam.getPreTag());
-                highlightBuilder.postTags(highLightParam.getPostTag());
                 Optional.ofNullable(highLightParam.getNumberOfFragments()).ifPresent(highlightBuilder::numOfFragments);
             }
         });
