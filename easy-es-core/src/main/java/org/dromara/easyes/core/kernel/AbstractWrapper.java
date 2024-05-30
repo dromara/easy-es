@@ -365,7 +365,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children orderBy(boolean condition, List<OrderByParam> orderByParams) {
-        if (CollectionUtils.isNotEmpty(orderByParams)) {
+        if (condition && CollectionUtils.isNotEmpty(orderByParams)) {
             this.orderByParams = orderByParams;
         }
         return typedThis;
@@ -440,7 +440,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public final Children groupBy(boolean condition, boolean enablePipeline, String... columns) {
-        if (ArrayUtils.isEmpty(columns)) {
+        if (!condition || ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
         Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.TERMS, column));
@@ -449,7 +449,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children termsAggregation(boolean condition, boolean enablePipeline, String... columns) {
-        if (ArrayUtils.isEmpty(columns)) {
+        if (!condition || ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
         Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.TERMS, column));
@@ -458,7 +458,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children avg(boolean condition, boolean enablePipeline, String... columns) {
-        if (ArrayUtils.isEmpty(columns)) {
+        if (!condition || ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
         Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.AVG, column));
@@ -467,7 +467,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children min(boolean condition, boolean enablePipeline, String... columns) {
-        if (ArrayUtils.isEmpty(columns)) {
+        if (!condition || ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
         Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.MIN, column));
@@ -476,7 +476,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children max(boolean condition, boolean enablePipeline, String... columns) {
-        if (ArrayUtils.isEmpty(columns)) {
+        if (!condition || ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
         Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.MAX, column));
@@ -485,7 +485,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children sum(boolean condition, boolean enablePipeline, String... columns) {
-        if (ArrayUtils.isEmpty(columns)) {
+        if (!condition || ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
         Arrays.stream(columns).forEach(column -> doIt(condition, enablePipeline, AggregationTypeEnum.SUM, column));
