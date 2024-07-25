@@ -22,6 +22,8 @@
 
 **easy-es官网** https://easy-es.cn/
 
+**easy-es官方gitcode** https://gitcode.com/dromara/easy-es
+
 **easy-es官方gitee** https://gitee.com/dromara/easy-es
 
 **easy-es官方github** https://github.com/dromara/easy-es
