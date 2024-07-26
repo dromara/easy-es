@@ -22,7 +22,7 @@
 
 **easy-es官网** https://easy-es.cn/
 
-**easy-es官方gitcode** https://gitcode.com/dromara/easy-es
+**easy-es备用官网** http://47.92.157.199 (国内用户如偶遇官网打不开,可访"无言"先生捐赠的此备用地址)
 
 **easy-es官方gitee** https://gitee.com/dromara/easy-es
 
@@ -57,7 +57,7 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,全自动�
 - **全自动索引托管:** 全球开源首创的索引托管模式,开发者无需关心索引的创建更新及数据迁移等繁琐步骤,索引全生命周期皆可托管给框架,由框架自动完成,过程零停机,用户无感知,彻底解放开发者
 - **智能字段类型推断:** 根据索引类型和当前查询类型上下文综合智能判断当前查询是否需要拼接.keyword后缀,减少小白误用的可能
 - **屏蔽语言差异:** 开发者只需要会MySQL语法即可使用Es
-- **代码量极少:** 与直接使用RestHighLevelClient相比,相同的查询平均可以节3-8倍左右的代码量
+- **代码量极少:** 与直接使用RestHighLevelClient相比,相同的查询平均可以节3-80倍左右的代码量
 - **零魔法值:** 字段名称直接从实体中获取,无需输入字段名称字符串这种魔法值
 - **零额外学习成本:** 开发者只要会国内最受欢迎的Mybatis-Plus语法,即可无缝迁移至Easy-Es
 - **降低开发者门槛:** 即便是只了解ES基础的初学者也可以轻松驾驭ES完成绝大多数需求的开发
@@ -99,16 +99,12 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,全自动�
             e.printStackTrace();
         }
 ```
-> * 以上只是简单查询演示,实际使用场景越复杂,效果就越好,平均可节省至少3-8倍代码量
+> * 以上只是简单查询演示,实际使用场景越复杂,效果就越好,平均可节省至少3-80倍代码量
 > * 传统功夫,点到为止! 上述功能仅供演示,仅为Easy-Es支持功能的冰山一角,Easy-Es就是这么Easy到不讲武德💪,不用的请耗子尾汁.
 
 # 架构 | Architecture
 
 ![Architecture](https://iknow.hs.net/27fb40b8-22d4-45c2-92e0-1471112d5102.jpg)
-
-## 功能结构图 | Functional structure diagram
-
-![Function](https://iknow.hs.net/5fad565b-8b4e-4274-ab59-a74c3492ac9d.png)
 
 
 # 相关链接 | Links
@@ -141,7 +137,7 @@ compile group: 'org.dromara.easy-es', name: 'easy-es-boot-starter', version: 'La
 
 
 # 其他开源项目 | Other Project
-- [零侵入全自动接口文档生成框架](https://www.doc-apis.com)
+
 - [健身计划一键生成系统](https://gitee.com/easy-es/fit-plan)
 
 # 期望 | Futures
@@ -177,14 +173,20 @@ QQ | 微信:252645816
 
 > 我们的广告投放商,如果您期望Easy-Es能够走得更远,不妨点击下图,支持一下我们的广告商Thanks♪(･ω･)ﾉ
 
+<a href="https://www.mingdao.com?s=utm_70&utm_source=easy-es&utm_medium=banner&utm_campaign=gitee&utm_content=IT%E8%B5%8B%E8%83%BD%E4%B8%9A%E5%8A%A1">
+  <img alt="ad" src="https://iknow.hs.net/26a6e238-8b23-463c-8cf9-f62cc3f52e0f.png">
+</a>
+
+</br>
+
 <a href="https://www.misboot.com/?from=easy-es">
   <img alt="ad" src="https://iknow.hs.net/68963214-7a61-4f38-b5b5-a068c07a35f1.png">
 </a>
 
 </br>
 
-<a href="https://www.mingdao.com?s=utm_70&utm_source=easy-es&utm_medium=banner&utm_campaign=gitee&utm_content=IT%E8%B5%8B%E8%83%BD%E4%B8%9A%E5%8A%A1">
-  <img alt="ad" src="https://iknow.hs.net/00b4a54c-6505-4776-9232-f0a9d9768fac.jpg">
+<a href="http://www.yunchengxc.com/">
+  <img alt="ad" src="https://iknow.hs.net/ea88661b-3d02-4dba-aacb-8907a4ca8f11.jpg">
 </a>
 
 

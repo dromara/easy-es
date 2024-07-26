@@ -12,12 +12,26 @@ import org.dromara.easyes.annotation.rely.FieldStrategy;
 import org.dromara.easyes.annotation.rely.IdType;
 import org.dromara.easyes.annotation.rely.JoinField;
 import org.dromara.easyes.annotation.rely.RefreshPolicy;
-import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.common.enums.EsQueryTypeEnum;
 import org.dromara.easyes.common.enums.MethodEnum;
 import org.dromara.easyes.common.enums.OrderTypeEnum;
-import org.dromara.easyes.common.utils.*;
-import org.dromara.easyes.core.biz.*;
+import org.dromara.easyes.common.utils.ArrayUtils;
+import org.dromara.easyes.common.utils.Assert;
+import org.dromara.easyes.common.utils.CollectionUtils;
+import org.dromara.easyes.common.utils.ExceptionUtils;
+import org.dromara.easyes.common.utils.FastJsonUtils;
+import org.dromara.easyes.common.utils.LogUtils;
+import org.dromara.easyes.common.utils.NumericUtils;
+import org.dromara.easyes.common.utils.ReflectionKit;
+import org.dromara.easyes.common.utils.StringUtils;
+import org.dromara.easyes.core.biz.BaseSortParam;
+import org.dromara.easyes.core.biz.CreateIndexParam;
+import org.dromara.easyes.core.biz.EntityFieldInfo;
+import org.dromara.easyes.core.biz.EntityInfo;
+import org.dromara.easyes.core.biz.EsIndexParam;
+import org.dromara.easyes.core.biz.EsPageInfo;
+import org.dromara.easyes.core.biz.EsUpdateParam;
+import org.dromara.easyes.core.biz.SAPageInfo;
 import org.dromara.easyes.core.cache.BaseCache;
 import org.dromara.easyes.core.cache.GlobalConfigCache;
 import org.dromara.easyes.core.config.GlobalConfig;
@@ -34,6 +48,7 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
@@ -50,12 +65,14 @@ import org.elasticsearch.client.indices.GetIndexResponse;
 import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.metrics.ParsedCardinality;
@@ -66,11 +83,36 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static org.dromara.easyes.common.constants.BaseEsConstants.*;
+import static org.dromara.easyes.common.constants.BaseEsConstants.DEFAULT_ES_ID_NAME;
+import static org.dromara.easyes.common.constants.BaseEsConstants.DSL_ENDPOINT;
+import static org.dromara.easyes.common.constants.BaseEsConstants.DSL_PREFIX;
+import static org.dromara.easyes.common.constants.BaseEsConstants.EMPTY_STR;
+import static org.dromara.easyes.common.constants.BaseEsConstants.I_KUN_PREFIX;
+import static org.dromara.easyes.common.constants.BaseEsConstants.MINUS_ONE;
+import static org.dromara.easyes.common.constants.BaseEsConstants.ONE;
+import static org.dromara.easyes.common.constants.BaseEsConstants.PAGE_NUM;
+import static org.dromara.easyes.common.constants.BaseEsConstants.PAGE_SIZE;
+import static org.dromara.easyes.common.constants.BaseEsConstants.QUERY;
+import static org.dromara.easyes.common.constants.BaseEsConstants.REPEAT_NUM_KEY;
+import static org.dromara.easyes.common.constants.BaseEsConstants.SQL_ENDPOINT;
+import static org.dromara.easyes.common.constants.BaseEsConstants.STR_SIGN;
+import static org.dromara.easyes.common.constants.BaseEsConstants.ZERO;
 
 /**
  * 核心 所有支持方法接口实现类
@@ -243,8 +285,8 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     @Override
     public EsPageInfo<T> pageQuery(Wrapper<T> wrapper, Integer pageNum, Integer pageSize) {
         // 兼容分页参数
-        pageNum = pageNum == null || pageNum <= BaseEsConstants.ZERO ? BaseEsConstants.PAGE_NUM : pageNum;
-        pageSize = pageSize == null || pageSize <= BaseEsConstants.ZERO ? BaseEsConstants.PAGE_SIZE : pageSize;
+        pageNum = pageNum == null || pageNum <= ZERO ? PAGE_NUM : pageNum;
+        pageSize = pageSize == null || pageSize <= ZERO ? PAGE_SIZE : pageSize;
 
         wrapper.from = (pageNum - 1) * pageSize;
         wrapper.size = pageSize;
@@ -276,7 +318,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
 
         // 兼容分页参数
-        pageSize = pageSize == null || pageSize <= BaseEsConstants.ZERO ? BaseEsConstants.PAGE_SIZE : pageSize;
+        pageSize = pageSize == null || pageSize <= ZERO ? PAGE_SIZE : pageSize;
         wrapper.size = pageSize;
 
         // 请求es获取数据
@@ -393,7 +435,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     public Integer insertBatch(String routing, String parentId, Collection<T> entityList, String... indexNames) {
         // 老汉裤子都脱了 你告诉我没有数据 怎么*入?
         if (CollectionUtils.isEmpty(entityList)) {
-            return BaseEsConstants.ZERO;
+            return ZERO;
         }
 
         // 在每条指定的索引上批量执行数据插入
@@ -516,7 +558,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     @Override
     public Integer updateBatchByIds(String routing, Collection<T> entityList, String... indexNames) {
         if (CollectionUtils.isEmpty(entityList)) {
-            return BaseEsConstants.ZERO;
+            return ZERO;
         }
 
         // 在每条指定索引上批量执行更新
@@ -528,7 +570,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     @Override
     public Integer update(T entity, Wrapper<T> updateWrapper) {
         if (Objects.isNull(entity) && CollectionUtils.isEmpty(updateWrapper.updateParamList)) {
-            return BaseEsConstants.ZERO;
+            return ZERO;
         }
 
         // 在每条指定索引上执行更新操作
@@ -641,7 +683,21 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
         return Boolean.TRUE;
     }
-
+    
+    @Override
+    public List<T> selectAll(Wrapper<T> wrapper) {
+        // 请求es获取数据
+        SearchHit[] searchHits = getAllSearchHitArray(wrapper);
+        if (ArrayUtils.isEmpty(searchHits)) {
+            return Collections.emptyList();
+        }
+        
+        // 批量解析
+        return Arrays.stream(searchHits)
+                .map(searchHit -> parseOne(searchHit, wrapper))
+                .collect(Collectors.toList());
+    }
+    
     /**
      * 执行创建索引
      *
@@ -728,10 +784,10 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
             IndexResponse indexResponse = client.index(indexRequest, getRequestOptions());
             if (Objects.equals(indexResponse.status(), RestStatus.CREATED)) {
                 setId(entity, indexResponse.getId());
-                return BaseEsConstants.ONE;
+                return ONE;
             } else if (Objects.equals(indexResponse.status(), RestStatus.OK)) {
                 // 该id已存在,数据被更新的情况
-                return BaseEsConstants.ZERO;
+                return ZERO;
             } else {
                 throw ExceptionUtils.eee("insert failed, result:%s entity:%s", indexResponse.getResult(), entity);
             }
@@ -779,12 +835,12 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         try {
             DeleteResponse deleteResponse = client.delete(deleteRequest, getRequestOptions());
             if (Objects.equals(deleteResponse.status(), RestStatus.OK)) {
-                return BaseEsConstants.ONE;
+                return ONE;
             }
         } catch (IOException e) {
             throw ExceptionUtils.eee("deleteById exception, id:%s", e, id.toString());
         }
-        return BaseEsConstants.ZERO;
+        return ZERO;
     }
 
 
@@ -826,13 +882,13 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         try {
             UpdateResponse updateResponse = client.update(updateRequest, getRequestOptions());
             if (Objects.equals(updateResponse.status(), RestStatus.OK)) {
-                return BaseEsConstants.ONE;
+                return ONE;
             }
         } catch (IOException e) {
             throw ExceptionUtils.eee("updateById exception,entity:%s", e, entity.toString());
         }
 
-        return BaseEsConstants.ZERO;
+        return ZERO;
     }
 
     /**
@@ -870,7 +926,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         // 查询数据列表
         List<T> list = selectListByUpdateWrapper(updateWrapper, indexName);
         if (CollectionUtils.isEmpty(list)) {
-            return BaseEsConstants.ZERO;
+            return ZERO;
         }
 
         // 获取更新文档内容
@@ -1131,7 +1187,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         if (distinct) {
             Optional.ofNullable(response.getAggregations())
                     .ifPresent(aggregations -> {
-                        ParsedCardinality parsedCardinality = aggregations.get(BaseEsConstants.REPEAT_NUM_KEY);
+                        ParsedCardinality parsedCardinality = aggregations.get(REPEAT_NUM_KEY);
                         Optional.ofNullable(parsedCardinality).ifPresent(p -> repeatNum.getAndAdd(p.getValue()));
                     });
         } else {
@@ -1426,6 +1482,82 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
         printResponseErrors(response);
         return parseSearchHitArray(response);
+    }
+    
+    /**
+     * 获取所有数据.
+     *
+     * @param searchRequest 请求参数
+     * @return SearchHit数组
+     */
+    private SearchHit[] getAllSearchHitArray(SearchRequest searchRequest) {
+        Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1));
+        searchRequest.scroll(scroll);
+        printDSL(searchRequest);
+        String scrollId = null;
+        Stream.Builder<SearchHit[]> builder;
+        try {
+            SearchResponse response = client.search(searchRequest, getRequestOptions());
+            scrollId = response.getScrollId();
+            builder = Stream.builder();
+            while (response.getHits().getHits().length != 0) {
+                printResponseErrors(response);
+                SearchHit[] searchHits = parseSearchHitArray(response);
+                builder.add(searchHits);
+                SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
+                scrollRequest.scroll(scroll);
+                try {
+                    response = client.scroll(scrollRequest, RequestOptions.DEFAULT);
+                } catch (IOException e) {
+                    throw ExceptionUtils.eee("scroll IOException, searchRequest:%s", e, searchRequest.toString());
+                }
+                
+            }
+        } catch (IOException e) {
+            throw ExceptionUtils.eee("getAllSearchHitArray IOException, searchRequest:%s", e, searchRequest.toString());
+        } finally {
+            clearScroll(scrollId);
+        }
+        return builder.build().flatMap(Stream::of).toArray(SearchHit[]::new);
+    }
+    
+    /**
+     * 获取所有数据.
+     *
+     * @param wrapper 参数包装类
+     * @return SearchHit数组
+     */
+    private SearchHit[] getAllSearchHitArray(Wrapper<T> wrapper) {
+        SearchRequest searchRequest = new SearchRequest(getIndexNames(wrapper.indexNames));
+        Optional.ofNullable(wrapper.routing).ifPresent(searchRequest::routing);
+        Optional.ofNullable(wrapper.preference).ifPresent(searchRequest::preference);
+        
+        // 用户在wrapper中指定的混合查询条件优先级最高
+        SearchSourceBuilder searchSourceBuilder =
+                Objects.isNull(wrapper.searchSourceBuilder) ? WrapperProcessor.buildSearchSourceBuilder(wrapper,
+                        entityClass) : wrapper.searchSourceBuilder;
+        searchRequest.source(searchSourceBuilder);
+        return getAllSearchHitArray(searchRequest);
+    }
+    
+    /**
+     * 清除scroll.
+     *
+     * @param scrollId scrollId
+     */
+    private void clearScroll(String scrollId) {
+        if (StringUtils.isEmpty(scrollId)) {
+            return;
+        }
+        ClearScrollRequest clearScrollRequest = null;
+        try {
+            clearScrollRequest = new ClearScrollRequest();
+            clearScrollRequest.addScrollId(scrollId);
+            client.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw ExceptionUtils.eee("clearScroll IOException, clearScrollRequest:%s", e,
+                    clearScrollRequest.toString());
+        }
     }
 
     /**
