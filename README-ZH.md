@@ -22,6 +22,8 @@
 
 **easy-es官网** https://easy-es.cn/
 
+**easy-es官方gitcode** https://gitcode.com/dromara/easy-es
+
 **easy-es官方gitee** https://gitee.com/dromara/easy-es
 
 **easy-es官方github** https://github.com/dromara/easy-es
@@ -139,7 +141,7 @@ compile group: 'org.dromara.easy-es', name: 'easy-es-boot-starter', version: 'La
 
 
 # 其他开源项目 | Other Project
-
+- [零侵入全自动接口文档生成框架](https://www.doc-apis.com)
 - [健身计划一键生成系统](https://gitee.com/easy-es/fit-plan)
 
 # 期望 | Futures
