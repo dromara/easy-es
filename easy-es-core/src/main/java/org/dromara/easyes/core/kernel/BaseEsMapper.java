@@ -592,4 +592,12 @@ public interface BaseEsMapper<T> {
      * @return 是否成功
      */
     Boolean setRequestOptions(RequestOptions requestOptions);
+    
+    /**
+     * 查询全部记录.
+     *
+     * @param wrapper 参数包装类
+     * @return 指定对象的列表
+     */
+    List<T> selectAll(Wrapper<T> wrapper);
 }
