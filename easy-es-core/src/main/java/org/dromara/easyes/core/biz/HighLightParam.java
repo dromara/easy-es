@@ -29,6 +29,10 @@ public class HighLightParam {
      */
     private String postTag;
     /**
+     * 是否需要与查询字段匹配
+     */
+    protected Boolean requireFieldMatch;
+    /**
      * 高亮字段列表
      */
     private String highLightField;

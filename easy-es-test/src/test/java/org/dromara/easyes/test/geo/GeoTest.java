@@ -46,7 +46,7 @@ public class GeoTest {
 
     @Test
     public void testGeoDistance() {
-        // 查询以经度为41.0,纬度为115.0为圆心,半径168.8公里内的所有点
+        // 查询以纬度为41.0,经度为115.0为圆心,半径168.8公里内的所有点
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.geoDistance(Document::getLocation, 168.8, DistanceUnit.KILOMETERS, new GeoPoint(41.0, 116.0));
         // 上面语法也可以写成下面这几种形式,效果是一样的,兼容不同用户习惯而已:

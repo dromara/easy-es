@@ -34,4 +34,8 @@ public interface AnnotationConstants {
      * 默认索引别名
      */
     String DEFAULT_ALIAS = "ee_default_alias";
+    /**
+     * 默认join字段名称
+     */
+    String DEFAULT_JOIN_FIELD_NAME = "joinField";
 }

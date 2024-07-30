@@ -64,10 +64,14 @@ public class EntityFieldInfo {
      * 查询分词器
      */
     private String searchAnalyzer;
+//    /**
+//     * 用户配置的日期格式 例如yyyy-MM-dd HH:mm:ss
+//     */
+//    private String dateFormat;
     /**
-     * 用户配置的日期格式 例如yyyy-MM-dd HH:mm:ss
+     * 向量的维度大小，不能超过2048
      */
-    private String dateFormat;
+    private Integer dims;
     /**
      * 字段策略 默认，自判断 null
      */

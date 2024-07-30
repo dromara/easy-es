@@ -38,4 +38,15 @@ public class NumericUtils {
                 .setScale(decimalPlaces, RoundingMode.HALF_UP)
                 .doubleValue();
     }
+
+
+    /**
+     * 整数转double,保留1为小数 例如输入10,输出10.0
+     *
+     * @param number 原始数值
+     * @return 保留1位小数后的数值
+     */
+    public static double formatNumberWithOneDecimal(int number) {
+        return Math.round(number * 10.0) / 10.0;
+    }
 }

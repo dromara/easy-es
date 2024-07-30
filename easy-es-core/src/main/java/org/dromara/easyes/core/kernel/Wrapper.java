@@ -1,9 +1,10 @@
-package org.dromara.easyes.core.core;
+package org.dromara.easyes.core.kernel;
 
 
 import lombok.SneakyThrows;
 import org.dromara.easyes.core.biz.*;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.search.aggregations.BucketOrder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.util.LinkedList;
@@ -61,6 +62,10 @@ public abstract class Wrapper<T> implements Cloneable {
      */
     protected String[] indexNames;
     /**
+     * 路由
+     */
+    protected String routing;
+    /**
      * 参数列表
      */
     protected LinkedList<Param> paramQueue;
@@ -73,6 +78,11 @@ public abstract class Wrapper<T> implements Cloneable {
      * 聚合查询参数列表
      */
     protected List<AggregationParam> aggregationParamList;
+
+    /**
+     * 聚合桶排序规则列表
+     */
+    List<BucketOrder> bucketOrders;
 
     /**
      * 排序参数列表

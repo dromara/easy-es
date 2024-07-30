@@ -22,6 +22,10 @@ public class GlobalConfig {
      */
     private boolean printDsl = true;
     /**
+     * for fun, whether to print love chinese "kung fu" mode 是否开启爱坤(小黑子)模式 开启后日志将进入疯狂状态, 后期也会在此特殊模式下提供更多趣味化及傻瓜功能 让编码不仅简单,还有趣!
+     */
+    private boolean iKunMode;
+    /**
      * process index mode Manual by default 索引处理模式 默认开启手动模式
      */
     private ProcessIndexStrategyEnum processIndexMode = ProcessIndexStrategyEnum.MANUAL;

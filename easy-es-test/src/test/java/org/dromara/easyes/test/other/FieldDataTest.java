@@ -5,7 +5,7 @@ import org.dromara.easyes.annotation.rely.FieldType;
 import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.core.conditions.index.LambdaEsIndexWrapper;
 import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
-import org.dromara.easyes.core.core.EsWrappers;
+import org.dromara.easyes.core.kernel.EsWrappers;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;

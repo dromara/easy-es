@@ -1,4 +1,4 @@
-package org.dromara.easyes.core.core;
+package org.dromara.easyes.core.kernel;
 
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -21,6 +21,7 @@ import org.elasticsearch.join.query.HasParentQueryBuilder;
 import org.elasticsearch.join.query.ParentIdQueryBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.BucketOrder;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.collapse.CollapseBuilder;
@@ -221,22 +222,12 @@ public class WrapperProcessor {
                 queryBuilder = QueryBuilders.geoShapeQuery(realField, (Geometry) param.getVal()).relation((ShapeRelation) param.getExt1()).boost(param.getBoost());
                 setBool(bool, queryBuilder, param.getPrevQueryType());
                 break;
-            case HAS_CHILD:
-                realField = getRealField(param.getColumn(), mappingColumnMap);
-                queryBuilder = new HasChildQueryBuilder(param.getExt1().toString(), QueryBuilders.matchQuery(param.getExt1().toString() + PATH_FIELD_JOIN + realField, param.getVal()).boost(param.getBoost()), (ScoreMode) param.getExt2());
-                setBool(bool, queryBuilder, param.getPrevQueryType());
-                break;
-            case HAS_PARENT:
-                realField = getRealField(param.getColumn(), mappingColumnMap);
-                queryBuilder = new HasParentQueryBuilder(param.getExt1().toString(), QueryBuilders.matchQuery(param.getExt1().toString() + PATH_FIELD_JOIN + realField, param.getVal()).boost(param.getBoost()), (boolean) param.getExt2());
-                setBool(bool, queryBuilder, param.getPrevQueryType());
-                break;
             case PARENT_ID:
                 realField = getRealField(param.getColumn(), mappingColumnMap);
                 queryBuilder = new ParentIdQueryBuilder(realField, param.getVal().toString());
                 setBool(bool, queryBuilder, param.getPrevQueryType());
                 break;
-            // 下面五种嵌套类型 需要对孩子节点递归处理
+            // 下面几种特殊嵌套类型 需要对孩子节点递归处理
             case NESTED_AND:
             case NESTED_FILTER:
             case NESTED_NOT:
@@ -246,15 +237,54 @@ public class WrapperProcessor {
                 break;
             case NESTED:
                 realField = getRealField(param.getColumn(), mappingColumnMap);
-                String[] split = param.getColumn().split("\\.");
-                queryBuilder = getBool(children, QueryBuilders.boolQuery(), entityInfo, split[split.length - 1]);
-                queryBuilder = QueryBuilders.nestedQuery(realField, queryBuilder, (ScoreMode) param.getVal());
-                setBool(bool, queryBuilder, param.getPrevQueryType());
+                String[] split = param.getColumn().split(SIGN);
+                String path = split[split.length - 1];
+                queryBuilder = getBool(children, QueryBuilders.boolQuery(), entityInfo, path);
+                NestedQueryBuilder nestedQueryBuilder = QueryBuilders.nestedQuery(realField, queryBuilder, (ScoreMode) param.getVal());
+                // 设置嵌套类型高亮查询参数
+                setNestedHighlight(path, param.getColumn(), nestedQueryBuilder, entityInfo);
+                // 设置bool查询参数
+                setBool(bool, nestedQueryBuilder, param.getPrevQueryType());
+                break;
+            case HAS_PARENT:
+                // 如果用户没指定type框架可根据entityInfo上下文自行推断出其父type
+                String column = Optional.ofNullable(param.getColumn()).orElse(entityInfo.getParentJoinAlias());
+                realField = getRealField(column, mappingColumnMap);
+                queryBuilder = getBool(children, QueryBuilders.boolQuery(), entityInfo, param.getColumn());
+                HasParentQueryBuilder hasParentQueryBuilder = new HasParentQueryBuilder(realField, queryBuilder, (boolean) param.getVal());
+                setBool(bool, hasParentQueryBuilder, param.getPrevQueryType());
+                break;
+            case HAS_CHILD:
+                realField = getRealField(param.getColumn(), mappingColumnMap);
+                queryBuilder = getBool(children, QueryBuilders.boolQuery(), entityInfo, param.getColumn());
+                HasChildQueryBuilder hasChildQueryBuilder = new HasChildQueryBuilder(realField, queryBuilder, (ScoreMode) param.getVal());
+                setBool(bool, hasChildQueryBuilder, param.getPrevQueryType());
                 break;
             default:
                 // just ignore,almost never happen
                 throw ExceptionUtils.eee("非法参数类型");
         }
+    }
+
+    /**
+     * 设置嵌套类型高亮查询参数
+     *
+     * @param path               嵌套path
+     * @param column             字段
+     * @param nestedQueryBuilder 嵌套查询条件构造器
+     * @param entityInfo         实体信息缓存
+     */
+    private static void setNestedHighlight(String path, String column, NestedQueryBuilder nestedQueryBuilder, EntityInfo entityInfo) {
+        // 嵌套类型的高亮查询语句构造
+        Class<?> pathClass = entityInfo.getPathClassMap().get(path);
+        Optional.ofNullable(pathClass)
+                .flatMap(i -> Optional.ofNullable(entityInfo.getNestedHighLightParamsMap().get(i)))
+                .ifPresent(i -> {
+                    // 嵌套类型高亮字段名需要完整的path 例如users.faqs 所以此处用param.column而非path
+                    HighlightBuilder highlightBuilder = initHighlightBuilder(i, column);
+                    Optional.ofNullable(highlightBuilder)
+                            .ifPresent(p -> nestedQueryBuilder.innerHit(new InnerHitBuilder().setHighlightBuilder(p)));
+                });
     }
 
     /**
@@ -282,8 +312,10 @@ public class WrapperProcessor {
     /**
      * 递归获取子节点的bool
      *
-     * @param paramList 子节点参数列表
-     * @param builder   新的根bool
+     * @param paramList  子节点参数列表
+     * @param builder    新的根bool
+     * @param entityInfo 实体信息缓存
+     * @param path       路径
      * @return 子节点bool合集, 统一封装至入参builder中
      */
     private static BoolQueryBuilder getBool(List<Param> paramList, BoolQueryBuilder builder, EntityInfo entityInfo, String path) {
@@ -298,9 +330,9 @@ public class WrapperProcessor {
             // 嵌套类型
             Class<?> clazz = entityInfo.getPathClassMap().get(path);
             mappingColumnMap = Optional.ofNullable(entityInfo.getNestedClassMappingColumnMap().get(clazz))
-                    .orElse(new HashMap<>(0));
+                    .orElse(Collections.emptyMap());
             fieldTypeMap = Optional.ofNullable(entityInfo.getNestedClassFieldTypeMap().get(clazz))
-                    .orElse(new HashMap<>(0));
+                    .orElse(Collections.emptyMap());
         } else {
             mappingColumnMap = entityInfo.getMappingColumnMap();
             fieldTypeMap = entityInfo.getFieldTypeMap();
@@ -326,7 +358,7 @@ public class WrapperProcessor {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
         // 设置高亮
-        setHighLight(entityInfo.getHighLightParams(), searchSourceBuilder);
+        setHighLight(entityInfo.getHighlightParams(), searchSourceBuilder);
 
         // 设置用户指定的各种排序规则
         setSort(wrapper, mappingColumnMap, searchSourceBuilder);
@@ -404,22 +436,35 @@ public class WrapperProcessor {
             return;
         }
 
+        // 初始化高亮参数
+        HighlightBuilder highlightBuilder = initHighlightBuilder(highLightParams, null);
+        Optional.ofNullable(highlightBuilder).ifPresent(searchSourceBuilder::highlighter);
+    }
+
+    private static HighlightBuilder initHighlightBuilder(List<HighLightParam> highLightParams, String path) {
+        if (CollectionUtils.isEmpty(highLightParams)) {
+            return null;
+        }
         // 封装高亮参数
         HighlightBuilder highlightBuilder = new HighlightBuilder();
         highLightParams.forEach(highLightParam -> {
             if (StringUtils.isNotBlank(highLightParam.getHighLightField())) {
-                //field
-                HighlightBuilder.Field field = new HighlightBuilder.Field(highLightParam.getHighLightField());
+                // 嵌套类型 须追加其完整path前缀
+                String highlightField = Optional.ofNullable(path).map(i -> i + STR_SIGN + highLightParam.getHighLightField())
+                        .orElse(highLightParam.getHighLightField());
+                HighlightBuilder.Field field = new HighlightBuilder.Field(highlightField)
+                        .preTags(highLightParam.getPreTag())
+                        .postTags(highLightParam.getPostTag());
                 field.highlighterType(highLightParam.getHighLightType().getValue());
+                if (Boolean.FALSE.equals(highLightParam.getRequireFieldMatch())) {
+                    field.requireFieldMatch(highLightParam.getRequireFieldMatch());
+                }
                 highlightBuilder.field(field);
-
                 highlightBuilder.fragmentSize(highLightParam.getFragmentSize());
-                highlightBuilder.preTags(highLightParam.getPreTag());
-                highlightBuilder.postTags(highLightParam.getPostTag());
                 Optional.ofNullable(highLightParam.getNumberOfFragments()).ifPresent(highlightBuilder::numOfFragments);
             }
         });
-        searchSourceBuilder.highlighter(highlightBuilder);
+        return highlightBuilder;
     }
 
 
@@ -515,7 +560,7 @@ public class WrapperProcessor {
         AggregationBuilder cursor = null;
         for (AggregationParam aggParam : aggregationParamList) {
             String realField = getRealField(aggParam.getField(), mappingColumnMap);
-            AggregationBuilder builder = getRealAggregationBuilder(aggParam.getAggregationType(), aggParam.getName(), realField);
+            AggregationBuilder builder = getRealAggregationBuilder(aggParam.getAggregationType(), aggParam.getName(), realField, wrapper.size, wrapper.bucketOrders);
             if (aggParam.isEnablePipeline()) {
                 // 管道聚合, 构造聚合树
                 if (root == null) {
@@ -548,9 +593,10 @@ public class WrapperProcessor {
      * @param aggType   聚合类型
      * @param name      聚合返回桶的名称 保持原字段名称
      * @param realField 原字段名称
+     * @param size      聚合桶大小
      * @return 聚合建造者
      */
-    private static AggregationBuilder getRealAggregationBuilder(AggregationTypeEnum aggType, String name, String realField) {
+    private static AggregationBuilder getRealAggregationBuilder(AggregationTypeEnum aggType, String name, String realField, Integer size, List<BucketOrder> bucketOrders) {
         AggregationBuilder aggregationBuilder;
         // 解决同一个字段聚合多次，如min(starNum), max(starNum) 字段名重复问题
         name += aggType.getValue();
@@ -568,7 +614,10 @@ public class WrapperProcessor {
                 aggregationBuilder = AggregationBuilders.sum(name).field(realField);
                 break;
             case TERMS:
-                aggregationBuilder = AggregationBuilders.terms(name).field(realField);
+                TermsAggregationBuilder termsAggregationBuilder = AggregationBuilders.terms(name).field(realField);
+                Optional.ofNullable(size).ifPresent(termsAggregationBuilder::size);
+                Optional.ofNullable(bucketOrders).ifPresent(termsAggregationBuilder::order);
+                aggregationBuilder = termsAggregationBuilder;
                 break;
             default:
                 throw new UnsupportedOperationException("不支持的聚合类型,参见AggregationTypeEnum");

@@ -1,9 +1,10 @@
 package org.dromara.easyes.starter.register;
 
+import org.dromara.easyes.annotation.EsDS;
 import org.dromara.easyes.annotation.Intercepts;
-import org.dromara.easyes.annotation.rely.DefaultChildClass;
 import org.dromara.easyes.common.enums.ProcessIndexStrategyEnum;
 import org.dromara.easyes.common.utils.LogUtils;
+import org.dromara.easyes.common.utils.RestHighLevelClientUtils;
 import org.dromara.easyes.common.utils.TypeUtils;
 import org.dromara.easyes.core.biz.EntityInfo;
 import org.dromara.easyes.core.cache.BaseCache;
@@ -25,6 +26,10 @@ import org.springframework.context.ApplicationContext;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.dromara.easyes.common.constants.BaseEsConstants.ZERO;
+import static org.dromara.easyes.common.utils.RestHighLevelClientUtils.DEFAULT_DS;
 
 /**
  * 代理类
@@ -35,7 +40,8 @@ public class MapperFactoryBean<T> implements FactoryBean<T> {
     private Class<T> mapperInterface;
 
     @Autowired
-    private RestHighLevelClient client;
+    private RestHighLevelClientUtils restHighLevelClientUtils;
+
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -56,13 +62,17 @@ public class MapperFactoryBean<T> implements FactoryBean<T> {
     @Override
     public T getObject() throws Exception {
 
-        EsMapperProxy<T> esMapperProxy = new EsMapperProxy<>(mapperInterface);
+        EsMapperProxy<T> esMapperProxy = new EsMapperProxy<>(mapperInterface, new ConcurrentHashMap<>());
 
         // 获取实体类
-        Class<?> entityClass = TypeUtils.getInterfaceT(mapperInterface, 0);
+        Class<?> entityClass = TypeUtils.getInterfaceT(mapperInterface, ZERO);
 
         // 初始化缓存
         GlobalConfigCache.setGlobalConfig(esConfigProperties.getGlobalConfig());
+
+        //获取动态数据源 若未配置多数据源,则使用默认数据源
+        String restHighLevelClientId = Optional.ofNullable(mapperInterface.getAnnotation(EsDS.class)).map(EsDS::value).orElse(DEFAULT_DS);
+        RestHighLevelClient client = restHighLevelClientUtils.getClient(restHighLevelClientId);
         BaseCache.initCache(mapperInterface, entityClass, client);
 
         // 创建代理
@@ -76,17 +86,11 @@ public class MapperFactoryBean<T> implements FactoryBean<T> {
         if (!ProcessIndexStrategyEnum.MANUAL.equals(globalConfig.getProcessIndexMode())) {
             // 父子类型,仅针对父类型创建索引,子类型不创建索引
             EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
-            if (!entityInfo.isChild()) {
+            boolean isChild = entityInfo.isChild();
+            if (!isChild) {
                 AutoProcessIndexService autoProcessIndexService = indexStrategyFactory
                         .getByStrategyType(globalConfig.getProcessIndexMode().getStrategyType());
                 autoProcessIndexService.processIndexAsync(entityClass, client);
-
-                // 将子文档索引激活为父文档索引
-                if (!DefaultChildClass.class.equals(entityInfo.getChildClass())) {
-                  Optional.ofNullable(entityInfo.getChildClass())
-                          .flatMap(childClass -> Optional.ofNullable(EntityInfoHelper.getEntityInfo(childClass)))
-                          .ifPresent(childEntityInfo -> childEntityInfo.setIndexName(entityInfo.getIndexName()));
-                }
             }
         } else {
             LogUtils.info("===> manual index mode activated");

@@ -4,7 +4,7 @@ import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.common.utils.CollectionUtils;
 import org.dromara.easyes.common.utils.ExceptionUtils;
 import org.dromara.easyes.core.biz.EntityInfo;
-import org.dromara.easyes.core.core.BaseEsMapperImpl;
+import org.dromara.easyes.core.kernel.BaseEsMapperImpl;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.core.toolkit.FieldUtils;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -110,8 +110,7 @@ public class BaseCache {
                         method = b.get(BaseEsConstants.IS_FUNC_PREFIX + FieldUtils.firstToUpperCase(methodName));
                     }
                     return method;
-                })
-                .orElseThrow(() -> ExceptionUtils.eee("no such method:", entityClass, methodName));
+                }).orElseThrow(() -> ExceptionUtils.eee("no such method, entityClass: %s, method:%s", entityClass, methodName));
     }
 
     /**

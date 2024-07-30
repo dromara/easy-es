@@ -1,4 +1,4 @@
-package org.dromara.easyes.core.core;
+package org.dromara.easyes.core.kernel;
 
 import org.dromara.easyes.core.conditions.index.LambdaEsIndexChainWrapper;
 import org.dromara.easyes.core.conditions.index.LambdaEsIndexWrapper;

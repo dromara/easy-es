@@ -1,6 +1,6 @@
 package org.dromara.easyes.starter.register;
 
-import org.dromara.easyes.core.core.BaseEsMapper;
+import org.dromara.easyes.core.kernel.BaseEsMapper;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;

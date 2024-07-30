@@ -47,16 +47,16 @@ public class AutoProcessIndexSmoothlyServiceImpl implements AutoProcessIndexServ
         if (existsIndex) {
             // 更新
             LogUtils.info("===> Index exists, automatically updating index by easy-es...");
-            return doUpdateIndex(entityInfo, client);
+            return doUpdateIndex(entityInfo, entityClass, client);
         } else {
             // 新建
             LogUtils.info("===> Index not exists, automatically creating index by easy-es...");
-            return doCreateIndex(entityInfo, client);
+            return doCreateIndex(entityInfo, entityClass, client);
         }
     }
 
 
-    private boolean doUpdateIndex(EntityInfo entityInfo, RestHighLevelClient client) {
+    private boolean doUpdateIndex(EntityInfo entityInfo, Class<?> clazz, RestHighLevelClient client) {
         // 获取索引信息
         EsIndexInfo esIndexInfo = IndexUtils.getIndexInfo(client, entityInfo.getIndexName());
 
@@ -66,7 +66,7 @@ public class AutoProcessIndexSmoothlyServiceImpl implements AutoProcessIndexServ
         }
 
         // 索引是否有变化 若有则创建新索引并无感迁移, 若无则直接返回托管成功
-        boolean isIndexNeedChange = IndexUtils.isIndexNeedChange(esIndexInfo, entityInfo);
+        boolean isIndexNeedChange = IndexUtils.isIndexNeedChange(esIndexInfo, entityInfo, clazz);
         if (!isIndexNeedChange) {
             LogUtils.info("===> index has nothing changed");
             return Boolean.TRUE;
@@ -75,7 +75,7 @@ public class AutoProcessIndexSmoothlyServiceImpl implements AutoProcessIndexServ
         // 创建新索引
         String releaseIndexName = generateReleaseIndexName(entityInfo.getIndexName());
         entityInfo.setReleaseIndexName(releaseIndexName);
-        boolean isCreateIndexSuccess = doCreateIndex(entityInfo, client);
+        boolean isCreateIndexSuccess = doCreateIndex(entityInfo, clazz, client);
         if (!isCreateIndexSuccess) {
             LogUtils.error("create release index failed", "releaseIndex:" + releaseIndexName);
             return Boolean.FALSE;
@@ -126,9 +126,9 @@ public class AutoProcessIndexSmoothlyServiceImpl implements AutoProcessIndexServ
         return IndexUtils.reindex(client, oldIndexName, releaseIndexName, maxResultWindow);
     }
 
-    private boolean doCreateIndex(EntityInfo entityInfo, RestHighLevelClient client) {
+    private boolean doCreateIndex(EntityInfo entityInfo, Class<?> clazz, RestHighLevelClient client) {
         // 初始化创建索引参数
-        CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo);
+        CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo, clazz);
         // 执行创建
         return IndexUtils.createIndex(client, entityInfo, createIndexParam);
     }

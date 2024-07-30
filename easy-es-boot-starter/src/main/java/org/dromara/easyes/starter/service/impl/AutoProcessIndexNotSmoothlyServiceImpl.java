@@ -44,20 +44,20 @@ public class AutoProcessIndexNotSmoothlyServiceImpl implements AutoProcessIndexS
         if (existsIndex) {
             // 更新
             LogUtils.info("===> Index exists, automatically updating index by easy-es...");
-            return doUpdateIndex(entityInfo, client);
+            return doUpdateIndex(entityInfo, entityClass, client);
         } else {
             // 新建
             LogUtils.info("===> Index not exists, automatically creating index by easy-es...");
-            return doCreateIndex(entityInfo, client);
+            return doCreateIndex(entityInfo, entityClass, client);
         }
     }
 
-    private boolean doUpdateIndex(EntityInfo entityInfo, RestHighLevelClient client) {
+    private boolean doUpdateIndex(EntityInfo entityInfo, Class<?> clazz, RestHighLevelClient client) {
         // 获取索引信息
         EsIndexInfo esIndexInfo = IndexUtils.getIndexInfo(client, entityInfo.getRetrySuccessIndexName());
 
         // 索引是否有变化 若有则直接删除旧索引,创建新索引 若无则直接返回托管成功
-        boolean isIndexNeedChange = IndexUtils.isIndexNeedChange(esIndexInfo, entityInfo);
+        boolean isIndexNeedChange = IndexUtils.isIndexNeedChange(esIndexInfo, entityInfo, clazz);
         if (!isIndexNeedChange) {
             LogUtils.info("===> index has nothing changed");
             entityInfo.setIndexName(entityInfo.getRetrySuccessIndexName());
@@ -68,15 +68,15 @@ public class AutoProcessIndexNotSmoothlyServiceImpl implements AutoProcessIndexS
         IndexUtils.deleteIndex(client, entityInfo.getRetrySuccessIndexName());
 
         // 初始化创建索引参数
-        CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo);
+        CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo, clazz);
 
         // 执行创建
         return IndexUtils.createIndex(client, entityInfo, createIndexParam);
     }
 
-    private boolean doCreateIndex(EntityInfo entityInfo, RestHighLevelClient client) {
+    private boolean doCreateIndex(EntityInfo entityInfo, Class<?> clazz, RestHighLevelClient client) {
         // 初始化创建索引参数
-        CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo);
+        CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo, clazz);
 
         // 执行创建
         return IndexUtils.createIndex(client, entityInfo, createIndexParam);

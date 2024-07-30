@@ -168,4 +168,108 @@ public interface Nested<Param, Children> extends Serializable {
      * @return wrapper
      */
     Children nested(boolean condition, String path, Consumer<Param> consumer, ScoreMode scoreMode);
+
+
+    /**
+     * 父子类型-根据父查子匹配 返回父文档
+     *
+     * @param type     索引中 子join字段的名字
+     * @param consumer 嵌套条件函数
+     * @return wrapper
+     */
+    default Children hasChild(String type, Consumer<Param> consumer) {
+        return hasChild(true, type, consumer);
+    }
+
+    /**
+     * 父子类型-根据父查子匹配 返回父文档
+     *
+     * @param type      索引中 子join字段的名字
+     * @param consumer  嵌套条件函数
+     * @param scoreMode 得分模式
+     * @return wrapper
+     */
+    default Children hasChild(String type, Consumer<Param> consumer, ScoreMode scoreMode) {
+        return hasChild(true, type, consumer, scoreMode);
+    }
+
+    /**
+     * 父子类型-根据父查子匹配 返回父文档
+     *
+     * @param condition 执行条件
+     * @param type      索引中 子join字段的名字
+     * @param consumer  嵌套条件函数
+     * @return wrapper
+     */
+    default Children hasChild(boolean condition, String type, Consumer<Param> consumer) {
+        return hasChild(condition, type, consumer, ScoreMode.None);
+    }
+
+    /**
+     * 父子类型-根据父查子匹配 返回父文档
+     *
+     * @param condition 条件
+     * @param type      索引中 子join字段的名字
+     * @param consumer  嵌套条件函数
+     * @param scoreMode 得分模式
+     * @return wrapper
+     */
+    Children hasChild(boolean condition, String type, Consumer<Param> consumer, ScoreMode scoreMode);
+
+    /**
+     * 父子类型-根据子查父匹配 返回子文档 无需指定父,由框架根据@Join注解自行推断其父
+     *
+     * @param consumer 嵌套条件函数
+     * @return wrapper
+     */
+    default Children hasParent(Consumer<Param> consumer) {
+        return hasParent(true, null, consumer);
+    }
+
+    /**
+     * 父子类型-根据子查父匹配 返回子文档
+     *
+     * @param parentType 索引中 父join字段的名字
+     * @param consumer   嵌套条件函数
+     * @return wrapper
+     */
+    default Children hasParent(String parentType, Consumer<Param> consumer) {
+        return hasParent(true, parentType, consumer);
+    }
+
+    /**
+     * 父子类型-根据子查父匹配 返回子文档
+     *
+     * @param parentType 索引中 父join字段的名字
+     * @param consumer   嵌套条件函数
+     * @param score      是否计算评分
+     * @return wrapper
+     */
+    default Children hasParent(String parentType, Consumer<Param> consumer, boolean score) {
+        return hasParent(true, parentType, consumer, score);
+    }
+
+    /**
+     * 父子类型-根据子查父匹配 返回子文档
+     *
+     * @param condition  条件
+     * @param parentType 索引中 父join字段的名字
+     * @param consumer   嵌套条件函数
+     * @return wrapper
+     */
+    default Children hasParent(boolean condition, String parentType, Consumer<Param> consumer) {
+        return hasParent(condition, parentType, consumer, true);
+    }
+
+
+    /**
+     * 父子类型-根据子查父匹配 返回子文档
+     *
+     * @param condition  条件
+     * @param parentType 索引中 父join字段的名字
+     * @param consumer   嵌套条件函数
+     * @param score      是否计算评分
+     * @return wrapper
+     */
+    Children hasParent(boolean condition, String parentType, Consumer<Param> consumer, boolean score);
 }

@@ -1,4 +1,4 @@
-package org.dromara.easyes.core.core;
+package org.dromara.easyes.core.kernel;
 
 /**
  * 链式基类

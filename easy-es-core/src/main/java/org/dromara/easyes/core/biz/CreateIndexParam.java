@@ -47,6 +47,10 @@ public class CreateIndexParam {
      */
     private Map<String, Object> mapping;
     /**
+     * 用户通过自定义注解指定的settings信息
+     */
+    private Map<String, Object> settingsMap;
+    /**
      * 用户手动指定的settings信息,优先级最高
      */
     private Settings settings;

@@ -22,8 +22,6 @@
 
 **easy-es官网** https://easy-es.cn/
 
-**easy-es备用官网** http://47.92.157.199 (国内用户如偶遇官网打不开,可访"无言"先生捐赠的此备用地址)
-
 **easy-es官方gitee** https://gitee.com/dromara/easy-es
 
 **easy-es官方github** https://github.com/dromara/easy-es
@@ -106,6 +104,10 @@ Easy-Es是一款简化ElasticSearch搜索引擎操作的开源框架,全自动�
 
 ![Architecture](https://iknow.hs.net/27fb40b8-22d4-45c2-92e0-1471112d5102.jpg)
 
+## 功能结构图 | Functional structure diagram
+
+![Function](https://iknow.hs.net/5fad565b-8b4e-4274-ab59-a74c3492ac9d.png)
+
 
 # 相关链接 | Links
 
@@ -137,7 +139,7 @@ compile group: 'org.dromara.easy-es', name: 'easy-es-boot-starter', version: 'La
 
 
 # 其他开源项目 | Other Project
-
+- [零侵入全自动接口文档生成框架](https://www.doc-apis.com)
 - [健身计划一键生成系统](https://gitee.com/easy-es/fit-plan)
 
 # 期望 | Futures
@@ -185,8 +187,6 @@ QQ | 微信:252645816
 
 </br>
 
-<a href="http://www.yunchengxc.com/">
-  <img alt="ad" src="https://iknow.hs.net/ea88661b-3d02-4dba-aacb-8907a4ca8f11.jpg">
 </a>
 
 

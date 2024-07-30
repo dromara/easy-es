@@ -31,6 +31,16 @@ public final class ExceptionUtils {
     /**
      * 重载
      *
+     * @param msg 消息
+     * @return 自定义异常
+     */
+    public static EasyEsException eee(String msg) {
+        return new EasyEsException(msg);
+    }
+
+    /**
+     * 重载
+     *
      * @param msg    消息
      * @param params 参数
      * @return 自定义异常

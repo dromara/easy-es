@@ -7,13 +7,15 @@ import org.dromara.easyes.core.biz.OrderByParam;
 import org.dromara.easyes.core.biz.SAPageInfo;
 import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
 import org.dromara.easyes.core.conditions.update.LambdaEsUpdateWrapper;
-import org.dromara.easyes.core.core.EsWrappers;
+import org.dromara.easyes.core.kernel.EsWrappers;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.core.toolkit.FieldUtils;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
 import org.dromara.easyes.test.mapper.DocumentMapper;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.HttpAsyncResponseConsumerFactory;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.geo.GeoDistance;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.geo.ShapeRelation;
@@ -22,7 +24,10 @@ import org.elasticsearch.geometry.Circle;
 import org.elasticsearch.geometry.Point;
 import org.elasticsearch.geometry.Rectangle;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedLongTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.ParsedAvg;
@@ -48,14 +53,15 @@ import static org.dromara.easyes.common.constants.BaseEsConstants.KEYWORD_SUFFIX
 
 /**
  * 全部核心功能测试-除手动挡索引相关API
- * 以下测试用例,需要开启自动挡
+ * 提交PR前 须确保以下所有自动化单元测试全部跑通
  * <p>
  * Copyright © 2022 xpc1024 All Rights Reserved
  **/
-@DisplayName("easy-es核心功能测试用例")
+@DisplayName("easy-es核心功能单元测试")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest(classes = TestEasyEsApplication.class)
 public class AllTest {
+
     @Resource
     private DocumentMapper documentMapper;
 
@@ -89,6 +95,7 @@ public class AllTest {
         document.setMultiField("葡萄糖酸钙口服溶液");
         document.setEnglish("Calcium Gluconate");
         document.setBigNum(new BigDecimal("66.66"));
+        document.setVector(new double[]{0.39684247970581666, 0.768707156181666, 0.5145490765571666});
         int successCount = documentMapper.insert(document);
         Assertions.assertEquals(successCount, 1);
     }
@@ -108,6 +115,9 @@ public class AllTest {
             Point point = new Point(13.400544 + i, 52.530286 + i);
             document.setGeoLocation(point.toString());
             document.setStarNum(i);
+            document.setVector(new double[]{35.89684247970581666, 86.268707156181666, 133.1145490765571666});
+
+            // 针对个别数据 造一些差异项 方便测试不同场景
             if (i == 2) {
                 document.setLocation("40.17836693398477,116.64002551005981");
                 document.setStarNum(1);
@@ -139,6 +149,7 @@ public class AllTest {
         LambdaEsUpdateWrapper<Document> wrapper = new LambdaEsUpdateWrapper<>();
         wrapper.eq(Document::getTitle, "测试文档2");
         wrapper.set(Document::getContent, "测试文档内容2的内容被更新了");
+
         int count = documentMapper.update(null, wrapper);
         Assertions.assertEquals(1, count);
     }
@@ -160,6 +171,7 @@ public class AllTest {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.termQuery(FieldUtils.val(Document::getTitle) + KEYWORD_SUFFIX, "测试文档2"));
         wrapper.setSearchSourceBuilder(searchSourceBuilder);
+
         Document document = new Document();
         document.setContent("测试文档内容2的内容再次被更新了");
         int count = documentMapper.update(document, wrapper);
@@ -215,6 +227,13 @@ public class AllTest {
         // 链式调用
         Document document = EsWrappers.lambdaChainQuery(documentMapper).eq(Document::getTitle, "测试文档3").one();
         Assertions.assertEquals(document.getContent(), "测试文档内容3的内容被修改了");
+    }
+
+    @Test
+    @Order(6)
+    public void testDefaultMethod(){
+        List<Document> documents = documentMapper.testDefaultMethod();
+        Assertions.assertEquals(documents.size(),1);
     }
 
     @Test
@@ -798,6 +817,7 @@ public class AllTest {
 
         LambdaEsQueryWrapper<Document> wrapper1 = new LambdaEsQueryWrapper<>();
         wrapper1.multiMatchQuery("更新", Document::getContent, Document::getCreator);
+
         List<Document> documents1 = documentMapper.selectList(wrapper1);
         Assertions.assertEquals(1, documents1.size());
     }
@@ -824,7 +844,8 @@ public class AllTest {
     @Order(6)
     public void testHighLight() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.match(Document::getContent, "测试");
+        wrapper.match(Document::getContent, "测试")
+                .match(Document::getCustomField,"字段");
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertTrue(documents.get(0).getHighlightContent().contains("测试"));
     }
@@ -898,6 +919,36 @@ public class AllTest {
         System.out.println(documents);
     }
 
+    @Test
+    @Order(6)
+    public void testVector() {
+        // 向量查询, 查询条件构造
+        Map<String, Object> params = new HashMap<>();
+        params.put("vector", new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594});
+        String scriptCode = "cosineSimilarity(params.vector, 'vector') + 1.0";
+        QueryBuilder queryBuilder = QueryBuilders.scriptScoreQuery(QueryBuilders.matchAllQuery(), new Script(ScriptType.INLINE, Script.DEFAULT_SCRIPT_LANG, scriptCode, params));
+
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(queryBuilder);
+        LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
+        wrapper.setSearchSourceBuilder(searchSourceBuilder);
+
+        List<Document> Documents = documentMapper.selectList(wrapper);
+        Assertions.assertFalse(Documents.isEmpty());
+    }
+
+    @Test
+    @Order(6)
+    public void testSetRequestOptions() {
+        // 可设置自定义请求参数,覆盖默认配置, 解决报错 entity content is too long [168583249] for the configured buffer limit [104857600]
+        RequestOptions.Builder options = RequestOptions.DEFAULT.toBuilder();
+        options.setHttpAsyncResponseConsumerFactory(
+                new HttpAsyncResponseConsumerFactory.HeapBufferedResponseConsumerFactory(4 * 104857600));
+        final RequestOptions requestOptions = options.build();
+        Boolean success = documentMapper.setRequestOptions(requestOptions);
+        Assertions.assertTrue(success);
+    }
+
     // 4.删除
     @Test
     @Order(7)
@@ -919,6 +970,7 @@ public class AllTest {
     public void testDeleteByWrapper() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉");
+
         int count = documentMapper.delete(wrapper);
         Assertions.assertEquals(18, count);
     }

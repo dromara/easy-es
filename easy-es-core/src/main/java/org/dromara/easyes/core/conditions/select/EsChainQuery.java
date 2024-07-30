@@ -3,7 +3,7 @@ package org.dromara.easyes.core.conditions.select;
 
 import org.dromara.easyes.core.biz.EsPageInfo;
 import org.dromara.easyes.core.biz.SAPageInfo;
-import org.dromara.easyes.core.core.EsChainWrapper;
+import org.dromara.easyes.core.kernel.EsChainWrapper;
 
 import java.util.List;
 import java.util.Optional;

@@ -35,7 +35,7 @@ public class SampleController {
         document.setTitle("测试1");
         document.setContent("测试内容1");
         document.setCreator("老汉");
-        document.setGmtCreate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        document.setGmtCreate(LocalDateTime.now());
         return documentMapper.insert(document);
     }
 

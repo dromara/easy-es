@@ -1,15 +1,14 @@
 package org.dromara.easyes.sample.entity;
 
-import org.dromara.easyes.annotation.HighLight;
-import org.dromara.easyes.annotation.IndexField;
-import org.dromara.easyes.annotation.IndexId;
-import org.dromara.easyes.annotation.IndexName;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import org.dromara.easyes.annotation.*;
 import org.dromara.easyes.annotation.rely.Analyzer;
 import org.dromara.easyes.annotation.rely.FieldStrategy;
 import org.dromara.easyes.annotation.rely.FieldType;
 import org.dromara.easyes.annotation.rely.IdType;
-import lombok.Data;
-import lombok.experimental.Accessors;
+
+import java.time.LocalDateTime;
 
 /**
  * es 数据模型
@@ -18,7 +17,8 @@ import lombok.experimental.Accessors;
  **/
 @Data
 @Accessors(chain = true)
-@IndexName(value = "easyes_document", shardsNum = 3, replicasNum = 2, keepGlobalPrefix = true,maxResultWindow = 100)
+@Settings(shardsNum = 3, replicasNum = 2)
+@IndexName(value = "easyes_document", keepGlobalPrefix = true)
 public class Document {
     /**
      * es中的唯一id,如果你想自定义es中的id为你提供的id,比如MySQL中的id,请将注解中的type指定为customize或直接在全局配置文件中指定,如此id便支持任意数据类型)
@@ -43,8 +43,8 @@ public class Document {
     /**
      * 创建时间
      */
-    @IndexField(fieldType = FieldType.DATE, dateFormat = "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis")
-    private String gmtCreate;
+    @IndexField(fieldType = FieldType.DATE, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime gmtCreate;
     /**
      * es中实际不存在的字段,但模型中加了,为了不和es映射,可以在此类型字段上加上 注解@TableField,并指明exist=false
      */
@@ -63,7 +63,7 @@ public class Document {
     /**
      * 自定义字段名称
      */
-    @IndexField(value = "wu-la", fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART, searchAnalyzer = Analyzer.IK_SMART,fieldData = true)
+    @IndexField(value = "wu-la", fieldType = FieldType.TEXT, analyzer = Analyzer.IK_SMART, searchAnalyzer = Analyzer.IK_SMART, fieldData = true)
     private String customField;
 
     /**

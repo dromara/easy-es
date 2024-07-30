@@ -1,4 +1,4 @@
-package org.dromara.easyes.core.core;
+package org.dromara.easyes.core.kernel;
 
 import org.apache.lucene.search.join.ScoreMode;
 import org.dromara.easyes.annotation.rely.FieldType;
@@ -13,6 +13,7 @@ import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.geometry.Geometry;
 import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.aggregations.BucketOrder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
@@ -528,14 +529,14 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children hasChild(boolean condition, String type, String column, Object val, ScoreMode scoreMode, Float boost) {
-        getWrapper().hasChild(condition, type, column, val, scoreMode, boost);
+    public Children hasChild(boolean condition, String type, Consumer<Param> consumer, ScoreMode scoreMode) {
+        getWrapper().hasChild(condition, type, consumer, scoreMode);
         return typedThis;
     }
 
     @Override
-    public Children hasParent(boolean condition, String type, String column, Object val, boolean score, Float boost) {
-        getWrapper().hasParent(condition, type, column, val, score, boost);
+    public Children hasParent(boolean condition, String parentType, Consumer<Param> consumer, boolean score) {
+        getWrapper().hasParent(condition, parentType, consumer, score);
         return typedThis;
     }
 
@@ -654,6 +655,13 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
         return typedThis;
     }
 
+
+    @Override
+    public Children bucketOrder(boolean condition, List<BucketOrder> bucketOrders) {
+        getWrapper().bucketOrder(condition, bucketOrders);
+        return typedThis;
+    }
+
     @Override
     public Children select(String... columns) {
         getWrapper().select(columns);
@@ -693,6 +701,12 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     @Override
     public Children index(boolean condition, String... indexNames) {
         getWrapper().index(condition, indexNames);
+        return typedThis;
+    }
+
+    @Override
+    public Children routing(boolean condition, String routing) {
+        getWrapper().routing(condition, routing);
         return typedThis;
     }
 

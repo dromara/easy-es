@@ -1,14 +1,15 @@
 package org.dromara.easyes.core.biz;
 
-import org.dromara.easyes.annotation.rely.IdType;
-import org.dromara.easyes.annotation.rely.JoinField;
-import org.dromara.easyes.annotation.rely.RefreshPolicy;
-import org.dromara.easyes.common.constants.BaseEsConstants;
 import com.alibaba.fastjson.PropertyNamingStrategy;
 import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
 import com.alibaba.fastjson.serializer.SerializeFilter;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.dromara.easyes.annotation.rely.IdType;
+import org.dromara.easyes.annotation.rely.JoinField;
+import org.dromara.easyes.annotation.rely.RefreshPolicy;
+import org.dromara.easyes.common.constants.BaseEsConstants;
+import org.elasticsearch.client.RequestOptions;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -16,6 +17,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.dromara.easyes.annotation.rely.AnnotationConstants.DEFAULT_MAX_RESULT_WINDOW;
+import static org.dromara.easyes.common.constants.BaseEsConstants.ZERO;
 
 /**
  * 实体类信息
@@ -25,6 +27,10 @@ import static org.dromara.easyes.annotation.rely.AnnotationConstants.DEFAULT_MAX
 @Data
 @Accessors(chain = true)
 public class EntityInfo {
+    /**
+     * 请求配置 默认值为官方内置的默认配置
+     */
+    private RequestOptions requestOptions = RequestOptions.DEFAULT;
     /**
      * 表主键ID 类型
      */
@@ -84,7 +90,7 @@ public class EntityInfo {
     /**
      * 得分保留小数位,默认不处理,保持es返回值,效率更高
      */
-    private int scoreDecimalPlaces = 0;
+    private int scoreDecimalPlaces = ZERO;
     /**
      * 距离字段名列表
      */
@@ -98,6 +104,14 @@ public class EntityInfo {
      */
     private String joinFieldName;
     /**
+     * join类型别名
+     */
+    private String joinAlias;
+    /**
+     * join类型 父别名
+     */
+    private String parentJoinAlias;
+    /**
      * join关系字段类 默认为JoinField.class
      */
     private Class<?> joinFieldClass = JoinField.class;
@@ -109,6 +123,10 @@ public class EntityInfo {
      * 表字段信息列表
      */
     private List<EntityFieldInfo> fieldList;
+    /**
+     * join类型-子字段信息列表
+     */
+    private List<EntityFieldInfo> childFieldList = new ArrayList<>();
     /**
      * 标记id字段属于哪个类
      */
@@ -122,9 +140,17 @@ public class EntityInfo {
      */
     private boolean child = false;
     /**
+     * 父子类型是否开启急切全局序数
+     */
+    private boolean eagerGlobalOrdinals = true;
+    /**
      * 当前主类的高亮字段列表
      */
-    private List<HighLightParam> highLightParams = new ArrayList<>();
+    private List<HighLightParam> highlightParams = new ArrayList<>();
+    /**
+     * 嵌套类-高亮字段列表
+     */
+    private Map<Class<?>, List<HighLightParam>> nestedHighLightParamsMap = new HashMap<>();
     /**
      * fastjson 字段命名策略
      */
@@ -137,6 +163,10 @@ public class EntityInfo {
      * 实体字段->高亮返回结果 键值对
      */
     private final Map<String, String> highlightFieldMap = new HashMap<>();
+    /**
+     * 嵌套类 实体字段->高亮返回结果字段
+     */
+    private final Map<Class<?>, Map<String, String>> nestedHighlightFieldMap = new HashMap<>();
     /**
      * 实体字段名->es字段类型
      */
@@ -177,11 +207,28 @@ public class EntityInfo {
      * fastjson 过滤器
      */
     private final Map<Class<?>, List<SerializeFilter>> classSimplePropertyPreFilterMap = new HashMap<>();
-
+    /**
+     * 父子类型 join字段名字 K为父,v为子
+     */
+    private final Map<String, Object> relationMap = new HashMap<>();
+    /**
+     * 父子类型 join字段类 K为父,v为子
+     */
+    private final Map<Class<?>, List<Class<?>>> relationClassMap = new HashMap<>();
     /**
      * 数据刷新策略
      */
     private RefreshPolicy refreshPolicy;
+    /**
+     * 通过自定义注解指定的索引settings
+     */
+    private final Map<String, Object> settingsMap = new HashMap<>();
+    /**
+     * 日期字段格式规则Map
+     */
+//    private Map<String, String> dateFormatMap = new HashMap<>();
+    private Map<Class<?>, Map<String, String>> classDateFormatMap = new HashMap<>();
+
     /**
      * 获取需要进行查询的字段列表
      *
@@ -202,8 +249,17 @@ public class EntityInfo {
      * @return es中的字段名
      */
     public String getMappingColumn(String column) {
-        return Optional.ofNullable(mappingColumnMap.get(column))
-                .orElse(column);
+        return Optional.ofNullable(mappingColumnMap.get(column)).orElse(column);
+    }
+
+    /**
+     * 获取es字段映射实体字段名
+     *
+     * @param column es中的字段名
+     * @return 字段名
+     */
+    public String getColumnMapping(String column) {
+        return Optional.ofNullable(columnMappingMap.get(column)).orElse(column);
     }
 
     /**
@@ -224,7 +280,7 @@ public class EntityInfo {
     public Map<String, String> getNestedMappingColumnMapByPath(String path) {
         return Optional.ofNullable(pathClassMap.get(path))
                 .map(nestedClassMappingColumnMap::get)
-                .orElse(new HashMap<>(0));
+                .orElse(Collections.emptyMap());
     }
 
 

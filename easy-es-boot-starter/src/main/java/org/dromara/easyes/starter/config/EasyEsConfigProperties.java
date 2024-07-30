@@ -1,9 +1,9 @@
 package org.dromara.easyes.starter.config;
 
-import org.dromara.easyes.core.config.GlobalConfig;
 import lombok.Data;
+import org.dromara.easyes.common.enums.SchemaEnum;
+import org.dromara.easyes.core.config.GlobalConfig;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Configuration;
  * Copyright © 2022 xpc1024 All Rights Reserved
  **/
 @Data
-@Configuration
 @ConfigurationProperties(value = "easy-es")
 @ConditionalOnExpression("'${easy-es.address:x}'!='x'")
 @ConditionalOnProperty(prefix = "easy-es", name = {"enable"}, havingValue = "true", matchIfMissing = true)
@@ -35,7 +34,7 @@ public class EasyEsConfigProperties {
     /**
      * schema 模式
      */
-    private String schema = "http";
+    private String schema = SchemaEnum.http.name();
     /**
      * username of es 用户名,可缺省
      */

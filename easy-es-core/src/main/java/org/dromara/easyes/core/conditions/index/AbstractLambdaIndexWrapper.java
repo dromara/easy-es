@@ -1,7 +1,7 @@
 package org.dromara.easyes.core.conditions.index;
 
 import org.dromara.easyes.common.params.SFunction;
-import org.dromara.easyes.core.core.AbstractWrapper;
+import org.dromara.easyes.core.kernel.AbstractWrapper;
 
 /**
  * 抽象Lambda表达式父类
