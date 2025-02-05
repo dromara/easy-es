@@ -1,7 +1,10 @@
 package org.dromara.easyes.annotation;
 
 
-import org.dromara.easyes.annotation.rely.*;
+import org.dromara.easyes.annotation.rely.Analyzer;
+import org.dromara.easyes.annotation.rely.DefaultNestedClass;
+import org.dromara.easyes.annotation.rely.FieldStrategy;
+import org.dromara.easyes.annotation.rely.FieldType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -29,6 +32,13 @@ public @interface IndexField {
      * @return 存在
      */
     boolean exist() default true;
+
+    /**
+     * 用于将多个字段的值复制到一个新的字段中，以便在查询时可以简化查询语句，提高检索效率
+     *
+     * @return 复制当前字段至指定字段中
+     */
+    String[] copyTo() default {};
 
     /**
      * 字段在es索引中的类型,建议根据业务场景指定,若不指定则由本框架自动推断

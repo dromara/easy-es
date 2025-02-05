@@ -200,7 +200,9 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children parentId(boolean condition, Object parentId, String type, Float boost) {
-        Assert.notNull(parentId, "parentId could not be null");
+        if (condition) {
+            Assert.notNull(parentId, "parentId could not be null");
+        }
         return addParam(condition, PARENT_ID, type, parentId, boost);
     }
 
@@ -232,8 +234,8 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children prefixQuery(boolean condition, String column, String prefix, Float boost) {
-        if (StringUtils.isBlank(prefix)) {
-            throw ExceptionUtils.eee("prefix can't be blank");
+        if (condition) {
+            Assert.notBlank(prefix, "prefix can't be blank");
         }
         return addParam(condition, PREFIX, column, prefix, boost);
     }
@@ -302,44 +304,83 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
+    public Children geoBoundingBox(boolean condition, String column, String topLeft, String bottomRight, Float boost) {
+        if (condition) {
+            Assert.notBlank(topLeft, "TopLeft must not be null in geoBoundingBox query");
+            Assert.notBlank(bottomRight, "BottomRight must not be null in geoBoundingBox query");
+            return geoBoundingBox(true, column, new GeoPoint(topLeft), new GeoPoint(bottomRight), boost);
+        }
+        return typedThis;
+    }
+
+    @Override
     public Children geoBoundingBox(boolean condition, String column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
-        Assert.notNull(topLeft, "TopLeft point must not be null in geoBoundingBox query");
-        Assert.notNull(bottomRight, "BottomRight point must not be null in geoBoundingBox query");
+        if (condition) {
+            Assert.notNull(topLeft, "TopLeft point must not be null in geoBoundingBox query");
+            Assert.notNull(bottomRight, "BottomRight point must not be null in geoBoundingBox query");
+        }
         return addParam(condition, GEO_BOUNDING_BOX, column, null, topLeft, bottomRight, boost);
     }
 
-
     @Override
     public Children geoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
-        Assert.notNull(distance, "Distance must not be null in geoDistance query");
-        Assert.notNull(distanceUnit, "Distance unit must not be null in geoDistance query");
-        Assert.notNull(centralGeoPoint, "CentralGeoPoint must not be null in geoDistance query");
+        if (condition) {
+            Assert.notNull(distance, "Distance must not be null in geoDistance query");
+            Assert.notNull(distanceUnit, "Distance unit must not be null in geoDistance query");
+            Assert.notNull(centralGeoPoint, "CentralGeoPoint must not be null in geoDistance query");
+        }
         return addParam(condition, GEO_DISTANCE, column, distance, distanceUnit, centralGeoPoint, boost);
     }
 
     @Override
+    public Children geoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, String centralGeoPoint, Float boost) {
+        if (condition) {
+            Assert.notBlank(centralGeoPoint, "centralGeoPoint must not be null in geoDistance query");
+            return geoDistance(true, column, distance, distanceUnit, new GeoPoint(centralGeoPoint), boost);
+        }
+        return typedThis;
+    }
+
+    @Override
     public Children geoDistance(boolean condition, String column, String distance, GeoPoint centralGeoPoint, Float boost) {
-        Assert.notNull(distance, "Distance must not be null in geoDistance query");
-        Assert.notNull(centralGeoPoint, "CentralGeoPoint must not be null in geoDistance query");
+        if (condition) {
+            Assert.notBlank(distance, "Distance must not be null in geoDistance query");
+            Assert.notNull(centralGeoPoint, "CentralGeoPoint must not be null in geoDistance query");
+        }
         return addParam(condition, GEO_DISTANCE, column, distance, null, centralGeoPoint, boost);
     }
 
     @Override
+    public Children geoDistance(boolean condition, String column, String distance, String centralGeoPoint, Float boost) {
+        if (condition) {
+            Assert.notBlank(centralGeoPoint, "centralGeoPoint must not be null in geoDistance query");
+            return geoDistance(true, column, distance, new GeoPoint(centralGeoPoint), boost);
+        }
+        return typedThis;
+    }
+
+    @Override
     public Children geoPolygon(boolean condition, String column, List<GeoPoint> geoPoints, Float boost) {
-        Assert.notEmpty(geoPoints, "GeoPoints must not be null in geoPolygon query");
+        if (condition) {
+            Assert.notEmpty(geoPoints, "GeoPoints must not be null in geoPolygon query");
+        }
         return addParam(condition, GEO_POLYGON, column, geoPoints, boost);
     }
 
     @Override
     public Children geoShape(boolean condition, String column, String indexedShapeId, Float boost) {
-        Assert.notNull(indexedShapeId, "IndexedShapeId must not be null in geoShape query");
+        if (condition) {
+            Assert.notNull(indexedShapeId, "IndexedShapeId must not be null in geoShape query");
+        }
         return addParam(condition, GEO_SHAPE_ID, column, indexedShapeId, boost);
     }
 
     @Override
     public Children geoShape(boolean condition, String column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
-        Assert.notNull(geometry, "Geometry must not be null in geoShape query");
-        Assert.notNull(geometry, "ShapeRelation must not be null in geoShape query");
+        if (condition) {
+            Assert.notNull(geometry, "Geometry must not be null in geoShape query");
+            Assert.notNull(geometry, "ShapeRelation must not be null in geoShape query");
+        }
         return addParam(condition, GEO_SHAPE, column, geometry, shapeRelation, null, boost);
     }
 

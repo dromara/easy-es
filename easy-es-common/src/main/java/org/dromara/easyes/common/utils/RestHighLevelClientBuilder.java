@@ -13,11 +13,11 @@ import static org.dromara.easyes.common.constants.BaseEsConstants.UNKNOWN;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RestHighLevelClientBuilder {
     /**
-     * 支持的版本 目前支持版本为7.14.0 稳定无漏洞版
+     * 支持的版本 目前支持版本为7.17.8 稳定无漏洞版
      */
-    private final static String SUPPORTED_JAR_VERSION = "7.14.0";
+    private final static String SUPPORTED_JAR_VERSION = "7.17.8";
     /**
-     * 支持的客户端版本 目前支持7.xx 推荐7.14.0
+     * 支持的客户端版本 目前支持7.xx 推荐7.17.8
      */
     private final static String SUPPORTED_CLIENT_VERSION = "7";
 

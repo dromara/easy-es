@@ -6,20 +6,24 @@
 
     <groupId>org.dromara.easy-es</groupId>
     <artifactId>easy-es</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 
     <name>easy-es</name>
     <description>easy use for elastic search</description>
 
     <modules>
         <module>easy-es-parent</module>
-        <module>easy-es-sample</module>
-        <module>easy-es-test</module>
+        <module>easy-es-solon-test</module>
+        <module>easy-es-spring-test</module>
+        <module>easy-es-springboot-sample</module>
+        <module>easy-es-springboot-test</module>
+
     </modules>
 
     <properties>
         <junit.version>5.4.0</junit.version>
         <spring-boot.version>2.7.0</spring-boot.version>
+        <solon.version>3.0.5</solon.version>
         <commons-lang3>3.9</commons-lang3>
     </properties>
     <dependencyManagement>
@@ -27,6 +31,16 @@
             <dependency>
                 <groupId>org.dromara.easy-es</groupId>
                 <artifactId>easy-es-boot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dromara.easy-es</groupId>
+                <artifactId>easy-es-solon</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dromara.easy-es</groupId>
+                <artifactId>easy-es-spring</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -55,6 +69,16 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-test</artifactId>
                 <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.noear</groupId>
+                <artifactId>solon-test</artifactId>
+                <version>${solon.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.noear</groupId>
+                <artifactId>solon-logging-logback</artifactId>
+                <version>${solon.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="testConfig" class="org.dromara.easyes.spring.config.EasyEsConfiguration">
+        <property name="easyEsProperties" ref="easyEsProperties"/>
+        <property name="easyEsDynamicProperties" ref="easyEsDynamicProperties"/>
+    </bean>
+
+    <bean id="easyEsProperties" class="org.dromara.easyes.common.property.EasyEsProperties">
+        <property name="enable" value="true"/>
+        <property name="address" value="127.0.0.1:9200"/>
+        <property name="keepAliveMillis" value="18000"/>
+        <property name="globalConfig.IKunMode" value="true"/>
+        <property name="globalConfig.processIndexMode" value="MANUAL"/>
+        <property name="globalConfig.asyncProcessIndexBlocking" value="true"/>
+        <property name="globalConfig.printDsl" value="true"/>
+        <property name="globalConfig.dbConfig.mapUnderscoreToCamelCase" value="true"/>
+        <property name="globalConfig.dbConfig.idType" value="CUSTOMIZE"/>
+        <property name="globalConfig.dbConfig.fieldStrategy" value="NOT_EMPTY"/>
+        <property name="globalConfig.dbConfig.refreshPolicy" value="IMMEDIATE"/>
+        <property name="globalConfig.dbConfig.enableTrackTotalHits" value="true"/>
+    </bean>
+
+    <bean id="easyEsDynamicProperties" class="org.dromara.easyes.common.property.EasyEsDynamicProperties">
+
+    </bean>
+
+    <!-- easy-es配置 -->
+    <bean id="mapperScannerConfigurer" class="org.dromara.easyes.spring.MapperScannerConfigurer">
+        <property name="basePackage" value="org.dromara.easyes.test.mapper"/>
+    </bean>
+</beans>

@@ -9,7 +9,9 @@ import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.geometry.Geometry;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.dromara.easyes.common.constants.BaseEsConstants.DEFAULT_BOOST;
@@ -65,9 +67,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoBoundingBox(R column, String topLeft, String bottomRight) {
-        GeoPoint topLeftGeoPoint = new GeoPoint(topLeft);
-        GeoPoint bottomRightGeoPoint = new GeoPoint(bottomRight);
-        return geoBoundingBox(true, column, topLeftGeoPoint, bottomRightGeoPoint, DEFAULT_BOOST);
+        return geoBoundingBox(true, column, topLeft, bottomRight);
     }
 
     /**
@@ -80,9 +80,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoBoundingBox(boolean condition, R column, String topLeft, String bottomRight) {
-        GeoPoint topLeftGeoPoint = new GeoPoint(topLeft);
-        GeoPoint bottomRightGeoPoint = new GeoPoint(bottomRight);
-        return geoBoundingBox(condition, column, topLeftGeoPoint, bottomRightGeoPoint, DEFAULT_BOOST);
+        return geoBoundingBox(condition, FieldUtils.getFieldName(column), topLeft, bottomRight, DEFAULT_BOOST);
     }
 
     /**
@@ -95,9 +93,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoBoundingBox(R column, String topLeft, String bottomRight, Float boost) {
-        GeoPoint topLeftGeoPoint = new GeoPoint(topLeft);
-        GeoPoint bottomRightGeoPoint = new GeoPoint(bottomRight);
-        return geoBoundingBox(true, column, topLeftGeoPoint, bottomRightGeoPoint, boost);
+        return geoBoundingBox(true, FieldUtils.getFieldName(column), topLeft, bottomRight, boost);
     }
 
     /**
@@ -147,9 +143,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoBoundingBox(String column, String topLeft, String bottomRight) {
-        GeoPoint topLeftGeoPoint = new GeoPoint(topLeft);
-        GeoPoint bottomRightGeoPoint = new GeoPoint(bottomRight);
-        return geoBoundingBox(true, column, topLeftGeoPoint, bottomRightGeoPoint, DEFAULT_BOOST);
+        return geoBoundingBox(true, column, topLeft, bottomRight);
     }
 
     /**
@@ -162,9 +156,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoBoundingBox(boolean condition, String column, String topLeft, String bottomRight) {
-        GeoPoint topLeftGeoPoint = new GeoPoint(topLeft);
-        GeoPoint bottomRightGeoPoint = new GeoPoint(bottomRight);
-        return geoBoundingBox(condition, column, topLeftGeoPoint, bottomRightGeoPoint, DEFAULT_BOOST);
+        return geoBoundingBox(true, column, topLeft, bottomRight, DEFAULT_BOOST);
     }
 
     /**
@@ -177,9 +169,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoBoundingBox(String column, String topLeft, String bottomRight, Float boost) {
-        GeoPoint topLeftGeoPoint = new GeoPoint(topLeft);
-        GeoPoint bottomRightGeoPoint = new GeoPoint(bottomRight);
-        return geoBoundingBox(true, column, topLeftGeoPoint, bottomRightGeoPoint, boost);
+        return geoBoundingBox(true, column, topLeft, bottomRight, boost);
     }
 
     /**
@@ -207,6 +197,18 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     Children geoBoundingBox(boolean condition, String column, GeoPoint topLeft, GeoPoint bottomRight, Float boost);
+
+    /**
+     * 矩形内范围查询
+     *
+     * @param condition   执行条件
+     * @param column      列名 字符串
+     * @param topLeft     左上点坐标 GeoPoint/字符串/哈希/wkt均支持
+     * @param bottomRight 右下点坐标 GeoPoint/字符串/哈希/wkt均支持
+     * @param boost       权重值
+     * @return wrapper
+     */
+    Children geoBoundingBox(boolean condition, String column, String topLeft, String bottomRight, Float boost);
 
     /**
      * 距离范围查询 以给定圆心和半径范围查询 距离类型为双精度
@@ -257,8 +259,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(R column, Double distance, DistanceUnit distanceUnit, String centralGeoPoint) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(true, column, distance, distanceUnit, geoPoint, DEFAULT_BOOST);
+        return geoDistance(true, column, distance, distanceUnit, centralGeoPoint, DEFAULT_BOOST);
     }
 
     /**
@@ -272,8 +273,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(boolean condition, R column, Double distance, DistanceUnit distanceUnit, String centralGeoPoint) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(condition, column, distance, distanceUnit, geoPoint, DEFAULT_BOOST);
+        return geoDistance(condition, column, distance, distanceUnit, centralGeoPoint, DEFAULT_BOOST);
     }
 
     /**
@@ -287,8 +287,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(R column, Double distance, DistanceUnit distanceUnit, String centralGeoPoint, Float boost) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(true, column, distance, distanceUnit, geoPoint, boost);
+        return geoDistance(true, column, distance, distanceUnit, centralGeoPoint, boost);
     }
 
     /**
@@ -303,8 +302,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(boolean condition, R column, Double distance, DistanceUnit distanceUnit, String centralGeoPoint, Float boost) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(condition, column, distance, distanceUnit, geoPoint, boost);
+        return geoDistance(condition, FieldUtils.getFieldName(column), distance, distanceUnit, centralGeoPoint, boost);
     }
 
     /**
@@ -356,8 +354,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(String column, Double distance, DistanceUnit distanceUnit, String centralGeoPoint) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(true, column, distance, distanceUnit, geoPoint, DEFAULT_BOOST);
+        return geoDistance(true, column, distance, distanceUnit, centralGeoPoint, DEFAULT_BOOST);
     }
 
     /**
@@ -371,8 +368,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, String centralGeoPoint) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(condition, column, distance, distanceUnit, geoPoint, DEFAULT_BOOST);
+        return geoDistance(condition, column, distance, distanceUnit, centralGeoPoint, DEFAULT_BOOST);
     }
 
     /**
@@ -386,8 +382,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(String column, Double distance, DistanceUnit distanceUnit, String centralGeoPoint, Float boost) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(true, column, distance, distanceUnit, geoPoint, boost);
+        return geoDistance(true, column, distance, distanceUnit, centralGeoPoint, boost);
     }
 
     /**
@@ -401,10 +396,7 @@ public interface Geo<Children, R> extends Serializable {
      * @param boost           权重值
      * @return wrapper
      */
-    default Children geoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, String centralGeoPoint, Float boost) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(condition, column, distance, distanceUnit, geoPoint, boost);
-    }
+    Children geoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, String centralGeoPoint, Float boost);
 
     /**
      * 距离范围查询 以给定圆心和半径范围查询 距离类型为双精度
@@ -481,8 +473,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(R column, String distance, String centralGeoPoint) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(true, column, distance, geoPoint, DEFAULT_BOOST);
+        return geoDistance(true, column, distance, centralGeoPoint, DEFAULT_BOOST);
     }
 
     /**
@@ -495,8 +486,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(boolean condition, R column, String distance, String centralGeoPoint) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(condition, column, distance, geoPoint, DEFAULT_BOOST);
+        return geoDistance(condition, column, distance, centralGeoPoint, DEFAULT_BOOST);
     }
 
     /**
@@ -509,8 +499,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(R column, String distance, String centralGeoPoint, Float boost) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(true, column, distance, geoPoint, boost);
+        return geoDistance(true, column, distance, centralGeoPoint, boost);
     }
 
     /**
@@ -524,8 +513,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(boolean condition, R column, String distance, String centralGeoPoint, Float boost) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(condition, column, distance, geoPoint, boost);
+        return geoDistance(condition, FieldUtils.getFieldName(column), distance, centralGeoPoint, boost);
     }
 
     /**
@@ -575,8 +563,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(String column, String distance, String centralGeoPoint) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(true, column, distance, geoPoint, DEFAULT_BOOST);
+        return geoDistance(true, column, distance, centralGeoPoint, DEFAULT_BOOST);
     }
 
     /**
@@ -589,8 +576,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(boolean condition, String column, String distance, String centralGeoPoint) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(condition, column, distance, geoPoint, DEFAULT_BOOST);
+        return geoDistance(condition, column, distance, centralGeoPoint, DEFAULT_BOOST);
     }
 
     /**
@@ -603,8 +589,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoDistance(String column, String distance, String centralGeoPoint, Float boost) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(true, column, distance, geoPoint, boost);
+        return geoDistance(true, column, distance, centralGeoPoint, boost);
     }
 
     /**
@@ -617,10 +602,7 @@ public interface Geo<Children, R> extends Serializable {
      * @param boost           权重值
      * @return wrapper
      */
-    default Children geoDistance(boolean condition, String column, String distance, String centralGeoPoint, Float boost) {
-        GeoPoint geoPoint = new GeoPoint(centralGeoPoint);
-        return geoDistance(condition, column, distance, geoPoint, boost);
-    }
+    Children geoDistance(boolean condition, String column, String distance, String centralGeoPoint, Float boost);
 
     /**
      * 距离范围查询 以给定圆心和半径范围查询 距离类型为字符串
@@ -691,11 +673,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoPolygonStr(R column, List<String> strPoints) {
-        if (CollectionUtils.isEmpty(strPoints)) {
-            throw ExceptionUtils.eee("polygon point list must not be empty");
-        }
-        List<GeoPoint> geoPoints = strPoints.stream().map(GeoPoint::new).collect(Collectors.toList());
-        return geoPolygon(true, column, geoPoints, DEFAULT_BOOST);
+        return geoPolygonStr(true, column, strPoints);
     }
 
     /**
@@ -707,11 +685,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoPolygonStr(boolean condition, R column, List<String> strPoints) {
-        if (CollectionUtils.isEmpty(strPoints)) {
-            throw ExceptionUtils.eee("polygon point list must not be empty");
-        }
-        List<GeoPoint> geoPoints = strPoints.stream().map(GeoPoint::new).collect(Collectors.toList());
-        return geoPolygon(condition, column, geoPoints, DEFAULT_BOOST);
+        return geoPolygonStr(condition, FieldUtils.getFieldName(column), strPoints);
     }
 
     /**
@@ -723,11 +697,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoPolygonStr(R column, List<String> strPoints, Float boost) {
-        if (CollectionUtils.isEmpty(strPoints)) {
-            throw ExceptionUtils.eee("polygon point list must not be empty");
-        }
-        List<GeoPoint> geoPoints = strPoints.stream().map(GeoPoint::new).collect(Collectors.toList());
-        return geoPolygon(true, column, geoPoints, boost);
+        return geoPolygonStr(FieldUtils.getFieldName(column), strPoints, boost);
     }
 
     /**
@@ -773,11 +743,7 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoPolygonStr(String column, List<String> strPoints) {
-        if (CollectionUtils.isEmpty(strPoints)) {
-            throw ExceptionUtils.eee("polygon point list must not be empty");
-        }
-        List<GeoPoint> geoPoints = strPoints.stream().map(GeoPoint::new).collect(Collectors.toList());
-        return geoPolygon(true, column, geoPoints, DEFAULT_BOOST);
+        return geoPolygonStr(true, column, strPoints);
     }
 
     /**
@@ -789,10 +755,10 @@ public interface Geo<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children geoPolygonStr(boolean condition, String column, List<String> strPoints) {
-        if (CollectionUtils.isEmpty(strPoints)) {
-            throw ExceptionUtils.eee("polygon point list must not be empty");
-        }
-        List<GeoPoint> geoPoints = strPoints.stream().map(GeoPoint::new).collect(Collectors.toList());
+        List<GeoPoint> geoPoints = Optional.ofNullable(strPoints).orElseGet(ArrayList::new)
+                .stream()
+                .map(GeoPoint::new)
+                .collect(Collectors.toList());
         return geoPolygon(condition, column, geoPoints, DEFAULT_BOOST);
     }
 

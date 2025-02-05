@@ -1,6 +1,6 @@
 package org.dromara.easyes.core.cache;
 
-import org.dromara.easyes.core.config.GlobalConfig;
+import org.dromara.easyes.common.property.GlobalConfig;
 
 import java.util.Map;
 import java.util.Optional;

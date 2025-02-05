@@ -226,8 +226,12 @@ public class EntityInfo {
     /**
      * 日期字段格式规则Map
      */
-//    private Map<String, String> dateFormatMap = new HashMap<>();
     private Map<Class<?>, Map<String, String>> classDateFormatMap = new HashMap<>();
+
+    /**
+     * 是否判定索引相同阶段
+     */
+    private boolean indexEqualStage;
 
     /**
      * 获取需要进行查询的字段列表

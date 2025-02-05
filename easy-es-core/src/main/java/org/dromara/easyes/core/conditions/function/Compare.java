@@ -1373,7 +1373,7 @@ public interface Compare<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children lt(R column, Object val, ZoneId timeZone, String format) {
-        return lt(true, column, val, timeZone, format, null);
+        return lt(true, column, val, timeZone, format, DEFAULT_BOOST);
     }
 
     /**

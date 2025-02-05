@@ -5,7 +5,7 @@ import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.common.params.SFunction;
 import org.dromara.easyes.common.utils.StringUtils;
 import org.dromara.easyes.core.cache.GlobalConfigCache;
-import org.dromara.easyes.core.config.GlobalConfig;
+import org.dromara.easyes.common.property.GlobalConfig;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -61,7 +61,7 @@ public class FieldUtils {
             Method method = func.getClass().getDeclaredMethod("writeReplace");
             method.setAccessible(Boolean.TRUE);
             // 利用jdk的SerializedLambda 解析方法引用
-            java.lang.invoke.SerializedLambda serializedLambda = (SerializedLambda) method.invoke(func);
+            SerializedLambda serializedLambda = (SerializedLambda) method.invoke(func);
             String getter = serializedLambda.getImplMethodName();
             return resolveFieldName(getter);
         } catch (ReflectiveOperationException e) {

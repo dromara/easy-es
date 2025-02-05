@@ -39,4 +39,10 @@ public @interface Signature {
      */
     Class<?>[] args();
 
+    /**
+     * use regexp
+     *
+     * @return java method name is use regexp
+     */
+    boolean useRegexp() default false;
 }

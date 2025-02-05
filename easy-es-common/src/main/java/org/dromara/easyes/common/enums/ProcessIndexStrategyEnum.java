@@ -23,5 +23,5 @@ public enum ProcessIndexStrategyEnum {
      */
     MANUAL(3);
     @Getter
-    private Integer strategyType;
+    private final Integer strategyType;
 }

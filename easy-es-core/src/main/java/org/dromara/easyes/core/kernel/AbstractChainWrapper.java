@@ -499,13 +499,31 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
+    public Children geoBoundingBox(boolean condition, String column, String topLeft, String bottomRight, Float boost) {
+        getWrapper().geoBoundingBox(condition, column, topLeft, bottomRight, boost);
+        return typedThis;
+    }
+
+    @Override
     public Children geoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
         getWrapper().geoDistance(condition, column, distance, distanceUnit, centralGeoPoint, boost);
         return typedThis;
     }
 
     @Override
+    public Children geoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, String centralGeoPoint, Float boost) {
+        getWrapper().geoDistance(condition, column, distance, distanceUnit, centralGeoPoint, boost);
+        return typedThis;
+    }
+
+    @Override
     public Children geoDistance(boolean condition, String column, String distance, GeoPoint centralGeoPoint, Float boost) {
+        getWrapper().geoDistance(condition, column, distance, centralGeoPoint, boost);
+        return typedThis;
+    }
+
+    @Override
+    public Children geoDistance(boolean condition, String column, String distance, String centralGeoPoint, Float boost) {
         getWrapper().geoDistance(condition, column, distance, centralGeoPoint, boost);
         return typedThis;
     }

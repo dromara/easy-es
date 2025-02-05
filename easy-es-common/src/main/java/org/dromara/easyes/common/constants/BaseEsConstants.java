@@ -19,6 +19,10 @@ public interface BaseEsConstants {
      */
     String ENABLE_I_KUN_MODE = "easy-es.global-config.i-kun-mode";
     /**
+     * 是否开启iKun模式
+     */
+    String INDEX_MODE = "easy-es.global-config.process-index-mode";
+    /**
      * 默认主键名称
      */
     String DEFAULT_ID_NAME = "id";

@@ -1,0 +1,30 @@
+easy-es:
+  #  enable: true
+  address: 10.18.2.45:9200
+  #  schema: http
+  #  username: elastic
+  #  password: WG7WVmuNMtM4GwNYkyWH
+  keep-alive-millis: 18000
+  global-config:
+    i-kun-mode: true
+    process-index-mode: manual
+    async-process-index-blocking: true
+    print-dsl: true
+    db-config:
+      map-underscore-to-camel-case: true
+      id-type: customize
+      field-strategy: not_empty
+      refresh-policy: immediate
+      enable-track-total-hits: true
+  #      index-prefix: dev_
+#  dynamic:
+#    datasource:
+#      ds1:
+#        address: 10.20.64.228:9200 # 数据源1
+#      ds2:
+#        address: 10.18.2.45:9200 # 数据源2
+        #username: '若无可去掉此行'
+        #password: '若无可去掉此行'
+#logging:
+#  level:
+#   tracer: trace

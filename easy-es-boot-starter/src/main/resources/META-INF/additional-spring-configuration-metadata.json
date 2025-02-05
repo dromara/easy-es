@@ -1,0 +1,171 @@
+{
+    "properties": [
+        {
+            "defaultValue": true,
+            "name": "easy-es.enable",
+            "description": "是否开启easy-es 默认开启.",
+            "type": "java.lang.Boolean"
+        },
+        {
+            "defaultValue": true,
+            "name": "easy-es.banner",
+            "description": "是否开启easy-es LOGO BANNER的打印.",
+            "type": "java.lang.Boolean"
+        },
+        {
+            "defaultValue": "127.0.0.1:9200",
+            "name": "easy-es.address",
+            "description": "es client address es客户端地址.",
+            "type": "java.lang.String"
+        },
+        {
+            "defaultValue": "http",
+            "name": "easy-es.schema",
+            "description": "schema 模式.",
+            "type": "java.lang.String"
+        },
+        {
+            "name": "easy-es.username",
+            "description": "username of es 用户名,可缺省.",
+            "type": "java.lang.String"
+        },
+        {
+            "name": "easy-es.password",
+            "description": "password of es 密码,可缺省.",
+            "type": "java.lang.String"
+        },
+        {
+            "name": "easy-es.max-conn-total",
+            "description": "maxConnectTotal 最大连接数.",
+            "type": "java.lang.Integer"
+        },
+        {
+            "name": "easy-es.connect-timeout",
+            "description": "connectTimeout timeUnit:millis 连接超时时间 单位毫秒.",
+            "type": "java.lang.Integer"
+        },
+        {
+            "defaultValue": 600000,
+            "name": "easy-es.socket-timeout",
+            "description": "socketTimeout timeUnit:millis  通讯超时时间 单位毫秒 默认10分钟 以免小白踩坑平滑模式下数据量过大迁移超时失败.",
+            "type": "java.lang.Integer"
+        },
+        {
+            "defaultValue": 30000,
+            "name": "easy-es.keep-alive-millis",
+            "description": "保持心跳时间 timeUnit:millis  单位毫秒 默认30秒 防止小白白出现服务首次调用不成时不知所措.",
+            "type": "java.lang.Integer"
+        },
+        {
+            "name": "easy-es.connection-request-timeout",
+            "description": "connectionRequestTimeout timeUnit:millis 连接请求超时时间 单位毫秒.",
+            "type": "java.lang.Integer"
+        },
+        {
+            "defaultValue": true,
+            "name": "easy-es.global-config.print-dsl",
+            "description": "whether to print dsl log 是否打印执行的dsl语句.",
+            "type": "java.lang.Boolean"
+        },
+        {
+            "name": "easy-es.global-config.i-kun-mode",
+            "description": "for fun, whether to print love chinese `kung fu` mode 是否开启爱坤(小黑子)模式 开启后日志将进入疯狂状态, 后期也会在此特殊模式下提供更多趣味化及傻瓜功能 让编码不仅简单,还有趣!.",
+            "type": "java.lang.Boolean",
+            "sourceType": "org.dromara.easyes.common.property.EasyEsProperties"
+        },
+        {
+            "defaultValue": "MANUAL",
+            "name": "easy-es.global-config.process-index-mode",
+            "description": "process index mode Manual by default 索引处理模式 默认开启手动模式.",
+            "type": "org.dromara.easyes.common.enums.ProcessIndexStrategyEnum"
+        },
+        {
+            "defaultValue": 72,
+            "name": "easy-es.global-config.reindex-time-out-hours",
+            "description": "Rebuild index timeout unit: hour, default: 72 重建索引超时时间 单位小时,默认72.",
+            "type": "java.lang.Integer"
+        },
+        {
+            "defaultValue": true,
+            "name": "easy-es.global-config.async-process-index-blocking",
+            "description": "process index blocking main thread true by default 异步处理索引是否阻塞主线程 默认阻塞.",
+            "type": "java.lang.Boolean"
+        },
+        {
+            "defaultValue": true,
+            "name": "easy-es.global-config.distributed",
+            "description": "is distributed environment true by default 是否分布式环境 默认为是.",
+            "type": "java.lang.Boolean"
+        },
+        {
+            "defaultValue": 4320,
+            "name": "easy-es.global-config.active-release-index-max-retry",
+            "description": "Activate the current client's release index maximum number of retries 分布式环境下,平滑模式,当前客户端激活最新索引最大重试次数,若数据量过大,重建索引数据迁移时间超过4320/60=72H,可调大此参数值,此参数值决定最大重试次数,超出此次数后仍未成功,则终止重试并记录异常日志.",
+            "type": "java.lang.Integer"
+        },
+        {
+            "defaultValue": 60,
+            "name": "easy-es.global-config.active-release-index-fixed-delay",
+            "description": "Activate the current client's release index retry delay for a fixed time uint:second 分布式环境下,平滑模式,当前客户端激活最新索引重试时间间隔 若您期望最终一致性的时效性更高,可调小此值,但会牺牲一些性能.",
+            "type": "java.lang.Integer"
+        },
+        {
+            "defaultValue": "",
+            "name": "easy-es.global-config.db-config.index-prefix",
+            "description": "index prefix eg:daily_, 索引前缀 可缺省.",
+            "type": "java.lang.String"
+        },
+        {
+            "name": "easy-es.global-config.db-config.map-underscore-to-camel-case",
+            "description": "enable underscore to camel case default false 是否开启下划线自动转驼峰 默认关闭.",
+            "type": "java.lang.Boolean"
+        },
+        {
+            "defaultValue": "none",
+            "name": "easy-es.global-config.db-config.id-type",
+            "description": "es id generate type. es id生成类型 默认由es自动生成.",
+            "type": "org.dromara.easyes.annotation.rely.IdType"
+        },
+        {
+            "defaultValue": "not_null",
+            "name": "easy-es.global-config.db-config.field-strategy",
+            "description": "Field update strategy default nonNull 字段更新策略,默认非null.",
+            "type": "org.dromara.easyes.annotation.rely.FieldStrategy"
+        },
+        {
+            "defaultValue": true,
+            "name": "easy-es.global-config.db-config.enable-track-total-hits",
+            "description": "enableTrackTotalHits default true,是否开启查询全部数据 默认开启.",
+            "type": "java.lang.Boolean"
+        },
+        {
+            "defaultValue": "none",
+            "name": "easy-es.global-config.db-config.refresh-policy",
+            "description": "data refresh policy 数据刷新策略,es默认的数据刷新策略为NONE.",
+            "type": "org.dromara.easyes.annotation.rely.RefreshPolicy"
+        },
+        {
+            "defaultValue": 10000,
+            "name": "easy-es.global-config.db-config.batchUpdate-threshold",
+            "description": "Batch update threshold 10000 by default 批量更新阈值 默认值为1万.",
+            "type": "java.lang.Integer"
+        },
+        {
+            "defaultValue": false,
+            "name": "easy-es.global-config.db-config.enable-agg-hits",
+            "description": "Batch update threshold 10000 by default 批量更新阈值 默认值为1万.",
+            "type": "java.lang.Boolean"
+        },
+        {
+            "defaultValue": true,
+            "name": "easy-es.global-config.db-config.smart-add-keyword-suffix",
+            "description": "Whether to intelligently add the. keyword suffix to the field. This configuration is enabled by default. The field type is KEYWORD only for annotation configuration_ The String field of TEXT or unconfigured type takes effect and only takes effect when the query requires that the field be of keyword type, so it is called smart! 是否智能为字段添加.keyword后缀 默认开启 此配置仅对注解配置字段类型为KEYWORD_TEXT或未配置类型的String字段生效，并且只会在查询要求该字段必须为keyword类型的查询中才生效，因此谓之智能!.",
+            "type": "java.lang.Boolean"
+        },
+        {
+            "name": "easy-es.dynamic",
+            "description": "Whether to intelligently add the. keyword suffix to the field. This configuration is enabled by default. The field type is KEYWORD only for annotation configuration_ The String field of TEXT or unconfigured type takes effect and only takes effect when the query requires that the field be of keyword type, so it is called smart! 是否智能为字段添加.keyword后缀 默认开启 此配置仅对注解配置字段类型为KEYWORD_TEXT或未配置类型的String字段生效，并且只会在查询要求该字段必须为keyword类型的查询中才生效，因此谓之智能!.",
+            "type": "java.util.Map<java.lang.String, org.dromara.easyes.common.property.EasyEsProperties>"
+        }
+    ]
+}

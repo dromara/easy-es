@@ -8,7 +8,7 @@ import lombok.Setter;
 import org.dromara.easyes.annotation.IndexField;
 import org.dromara.easyes.annotation.rely.FieldStrategy;
 import org.dromara.easyes.annotation.rely.FieldType;
-import org.dromara.easyes.core.config.GlobalConfig;
+import org.dromara.easyes.common.property.GlobalConfig;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -98,6 +98,11 @@ public class EntityFieldInfo {
     @Getter(AccessLevel.NONE)
     private String sqlSelect;
     private NameFilter nameFilter;
+
+    /**
+     * 复制字段
+     */
+    private List<String> copyToList;
 
     /**
      * 内部字段列表

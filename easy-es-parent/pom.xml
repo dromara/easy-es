@@ -6,7 +6,7 @@
 
     <groupId>org.dromara.easy-es</groupId>
     <artifactId>easy-es-parent</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 
     <name>easy-es-parent</name>
     <description>easy use for elastic search</description>
@@ -25,16 +25,20 @@
         <module>../easy-es-extension</module>
         <module>../easy-es-annotation</module>
         <module>../easy-es-common</module>
+        <module>../easy-es-solon-plugin</module>
+        <module>../easy-es-spring</module>
     </modules>
 
     <properties>
         <java.version>1.8</java.version>
         <lombok.version>1.18.28</lombok.version>
-        <es-rest-high-level-client.version>7.14.0</es-rest-high-level-client.version>
-        <es.version>7.14.0</es.version>
+        <es-rest-high-level-client.version>7.17.8</es-rest-high-level-client.version>
+        <es.version>7.17.8</es.version>
         <fastjson.version>1.2.83</fastjson.version>
         <codec.version>1.13</codec.version>
         <spring-boot.version>2.6.10</spring-boot.version>
+        <spring.version>5.3.20</spring.version>
+        <solon.version>3.0.5</solon.version>
         <maven-jar-plugin.version>3.2.2</maven-jar-plugin.version>
     </properties>
 
@@ -63,6 +67,11 @@
             <dependency>
                 <groupId>org.dromara.easy-es</groupId>
                 <artifactId>easy-es-annotation</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dromara.easy-es</groupId>
+                <artifactId>easy-es-spring</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -96,6 +105,28 @@
                 <groupId>com.alibaba</groupId>
                 <artifactId>fastjson</artifactId>
                 <version>${fastjson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.noear</groupId>
+                <artifactId>solon</artifactId>
+                <version>${solon.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-beans</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-aop</artifactId>
+                <version>${spring.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -131,29 +162,15 @@
             </activation>
             <build>
                 <plugins>
-                    <!--                    <plugin>-->
-                    <!--                        <groupId>org.sonatype.plugins</groupId>-->
-                    <!--                        <artifactId>nexus-staging-maven-plugin</artifactId>-->
-                    <!--                        <version>1.6.7</version>-->
-                    <!--                        <extensions>true</extensions>-->
-                    <!--                        <configuration>-->
-                    <!--                            <serverId>ossrh</serverId>-->
-                    <!--                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>-->
-                    <!--                            <autoReleaseAfterClose>true</autoReleaseAfterClose>-->
-                    <!--                        </configuration>-->
-                    <!--                    </plugin>-->
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-release-plugin</artifactId>
-                        <version>2.5.3</version>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.5.0</version>
+                        <extensions>true</extensions>
                         <configuration>
-                            <autoVersionSubmodules>true</autoVersionSubmodules>
-                            <useReleaseProfile>false</useReleaseProfile>
-                            <releaseProfiles>release</releaseProfiles>
-                            <goals>deploy</goals>
+                            <publishingServerId>central</publishingServerId>
                         </configuration>
                     </plugin>
-
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
@@ -227,9 +244,8 @@
                     <url>https://oss.sonatype.org/content/repositories/snapshots</url>
                 </snapshotRepository>
                 <repository>
-                    <!--                    <id>ossrh</id>-->
-                    <id>release</id>
-                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                    <id>central</id>
+                    <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
                 </repository>
             </distributionManagement>
         </profile>
