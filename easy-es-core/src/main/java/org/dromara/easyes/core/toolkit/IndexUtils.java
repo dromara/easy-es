@@ -463,9 +463,10 @@ public class IndexUtils {
                 info.put(BaseEsConstants.TYPE, indexParam.getFieldType());
             }
 
-            // 是否text类型或keyword_text类型
+            // 是否text类型或keyword_text类型或completion类型
             boolean containsTextType = FieldType.TEXT.getType().equals(indexParam.getFieldType()) ||
-                    FieldType.KEYWORD_TEXT.getType().equals(indexParam.getFieldType());
+                    FieldType.KEYWORD_TEXT.getType().equals(indexParam.getFieldType()) ||
+                    FieldType.COMPLETION.getType().equals(indexParam.getFieldType());
             if (containsTextType) {
                 // 设置分词器
                 Optional.ofNullable(indexParam.getAnalyzer())
