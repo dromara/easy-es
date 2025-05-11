@@ -1,5 +1,6 @@
 package org.dromara.easyes.core.toolkit;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.dromara.easyes.core.biz.EsPageInfo;
@@ -50,8 +51,8 @@ public class PageHelper {
      * @param <T>             数据类型
      * @return 分页信息
      */
-    public static <T> SAPageInfo<T> getSAPageInfo(List<T> list, Long total, List<Object> searchAfter
-            , List<Object> nextSearchAfter, Integer pageSize) {
+    public static <T> SAPageInfo<T> getSAPageInfo(List<T> list, Long total, List<FieldValue> searchAfter
+            , List<FieldValue> nextSearchAfter, Integer pageSize) {
         SAPageInfo<T> saPageInfo = new SAPageInfo<>();
         saPageInfo.setSearchAfter(searchAfter);
         saPageInfo.setNextSearchAfter(nextSearchAfter);

@@ -1,5 +1,6 @@
 package org.dromara.easyes.core.index;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.dromara.easyes.common.enums.ProcessIndexStrategyEnum;
 import org.dromara.easyes.common.strategy.AutoProcessIndexStrategy;
 import org.dromara.easyes.common.utils.LogUtils;
@@ -8,7 +9,6 @@ import org.dromara.easyes.core.biz.EntityInfo;
 import org.dromara.easyes.core.biz.EsIndexInfo;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.core.toolkit.IndexUtils;
-import org.elasticsearch.client.RestHighLevelClient;
 
 /**
  * 自动非平滑托管索引实现类, 重建索引时原索引数据会被删除
@@ -23,12 +23,12 @@ public class AutoProcessIndexNotSmoothlyStrategy implements AutoProcessIndexStra
     }
 
     @Override
-    public void processIndexAsync(Class<?> entityClass, RestHighLevelClient client) {
+    public void processIndexAsync(Class<?> entityClass, ElasticsearchClient client) {
         LogUtils.info("===> Not smoothly process index mode activated");
         IndexUtils.supplyAsync(this::process, entityClass, client);
     }
 
-    private boolean process(Class<?> entityClass, RestHighLevelClient client) {
+    private boolean process(Class<?> entityClass, ElasticsearchClient client) {
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
         // 是否存在索引
         boolean existsIndex = IndexUtils.existsIndexWithRetry(entityInfo, client);
@@ -43,7 +43,7 @@ public class AutoProcessIndexNotSmoothlyStrategy implements AutoProcessIndexStra
         }
     }
 
-    private boolean doUpdateIndex(EntityInfo entityInfo, Class<?> clazz, RestHighLevelClient client) {
+    private boolean doUpdateIndex(EntityInfo entityInfo, Class<?> clazz, ElasticsearchClient client) {
         // 获取索引信息
         EsIndexInfo esIndexInfo = IndexUtils.getIndexInfo(client, entityInfo.getRetrySuccessIndexName());
 
@@ -65,7 +65,7 @@ public class AutoProcessIndexNotSmoothlyStrategy implements AutoProcessIndexStra
         return IndexUtils.createIndex(client, entityInfo, createIndexParam);
     }
 
-    private boolean doCreateIndex(EntityInfo entityInfo, Class<?> clazz, RestHighLevelClient client) {
+    private boolean doCreateIndex(EntityInfo entityInfo, Class<?> clazz, ElasticsearchClient client) {
         // 初始化创建索引参数
         CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo, clazz);
 

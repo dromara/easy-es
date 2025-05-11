@@ -1,5 +1,6 @@
 package org.dromara.easyes.core.index;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.dromara.easyes.common.enums.ProcessIndexStrategyEnum;
 import org.dromara.easyes.common.strategy.AutoProcessIndexStrategy;
 import org.dromara.easyes.common.utils.LogUtils;
@@ -8,7 +9,6 @@ import org.dromara.easyes.core.biz.EntityInfo;
 import org.dromara.easyes.core.biz.EsIndexInfo;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.core.toolkit.IndexUtils;
-import org.elasticsearch.client.RestHighLevelClient;
 
 import static org.dromara.easyes.common.constants.BaseEsConstants.S1_SUFFIX;
 import static org.dromara.easyes.common.constants.BaseEsConstants.SO_SUFFIX;
@@ -26,12 +26,12 @@ public class AutoProcessIndexSmoothlyStrategy implements AutoProcessIndexStrateg
     }
 
     @Override
-    public void processIndexAsync(Class<?> entityClass, RestHighLevelClient client) {
+    public void processIndexAsync(Class<?> entityClass, ElasticsearchClient client) {
         LogUtils.info("===> Smoothly process index mode activated");
         IndexUtils.supplyAsync(this::process, entityClass, client);
     }
 
-    private synchronized boolean process(Class<?> entityClass, RestHighLevelClient client) {
+    private synchronized boolean process(Class<?> entityClass, ElasticsearchClient client) {
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
 
         // 索引是否已存在
@@ -48,7 +48,7 @@ public class AutoProcessIndexSmoothlyStrategy implements AutoProcessIndexStrateg
     }
 
 
-    private boolean doUpdateIndex(EntityInfo entityInfo, Class<?> clazz, RestHighLevelClient client) {
+    private boolean doUpdateIndex(EntityInfo entityInfo, Class<?> clazz, ElasticsearchClient client) {
         // 获取索引信息
         EsIndexInfo esIndexInfo = IndexUtils.getIndexInfo(client, entityInfo.getIndexName());
 
@@ -114,11 +114,11 @@ public class AutoProcessIndexSmoothlyStrategy implements AutoProcessIndexStrateg
         }
     }
 
-    private boolean doDataMigration(String oldIndexName, String releaseIndexName, Integer maxResultWindow, RestHighLevelClient client) {
+    private boolean doDataMigration(String oldIndexName, String releaseIndexName, Integer maxResultWindow, ElasticsearchClient client) {
         return IndexUtils.reindex(client, oldIndexName, releaseIndexName, maxResultWindow);
     }
 
-    private boolean doCreateIndex(EntityInfo entityInfo, Class<?> clazz, RestHighLevelClient client) {
+    private boolean doCreateIndex(EntityInfo entityInfo, Class<?> clazz, ElasticsearchClient client) {
         // 初始化创建索引参数
         CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo, clazz);
         // 执行创建

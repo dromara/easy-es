@@ -15,12 +15,12 @@ public class IgnoreTest {
     //    @Resource
 //    DocumentMapper documentMapper;
 //    @Autowired
-//    private RestHighLevelClient client;
+//    private ElasticsearchClient client;
 //
 //
 //    @Test
 //    public void testSearch0() throws IOException {
-//        SearchSourceBuilder builder = new SearchSourceBuilder();
+//        SearchRequest.Builder builder = new SearchRequest.Builder();
 //        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
 //
 ////        boolQueryBuilder.must(QueryBuilders.termQuery("overt", Boolean.TRUE));

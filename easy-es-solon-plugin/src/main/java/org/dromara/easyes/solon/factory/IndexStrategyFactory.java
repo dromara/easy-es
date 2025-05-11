@@ -1,10 +1,10 @@
 package org.dromara.easyes.solon.factory;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.dromara.easyes.common.enums.ProcessIndexStrategyEnum;
 import org.dromara.easyes.common.property.EasyEsProperties;
-import org.dromara.easyes.common.utils.ExceptionUtils;
 import org.dromara.easyes.common.strategy.AutoProcessIndexStrategy;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.dromara.easyes.common.utils.ExceptionUtils;
 import org.noear.solon.Solon;
 import org.noear.solon.annotation.Component;
 import org.noear.solon.annotation.Condition;
@@ -21,7 +21,7 @@ import java.util.Optional;
  * Copyright © 2022 xpc1024 All Rights Reserved
  **/
 @Component
-@Condition(onBean = RestHighLevelClient.class, onProperty = "${easy-es.enable:true} = true && ${easy-es.address:x} != x")
+@Condition(onBean = ElasticsearchClient.class, onProperty = "${easy-es.enable:true} = true")
 public class IndexStrategyFactory implements LifecycleBean {
 
     /**
@@ -53,6 +53,12 @@ public class IndexStrategyFactory implements LifecycleBean {
         }
     }
 
+    /**
+     * 获取索引托管的对象
+     * @param strategyType {@link ProcessIndexStrategyEnum} 托管参数
+     * @return {@link AutoProcessIndexStrategy}
+     * @author MoJie
+     */
     public AutoProcessIndexStrategy getByStrategyType(Integer strategyType) {
         return Optional.ofNullable(SERVICE_MAP.get(strategyType))
                 .orElseThrow(() -> ExceptionUtils.eee("no such service strategyType:{}", strategyType));

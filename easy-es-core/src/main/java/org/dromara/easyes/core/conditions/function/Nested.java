@@ -1,6 +1,6 @@
 package org.dromara.easyes.core.conditions.function;
 
-import org.apache.lucene.search.join.ScoreMode;
+import co.elastic.clients.elasticsearch._types.query_dsl.ChildScoreMode;
 
 import java.io.Serializable;
 import java.util.function.Consumer;
@@ -142,7 +142,7 @@ public interface Nested<Param, Children> extends Serializable {
      * @param scoreMode 得分模式
      * @return wrapper
      */
-    default Children nested(String path, Consumer<Param> consumer, ScoreMode scoreMode) {
+    default Children nested(String path, Consumer<Param> consumer, ChildScoreMode scoreMode) {
         return nested(true, path, consumer, scoreMode);
     }
 
@@ -155,7 +155,7 @@ public interface Nested<Param, Children> extends Serializable {
      * @return wrapper
      */
     default Children nested(boolean condition, String path, Consumer<Param> consumer) {
-        return nested(condition, path, consumer, ScoreMode.None);
+        return nested(condition, path, consumer, ChildScoreMode.None);
     }
 
     /**
@@ -167,7 +167,7 @@ public interface Nested<Param, Children> extends Serializable {
      * @param scoreMode 得分模式
      * @return wrapper
      */
-    Children nested(boolean condition, String path, Consumer<Param> consumer, ScoreMode scoreMode);
+    Children nested(boolean condition, String path, Consumer<Param> consumer, ChildScoreMode scoreMode);
 
 
     /**
@@ -189,7 +189,7 @@ public interface Nested<Param, Children> extends Serializable {
      * @param scoreMode 得分模式
      * @return wrapper
      */
-    default Children hasChild(String type, Consumer<Param> consumer, ScoreMode scoreMode) {
+    default Children hasChild(String type, Consumer<Param> consumer, ChildScoreMode scoreMode) {
         return hasChild(true, type, consumer, scoreMode);
     }
 
@@ -202,7 +202,7 @@ public interface Nested<Param, Children> extends Serializable {
      * @return wrapper
      */
     default Children hasChild(boolean condition, String type, Consumer<Param> consumer) {
-        return hasChild(condition, type, consumer, ScoreMode.None);
+        return hasChild(condition, type, consumer, ChildScoreMode.None);
     }
 
     /**
@@ -214,7 +214,7 @@ public interface Nested<Param, Children> extends Serializable {
      * @param scoreMode 得分模式
      * @return wrapper
      */
-    Children hasChild(boolean condition, String type, Consumer<Param> consumer, ScoreMode scoreMode);
+    Children hasChild(boolean condition, String type, Consumer<Param> consumer, ChildScoreMode scoreMode);
 
     /**
      * 父子类型-根据子查父匹配 返回子文档 无需指定父,由框架根据@Join注解自行推断其父

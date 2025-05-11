@@ -1,12 +1,12 @@
 easy-es:
   #  enable: true
-  address: 127.0.0.1:9200
-  #  schema: http
-  #  username: elastic
-  #  password: WG7WVmuNMtM4GwNYkyWH
+  address: 192.168.0.18:9200
+#  schema: https
+#  username: elastic
+#  password: a2*HFkQU93mBnxOTaEAs
   keep-alive-millis: 18000
   global-config:
-    i-kun-mode: true
+    i-kun-mode: false
     process-index-mode: manual
     async-process-index-blocking: true
     print-dsl: true
@@ -26,6 +26,6 @@ easy-es:
         #username: '若无可去掉此行'
       #password: '若无可去掉此行'
 
-#logging:
-#  level:
-#   tracer: trace
+logging:
+  level:
+   tracer: trace

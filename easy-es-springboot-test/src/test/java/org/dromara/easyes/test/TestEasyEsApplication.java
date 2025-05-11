@@ -10,7 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 @SpringBootApplication
-@EsMapperScan("org.dromara.easyes.test.mapper")
+@EsMapperScan({"org.dromara.easyes.test.mapper", "org.dromara.easyes.test.mapper2", "org.dromara.easyes.test.mapper3"})
 public class TestEasyEsApplication {
     public static void main(String[] args) {
         SpringApplication.run(TestEasyEsApplication.class, args);

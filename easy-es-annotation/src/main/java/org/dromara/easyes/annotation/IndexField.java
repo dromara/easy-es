@@ -2,7 +2,7 @@ package org.dromara.easyes.annotation;
 
 
 import org.dromara.easyes.annotation.rely.Analyzer;
-import org.dromara.easyes.annotation.rely.DefaultNestedClass;
+import org.dromara.easyes.annotation.rely.DefaultNestedOrObjectClass;
 import org.dromara.easyes.annotation.rely.FieldStrategy;
 import org.dromara.easyes.annotation.rely.FieldType;
 
@@ -115,5 +115,5 @@ public @interface IndexField {
      *
      * @return 默认嵌套类
      */
-    Class<?> nestedClass() default DefaultNestedClass.class;
+    Class<?> nestedOrObjectClass() default DefaultNestedOrObjectClass.class;
 }

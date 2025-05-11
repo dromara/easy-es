@@ -1,7 +1,6 @@
 package org.dromara.easyes.annotation.rely;
 
-import java.util.Collections;
-import java.util.Map;
+import co.elastic.clients.elasticsearch.indices.IndexSettings;
 
 /**
  * es 索引 默认settings 如需拓展须继承此类并覆写getSettings方法提供自定义索引settings实现
@@ -10,7 +9,6 @@ import java.util.Map;
  **/
 public class DefaultSettingsProvider implements ISettingsProvider {
     @Override
-    public Map<String, Object> getSettings() {
-        return Collections.emptyMap();
+    public void settings(IndexSettings.Builder builder) {
     }
 }

@@ -1,22 +1,17 @@
 package org.dromara.easyes.core.kernel;
 
-import org.apache.lucene.search.join.ScoreMode;
+import co.elastic.clients.elasticsearch._types.*;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
+import co.elastic.clients.elasticsearch._types.query_dsl.ChildScoreMode;
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.indices.IndexSettings;
+import co.elastic.clients.util.NamedValue;
 import org.dromara.easyes.annotation.rely.FieldType;
 import org.dromara.easyes.core.biz.EntityFieldInfo;
 import org.dromara.easyes.core.biz.OrderByParam;
 import org.dromara.easyes.core.conditions.function.*;
-import org.elasticsearch.common.geo.GeoDistance;
-import org.elasticsearch.common.geo.GeoPoint;
-import org.elasticsearch.common.geo.ShapeRelation;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.geometry.Geometry;
-import org.elasticsearch.index.query.Operator;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.search.aggregations.BucketOrder;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.SortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
 
 import java.time.ZoneId;
 import java.util.Collection;
@@ -223,7 +218,7 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children sort(boolean condition, List<SortBuilder<?>> sortBuilders) {
+    public Children sort(boolean condition, List<SortOptions> sortBuilders) {
         getWrapper().sort(condition, sortBuilders);
         return typedThis;
     }
@@ -300,7 +295,7 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children sort(boolean condition, SortBuilder<?> sortBuilder) {
+    public Children sort(boolean condition, SortOptions sortBuilder) {
         getWrapper().sort(condition, sortBuilder);
         return typedThis;
     }
@@ -312,25 +307,25 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children geoBoundingBox(boolean condition, R column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
+    public Children geoBoundingBox(boolean condition, R column, GeoLocation topLeft, GeoLocation bottomRight, Float boost) {
         getWrapper().geoBoundingBox(condition, column, topLeft, bottomRight, boost);
         return typedThis;
     }
 
     @Override
-    public Children geoDistance(boolean condition, R column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
-        getWrapper().geoDistance(condition, column, distance, distanceUnit, centralGeoPoint, boost);
+    public Children geoDistance(boolean condition, R column, Double distance, DistanceUnit distanceUnit, GeoLocation centralGeoLocation, Float boost) {
+        getWrapper().geoDistance(condition, column, distance, distanceUnit, centralGeoLocation, boost);
         return typedThis;
     }
 
     @Override
-    public Children geoDistance(boolean condition, R column, String distance, GeoPoint centralGeoPoint, Float boost) {
-        getWrapper().geoDistance(condition, column, distance, centralGeoPoint, boost);
+    public Children geoDistance(boolean condition, R column, String distance, GeoLocation centralGeoLocation, Float boost) {
+        getWrapper().geoDistance(condition, column, distance, centralGeoLocation, boost);
         return typedThis;
     }
 
     @Override
-    public Children geoPolygon(boolean condition, R column, List<GeoPoint> geoPoints, Float boost) {
+    public Children geoPolygon(boolean condition, R column, List<GeoLocation> geoPoints, Float boost) {
         getWrapper().geoPolygon(condition, column, geoPoints, boost);
         return typedThis;
     }
@@ -342,7 +337,7 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children geoShape(boolean condition, R column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
+    public Children geoShape(boolean condition, R column, Geometry geometry, GeoShapeRelation shapeRelation, Float boost) {
         getWrapper().geoShape(condition, column, geometry, shapeRelation, boost);
         return typedThis;
     }
@@ -493,7 +488,7 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children geoBoundingBox(boolean condition, String column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
+    public Children geoBoundingBox(boolean condition, String column, GeoLocation topLeft, GeoLocation bottomRight, Float boost) {
         getWrapper().geoBoundingBox(condition, column, topLeft, bottomRight, boost);
         return typedThis;
     }
@@ -505,31 +500,31 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children geoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
-        getWrapper().geoDistance(condition, column, distance, distanceUnit, centralGeoPoint, boost);
+    public Children geoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, GeoLocation centralGeoLocation, Float boost) {
+        getWrapper().geoDistance(condition, column, distance, distanceUnit, centralGeoLocation, boost);
         return typedThis;
     }
 
     @Override
-    public Children geoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, String centralGeoPoint, Float boost) {
-        getWrapper().geoDistance(condition, column, distance, distanceUnit, centralGeoPoint, boost);
+    public Children geoDistance(boolean condition, String column, Double distance, DistanceUnit distanceUnit, String centralGeoLocation, Float boost) {
+        getWrapper().geoDistance(condition, column, distance, distanceUnit, centralGeoLocation, boost);
         return typedThis;
     }
 
     @Override
-    public Children geoDistance(boolean condition, String column, String distance, GeoPoint centralGeoPoint, Float boost) {
-        getWrapper().geoDistance(condition, column, distance, centralGeoPoint, boost);
+    public Children geoDistance(boolean condition, String column, String distance, GeoLocation centralGeoLocation, Float boost) {
+        getWrapper().geoDistance(condition, column, distance, centralGeoLocation, boost);
         return typedThis;
     }
 
     @Override
-    public Children geoDistance(boolean condition, String column, String distance, String centralGeoPoint, Float boost) {
-        getWrapper().geoDistance(condition, column, distance, centralGeoPoint, boost);
+    public Children geoDistance(boolean condition, String column, String distance, String centralGeoLocation, Float boost) {
+        getWrapper().geoDistance(condition, column, distance, centralGeoLocation, boost);
         return typedThis;
     }
 
     @Override
-    public Children geoPolygon(boolean condition, String column, List<GeoPoint> geoPoints, Float boost) {
+    public Children geoPolygon(boolean condition, String column, List<GeoLocation> geoPoints, Float boost) {
         getWrapper().geoPolygon(condition, column, geoPoints, boost);
         return typedThis;
     }
@@ -541,13 +536,13 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children geoShape(boolean condition, String column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
+    public Children geoShape(boolean condition, String column, Geometry geometry, GeoShapeRelation shapeRelation, Float boost) {
         getWrapper().geoShape(condition, column, geometry, shapeRelation, boost);
         return typedThis;
     }
 
     @Override
-    public Children hasChild(boolean condition, String type, Consumer<Param> consumer, ScoreMode scoreMode) {
+    public Children hasChild(boolean condition, String type, Consumer<Param> consumer, ChildScoreMode scoreMode) {
         getWrapper().hasChild(condition, type, consumer, scoreMode);
         return typedThis;
     }
@@ -572,13 +567,13 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
 
 
     @Override
-    public Children orderByDistanceAsc(boolean condition, String column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints) {
+    public Children orderByDistanceAsc(boolean condition, String column, DistanceUnit unit, GeoDistanceType geoDistance, GeoLocation... geoPoints) {
         getWrapper().orderByDistanceAsc(condition, column, unit, geoDistance, geoPoints);
         return typedThis;
     }
 
     @Override
-    public Children orderByDistanceDesc(boolean condition, String column, DistanceUnit unit, GeoDistance geoDistance, GeoPoint... geoPoints) {
+    public Children orderByDistanceDesc(boolean condition, String column, DistanceUnit unit, GeoDistanceType geoDistance, GeoLocation... geoPoints) {
         getWrapper().orderByDistanceDesc(condition, column, unit, geoDistance, geoPoints);
         return typedThis;
     }
@@ -632,7 +627,7 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children nested(boolean condition, String path, Consumer<Param> consumer, ScoreMode scoreMode) {
+    public Children nested(boolean condition, String path, Consumer<Param> consumer, ChildScoreMode scoreMode) {
         getWrapper().nested(condition, path, consumer, scoreMode);
         return typedThis;
     }
@@ -662,20 +657,20 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children setSearchSourceBuilder(boolean condition, SearchSourceBuilder searchSourceBuilder) {
-        getWrapper().setSearchSourceBuilder(condition, searchSourceBuilder);
+    public Children setSearchBuilder(boolean condition, SearchRequest.Builder searchSourceBuilder) {
+        getWrapper().setSearchBuilder(condition, searchSourceBuilder);
         return typedThis;
     }
 
     @Override
-    public Children mix(boolean condition, QueryBuilder queryBuilder) {
-        getWrapper().mix(condition, queryBuilder);
+    public Children mix(boolean condition, co.elastic.clients.elasticsearch._types.query_dsl.Query query) {
+        getWrapper().mix(condition, query);
         return typedThis;
     }
 
 
     @Override
-    public Children bucketOrder(boolean condition, List<BucketOrder> bucketOrders) {
+    public Children bucketOrder(boolean condition, List<NamedValue<SortOrder>> bucketOrders) {
         getWrapper().bucketOrder(condition, bucketOrders);
         return typedThis;
     }
@@ -705,7 +700,7 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children minScore(Float score) {
+    public Children minScore(Double score) {
         getWrapper().minScore(score);
         return typedThis;
     }
@@ -747,31 +742,25 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children maxResultWindow(Integer maxResultWindow) {
-        getWrapper().maxResultWindow(maxResultWindow);
+    public Children settings(Integer shards, Integer replicas, Integer maxResultWindow) {
+        getWrapper().settings(shards, replicas, maxResultWindow);
         return typedThis;
     }
 
     @Override
-    public Children settings(Integer shards, Integer replicas) {
-        getWrapper().settings(shards, replicas);
-        return typedThis;
-    }
-
-    @Override
-    public Children settings(Settings settings) {
+    public Children settings(IndexSettings.Builder settings) {
         getWrapper().settings(settings);
         return typedThis;
     }
 
     @Override
-    public Children mapping(Map<String, Object> mapping) {
+    public Children mapping(TypeMapping.Builder mapping) {
         getWrapper().mapping(mapping);
         return typedThis;
     }
 
     @Override
-    public Children mapping(String column, FieldType fieldType, String analyzer, String searchAnalyzer, String dateFormat, Boolean fieldData, Float boost) {
+    public Children mapping(String column, FieldType fieldType, String analyzer, String searchAnalyzer, String dateFormat, Boolean fieldData, Double boost) {
         getWrapper().mapping(column, fieldType, analyzer, searchAnalyzer, dateFormat, fieldData, boost);
         return typedThis;
     }

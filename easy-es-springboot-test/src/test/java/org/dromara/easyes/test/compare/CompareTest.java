@@ -1,18 +1,15 @@
 package org.dromara.easyes.test.compare;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.transport.rest_client.RestClientOptions;
 import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
 import org.dromara.easyes.test.mapper.DocumentMapper;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.TermQueryBuilder;
-import org.elasticsearch.index.query.TermsQueryBuilder;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,24 +30,25 @@ public class CompareTest {
     @Resource
     private DocumentMapper documentMapper;
     @Autowired
-    private RestHighLevelClient restHighLevelClient;
+    private ElasticsearchClient client;
+
+    public static RestClientOptions options = new RestClientOptions(RequestOptions.DEFAULT);
 
     @Test
     public void testCompare() {
         // 需求:查询出文档标题为 "中国功夫"且作者为"老汉"的所有文档
-        // 传统方式, 直接用RestHighLevelClient进行查询 需要11行代码,还不包含解析代码
+        // 传统方式, 直接用ElasticsearchClient进行查询 需要11行代码,还不包含解析代码
         String indexName = "document";
-        SearchRequest searchRequest = new SearchRequest(indexName);
-        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-        TermQueryBuilder titleTerm = QueryBuilders.termQuery("title", "中国功夫");
-        TermsQueryBuilder creatorTerm = QueryBuilders.termsQuery("creator", "老汉");
-        boolQueryBuilder.must(titleTerm);
-        boolQueryBuilder.must(creatorTerm);
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(boolQueryBuilder);
-        searchRequest.source(searchSourceBuilder);
+        SearchRequest searchRequest = SearchRequest.of(a -> a
+                .index(indexName)
+                .query(QueryBuilders.bool()
+                        .must(x -> x.term(b -> b.field("title").value("中国功夫")))
+                        .must(x -> x.term(b -> b.field("creator").value("老汉")))
+                        .build()._toQuery()
+                )
+        );
         try {
-            SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+            SearchResponse<Document> searchResponse = client.withTransportOptions(options).search(searchRequest, Document.class);
             // 然后从searchResponse中通过各种方式解析出DocumentList 省略这些代码...
         } catch (IOException e) {
             e.printStackTrace();

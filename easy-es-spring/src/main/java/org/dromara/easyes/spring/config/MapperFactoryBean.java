@@ -1,24 +1,25 @@
 package org.dromara.easyes.spring.config;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.dromara.easyes.annotation.EsDS;
 import org.dromara.easyes.annotation.Intercepts;
 import org.dromara.easyes.common.enums.ProcessIndexStrategyEnum;
 import org.dromara.easyes.common.property.EasyEsProperties;
 import org.dromara.easyes.common.property.GlobalConfig;
 import org.dromara.easyes.common.strategy.AutoProcessIndexStrategy;
+import org.dromara.easyes.common.utils.EsClientUtils;
 import org.dromara.easyes.common.utils.LogUtils;
-import org.dromara.easyes.common.utils.RestHighLevelClientUtils;
 import org.dromara.easyes.common.utils.TypeUtils;
 import org.dromara.easyes.core.biz.EntityInfo;
 import org.dromara.easyes.core.cache.BaseCache;
 import org.dromara.easyes.core.cache.GlobalConfigCache;
+import org.dromara.easyes.core.cache.JacksonCache;
 import org.dromara.easyes.core.proxy.EsMapperProxy;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.extension.context.Interceptor;
 import org.dromara.easyes.extension.context.InterceptorChain;
 import org.dromara.easyes.extension.context.InterceptorChainHolder;
 import org.dromara.easyes.spring.factory.IndexStrategyFactory;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -29,7 +30,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.dromara.easyes.common.constants.BaseEsConstants.ZERO;
-import static org.dromara.easyes.common.utils.RestHighLevelClientUtils.DEFAULT_DS;
+import static org.dromara.easyes.common.utils.EsClientUtils.DEFAULT_DS;
 
 /**
  * 代理类
@@ -62,12 +63,20 @@ public class MapperFactoryBean<T> implements FactoryBean<T> {
         // 初始化缓存
         GlobalConfigCache.setGlobalConfig(globalConfig);
 
+        // 初始化entity缓存
+        BaseCache.initEntityCache(entityClass);
+
+        // jackson配置缓存
+        JacksonCache.init(EntityInfoHelper.ENTITY_INFO_CACHE);
+
         //获取动态数据源 若未配置多数据源,则使用默认数据源
         String restHighLevelClientId = Optional.ofNullable(mapperInterface.getAnnotation(EsDS.class))
                 .map(EsDS::value).orElse(DEFAULT_DS);
-        RestHighLevelClient client = this.applicationContext.getBean(RestHighLevelClientUtils.class)
+        ElasticsearchClient client = this.applicationContext.getBean(EsClientUtils.class)
                 .getClient(restHighLevelClientId);
-        BaseCache.initCache(mapperInterface, entityClass, client);
+
+        // 初始化mapper
+        BaseCache.initMapperCache(mapperInterface, entityClass, client);
 
         // 创建代理
         T t = (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[]{mapperInterface}, esMapperProxy);

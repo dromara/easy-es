@@ -1,67 +1,50 @@
 package org.dromara.easyes.core.kernel;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.serializer.SerializeFilter;
-import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.AcknowledgedResponse;
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.Refresh;
+import co.elastic.clients.elasticsearch._types.Result;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
+import co.elastic.clients.elasticsearch.core.search.NestedIdentity;
+import co.elastic.clients.elasticsearch.core.search.ResponseBody;
+import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
+import co.elastic.clients.elasticsearch.indices.PutMappingRequest;
+import co.elastic.clients.elasticsearch.indices.RefreshRequest;
+import co.elastic.clients.elasticsearch.indices.RefreshResponse;
+import co.elastic.clients.elasticsearch.sql.QueryResponse;
+import co.elastic.clients.json.JsonData;
+import co.elastic.clients.json.JsonpUtils;
+import co.elastic.clients.transport.TransportOptions;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.http.util.EntityUtils;
-import org.dromara.easyes.annotation.rely.FieldStrategy;
 import org.dromara.easyes.annotation.rely.IdType;
-import org.dromara.easyes.annotation.rely.JoinField;
 import org.dromara.easyes.annotation.rely.RefreshPolicy;
 import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.common.enums.EsQueryTypeEnum;
-import org.dromara.easyes.common.enums.MethodEnum;
 import org.dromara.easyes.common.enums.OrderTypeEnum;
-import org.dromara.easyes.common.property.GlobalConfig;
+import org.dromara.easyes.common.join.BaseJoin;
 import org.dromara.easyes.common.utils.*;
+import org.dromara.easyes.common.utils.jackson.JsonUtils;
 import org.dromara.easyes.core.biz.*;
 import org.dromara.easyes.core.cache.BaseCache;
 import org.dromara.easyes.core.cache.GlobalConfigCache;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
-import org.dromara.easyes.core.toolkit.FieldUtils;
 import org.dromara.easyes.core.toolkit.IndexUtils;
 import org.dromara.easyes.core.toolkit.PageHelper;
-import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
-import org.elasticsearch.action.bulk.BulkItemResponse;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchScrollRequest;
-import org.elasticsearch.action.support.master.AcknowledgedResponse;
-import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.action.update.UpdateResponse;
+import org.dromara.easyes.core.toolkit.PrintUtils;
 import org.elasticsearch.client.Request;
-import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.core.CountRequest;
-import org.elasticsearch.client.core.CountResponse;
-import org.elasticsearch.client.indices.GetIndexResponse;
-import org.elasticsearch.client.indices.PutMappingRequest;
-import org.elasticsearch.common.text.Text;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.reindex.BulkByScrollResponse;
-import org.elasticsearch.index.reindex.DeleteByQueryRequest;
-import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.aggregations.metrics.ParsedCardinality;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
-import org.elasticsearch.search.sort.SortBuilder;
-import org.elasticsearch.xcontent.XContentType;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -77,22 +60,21 @@ import static org.dromara.easyes.common.constants.BaseEsConstants.*;
  * 核心 所有支持方法接口实现类
  * <p>
  * 内部实现:
- * 核心网络请求类：{@link RestHighLevelClient}、
+ * 核心网络请求类：{@link ElasticsearchClient}、
  * 动态封装request类：{@link WrapperProcessor}、
  * 查询类型枚举：{@link EsQueryTypeEnum}、
  * </p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
+@Setter
 public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     /**
      * restHighLevel client
      */
-    @Setter
-    private RestHighLevelClient client;
+    private ElasticsearchClient client;
     /**
      * T 对应的类
      */
-    @Setter
     private Class<T> entityClass;
 
     @Override
@@ -115,14 +97,12 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
     @Override
     public GetIndexResponse getIndex(String indexName) {
-        return IndexUtils.getIndex(client, getIndexName(indexName));
+        return IndexUtils.getIndex(client, WrapperProcessor.getIndexName(entityClass, indexName));
     }
 
     @Override
     public Boolean createIndex() {
-        EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
-        CreateIndexParam createIndexParam = IndexUtils.getCreateIndexParam(entityInfo, entityClass);
-        return IndexUtils.createIndex(client, entityInfo, createIndexParam);
+        return createIndex(EntityInfoHelper.getIndexName(entityClass));
     }
 
     @Override
@@ -137,13 +117,13 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
     @Override
     public Boolean createIndex(Wrapper<T> wrapper) {
-        Arrays.stream(wrapper.indexNames).forEach(indexName -> doCreateIndex(wrapper, indexName));
+        wrapper.indexNames.forEach(indexName -> doCreateIndex(wrapper, indexName));
         return Boolean.TRUE;
     }
 
     @Override
     public Boolean updateIndex(Wrapper<T> wrapper) {
-        Arrays.stream(wrapper.indexNames).forEach(indexName -> doUpdateIndex(wrapper, indexName));
+        wrapper.indexNames.forEach(indexName -> doUpdateIndex(wrapper, indexName));
         return Boolean.TRUE;
     }
 
@@ -165,10 +145,14 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
     @Override
     public Integer refresh(String... indexNames) {
-        RefreshRequest request = new RefreshRequest(indexNames);
+        RefreshRequest request = RefreshRequest.of(x -> x.index(Arrays.asList(indexNames)));
         try {
-            RefreshResponse refresh = client.indices().refresh(request, getRequestOptions());
-            return refresh.getSuccessfulShards();
+            PrintUtils.printDsl(request, client);
+            RefreshResponse refresh = client.indices().refresh(request);
+            if (refresh.shards() != null) {
+                return refresh.shards().successful().intValue();
+            }
+            return 0;
         } catch (IOException e) {
             e.printStackTrace();
             throw ExceptionUtils.eee("refresh index exception e", e);
@@ -178,67 +162,67 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     @Override
     @SneakyThrows
     public String executeSQL(String sql) {
-        Request request = new Request(MethodEnum.POST.name(), SQL_ENDPOINT);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put(QUERY, sql);
-        request.setJsonEntity(jsonObject.toJSONString());
-        Response response = client.getLowLevelClient().performRequest(request);
-        return EntityUtils.toString(response.getEntity());
+        // 如果是下划线转驼峰，ee帮助处理
+        if (GlobalConfigCache.getGlobalConfig().getDbConfig().isMapUnderscoreToCamelCase()) {
+            sql = StringUtils.camelToUnderline(sql);
+        }
+        PrintUtils.printSql(sql);
+        String finalSql = sql;
+        QueryResponse response = client.sql().query(x -> x.query(finalSql).format("json"));
+        return JsonpUtils.toString(response, new StringBuilder()).toString();
     }
 
+    /**
+     * 执行静态dsl语句 可指定作用的索引
+     *
+     * @param method   方法名
+     * @param endpoint 端点
+     * @param dsl      dsl语句
+     * @return 执行结果 jsonString
+     */
     @Override
     @SneakyThrows
-    public String executeDSL(String dsl) {
-        return executeDSL(dsl, EntityInfoHelper.getEntityInfo(entityClass).getIndexName());
-    }
-
-    @Override
-    @SneakyThrows
-    public String executeDSL(String dsl, String indexName) {
-        Assert.notNull(indexName, "indexName must not null");
-        Request request = new Request(MethodEnum.GET.name(), indexName + DSL_ENDPOINT);
+    public String executeDSL(String method, String endpoint, String dsl) {
+        Assert.notNull(endpoint, "endpoint must not null");
+        Request request = new Request(method, endpoint);
         request.setJsonEntity(dsl);
-        Response response = client.getLowLevelClient().performRequest(request);
+        PrintUtils.printDsl(method, endpoint, dsl);
+        Response response = ((RestClientTransport) client._transport()).restClient().performRequest(request);
         return EntityUtils.toString(response.getEntity());
     }
 
     @Override
-    public SearchResponse search(Wrapper<T> wrapper) {
+    public SearchResponse<T> search(Wrapper<T> wrapper) {
         // 执行普通混合查询, 不含searchAfter分页
-        return getSearchResponse(wrapper, null);
+        return getSearchResponse(wrapper, null, false);
     }
 
     @Override
-    public SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions) throws IOException {
-        printDSL(searchRequest);
-        SearchResponse response = client.search(searchRequest, requestOptions);
+    public ScrollResponse<T> scroll(ScrollRequest searchScrollRequest, TransportOptions requestOptions) throws IOException {
+        PrintUtils.printDsl(searchScrollRequest, client);
+        ScrollResponse<T> response = client.withTransportOptions(requestOptions).scroll(searchScrollRequest, entityClass);
         printResponseErrors(response);
         return response;
     }
 
     @Override
-    public SearchResponse scroll(SearchScrollRequest searchScrollRequest, RequestOptions requestOptions) throws IOException {
-        SearchResponse response = client.scroll(searchScrollRequest, requestOptions);
-        printResponseErrors(response);
-        return response;
-    }
-
-    @Override
-    public SearchSourceBuilder getSearchSourceBuilder(Wrapper<T> wrapper) {
-        return WrapperProcessor.buildSearchSourceBuilder(wrapper, entityClass);
+    public SearchRequest.Builder getSearchBuilder(Wrapper<T> wrapper) {
+        return WrapperProcessor.buildSearchBuilder(wrapper, entityClass);
     }
 
     @Override
     public String getSource(Wrapper<T> wrapper) {
-        // 获取由本框架生成的es查询参数 用于验证生成语法的正确性
-        SearchRequest searchRequest = new SearchRequest(getIndexNames(wrapper.indexNames));
-        Optional.ofNullable(wrapper.preference).ifPresent(searchRequest::preference);
-        Optional.ofNullable(wrapper.routing).ifPresent(searchRequest::routing);
-        SearchSourceBuilder searchSourceBuilder = WrapperProcessor.buildSearchSourceBuilder(wrapper, entityClass);
-        searchRequest.source(searchSourceBuilder);
-        return Optional.ofNullable(searchRequest.source())
-                .map(SearchSourceBuilder::toString)
-                .orElseThrow(() -> ExceptionUtils.eee("get search source exception"));
+        try {
+            // 用户在wrapper中指定的混合查询条件优先级最高
+            SearchRequest.Builder builder = Optional.ofNullable(wrapper.searchBuilder)
+                    .orElse(WrapperProcessor.buildSearchBuilder(wrapper, entityClass))
+                    .index(WrapperProcessor.getIndexName(entityClass, wrapper.indexNames))
+                    .routing(wrapper.routing)
+                    .preference(wrapper.preference);
+            return builder.build().toString();
+        } catch (Exception e) {
+            throw ExceptionUtils.eee("get search source exception", e);
+        }
     }
 
     @Override
@@ -251,11 +235,11 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         wrapper.size = pageSize;
 
         // 请求es获取数据
-        SearchResponse response = getSearchResponse(wrapper);
+        SearchResponse<T> response = getSearchResponse(wrapper);
 
         // 解析数据
-        SearchHit[] searchHits = parseSearchHitArray(response);
-        List<T> dataList = Arrays.stream(searchHits)
+        List<Hit<T>> searchHits = parseSearchHitArray(response);
+        List<T> dataList = searchHits.stream()
                 .map(searchHit -> parseOne(searchHit, wrapper))
                 .collect(Collectors.toList());
         long count = parseCount(response, Objects.nonNull(wrapper.distinctField));
@@ -263,21 +247,11 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     }
 
     @Override
-    public SAPageInfo<T> searchAfterPage(Wrapper<T> wrapper, List<Object> searchAfter, Integer pageSize) {
+    public SAPageInfo<T> searchAfterPage(Wrapper<T> wrapper, List<FieldValue> searchAfter, Integer pageSize) {
         // searchAfter语法规定 或from只允许为0或-1或不传,否则es会报错, 推荐不指定, 直接传null即可
         boolean illegalArg = Objects.nonNull(wrapper.from) && (!wrapper.from.equals(ZERO) || !wrapper.from.equals(MINUS_ONE));
         if (illegalArg) {
             throw ExceptionUtils.eee("The wrapper.from in searchAfter must be 0 or -1 or null, null is recommended");
-        }
-
-        // searchAfter必须要进行排序，不排序无法进行分页
-        boolean notSort = CollectionUtils.isEmpty(wrapper.baseSortParams) && CollectionUtils.isEmpty(wrapper.orderByParams);
-        if (notSort) {
-            // 混合查询中 排序
-            List<SortBuilder<?>> sorts = Objects.nonNull(wrapper.searchSourceBuilder) ? wrapper.searchSourceBuilder.sorts() : Collections.emptyList();
-            if (CollectionUtils.isEmpty(sorts)) {
-                throw ExceptionUtils.eee("sortParamList cannot be empty");
-            }
         }
 
         // 兼容分页参数
@@ -285,20 +259,19 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         wrapper.size = pageSize;
 
         // 请求es获取数据
-        SearchResponse response =
-                CollectionUtils.isEmpty(searchAfter) ? getSearchResponse(wrapper) : getSearchResponse(wrapper, searchAfter.toArray());
+        SearchResponse<T> response =
+                CollectionUtils.isEmpty(searchAfter) ? getSearchResponse(wrapper) : getSearchResponse(wrapper, searchAfter, true);
 
         // 解析数据
-        SearchHit[] searchHits = parseSearchHitArray(response);
-        List<T> dataList = Arrays.stream(searchHits).map(searchHit -> parseOne(searchHit, wrapper))
+        List<Hit<T>> searchHits = parseSearchHitArray(response);
+        List<T> dataList = searchHits.stream().map(searchHit -> parseOne(searchHit, wrapper))
                 .collect(Collectors.toList());
-        Object[] nextSearchAfter = Arrays.stream(searchHits)
-                .map(SearchHit::getSortValues)
+        List<FieldValue> nextSearchAfter = searchHits.stream()
+                .map(Hit::sort)
                 .reduce((first, second) -> second)
                 .orElse(null);
         long count = parseCount(response, Objects.nonNull(wrapper.distinctField));
-        return PageHelper.getSAPageInfo(dataList, count, searchAfter,
-                nextSearchAfter == null ? null : Arrays.asList(nextSearchAfter), pageSize);
+        return PageHelper.getSAPageInfo(dataList, count, searchAfter, nextSearchAfter, pageSize);
     }
 
     @Override
@@ -307,31 +280,24 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     }
 
     @Override
-    public Long selectCount(Wrapper<T> wrapper, boolean distinct) {
-        if (distinct) {
-            // 去重, 总数来源于桶, 只查id列,节省内存 拷贝是防止追加的只查id列影响到count后的其它查询
-            Wrapper<T> clone = wrapper.clone();
-            clone.include = new String[]{DEFAULT_ES_ID_NAME};
-            SearchResponse response = getSearchResponse(clone);
-            return parseCount(response, Objects.nonNull(clone.distinctField));
-        } else {
-            // 不去重,直接count获取,效率更高
-            CountRequest countRequest = new CountRequest(getIndexNames(wrapper.indexNames));
-            Optional.ofNullable(wrapper.routing).ifPresent(countRequest::routing);
-            Optional.ofNullable(wrapper.preference).ifPresent(countRequest::preference);
-            QueryBuilder queryBuilder = Optional.ofNullable(wrapper.searchSourceBuilder)
-                    .map(SearchSourceBuilder::query)
-                    .orElseGet(() -> WrapperProcessor.initBoolQueryBuilder(wrapper.paramQueue, entityClass));
-            countRequest.query(queryBuilder);
-            CountResponse count;
-            try {
-                printCountDSL(countRequest);
-                count = client.count(countRequest, getRequestOptions());
-            } catch (IOException e) {
-                throw ExceptionUtils.eee("selectCount exception", e);
-            }
-            return count.getCount();
-        }
+    public SearchResponse<T> search(SearchRequest searchRequest, TransportOptions requestOptions) throws IOException {
+        PrintUtils.printDsl(searchRequest, client);
+        SearchResponse<T> response = client.withTransportOptions(requestOptions).search(searchRequest, entityClass);
+        printResponseErrors(response);
+        return response;
+    }
+
+    /**
+     * 非search查询获取boolQuery
+     *
+     * @param wrapper wrapper
+     * @return boolQuery
+     */
+    private BoolQuery getBoolQuery(Wrapper<T> wrapper) {
+        return Optional.ofNullable(wrapper.searchBuilder)
+                .flatMap(x -> Optional.ofNullable(x.build().query()))
+                .map(Query::bool)
+                .orElse(WrapperProcessor.initBoolQueryBuilder(wrapper.paramQueue, entityClass).build());
     }
 
     @Override
@@ -364,7 +330,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         Assert.notNull(entity, "insert entity must not be null");
 
         // 执行插入
-        return Arrays.stream(getIndexNames(indexNames))
+        return WrapperProcessor.getIndexName(entityClass, indexNames).stream()
                 .mapToInt(indexName -> doInsert(entity, routing, parentId, indexName))
                 .sum();
     }
@@ -402,7 +368,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
 
         // 在每条指定的索引上批量执行数据插入
-        return Arrays.stream(getIndexNames(indexNames))
+        return WrapperProcessor.getIndexName(entityClass, indexNames).stream()
                 .mapToInt(indexName -> doInsertBatch(entityList, routing, parentId, indexName))
                 .sum();
     }
@@ -424,7 +390,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
     @Override
     public Integer deleteById(String routing, Serializable id, String... indexNames) {
-        return Arrays.stream(getIndexNames(indexNames))
+        return WrapperProcessor.getIndexName(entityClass, indexNames).stream()
                 .mapToInt(indexName -> doDeleteById(id, routing, indexName))
                 .sum();
     }
@@ -447,32 +413,38 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     @Override
     public Integer deleteBatchIds(String routing, Collection<? extends Serializable> idList, String... indexNames) {
         Assert.notEmpty(idList, "the collection of id must not empty");
-        return Arrays.stream(getIndexNames(indexNames))
+        return WrapperProcessor.getIndexName(entityClass, indexNames).stream()
                 .mapToInt(indexName -> doDeleteBatchIds(idList, routing, indexName))
                 .sum();
     }
 
     @Override
-    public Integer delete(Wrapper<T> wrapper) {
-        DeleteByQueryRequest request = new DeleteByQueryRequest(getIndexNames(wrapper.indexNames));
-        EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
-        Optional.ofNullable(entityInfo)
-                .flatMap(i -> Optional.ofNullable(i.getMaxResultWindow()))
-                .ifPresent(request::setBatchSize);
-        if (RefreshPolicy.IMMEDIATE.getValue().equals(getRefreshPolicy())) {
-            request.setRefresh(true);
+    public Long selectCount(Wrapper<T> wrapper, boolean distinct) {
+        if (distinct) {
+            // 去重, 总数来源于桶, 只查id列,节省内存 拷贝是防止追加的只查id列影响到count后的其它查询
+            Wrapper<T> clone = wrapper.clone();
+            clone.include = new String[]{EntityInfoHelper.getEntityInfo(entityClass).getKeyProperty()};
+            SearchResponse<T> response = getSearchResponse(clone);
+            return parseCount(response, Objects.nonNull(clone.distinctField));
+        } else {
+            // 不去重,直接count获取,效率更高
+            BoolQuery query = getBoolQuery(wrapper);
+
+            CountRequest req = CountRequest.of(a -> a
+                    .index(WrapperProcessor.getIndexName(entityClass, wrapper.indexNames))
+                    .routing(wrapper.routing)
+                    .preference(wrapper.preference)
+                    .query(query._toQuery())
+            );
+            CountResponse rsp;
+            try {
+                PrintUtils.printDsl(req, client);
+                rsp = client.withTransportOptions(getTransportOptions()).count(req);
+            } catch (IOException e) {
+                throw ExceptionUtils.eee("selectCount exception", e);
+            }
+            return rsp.count();
         }
-        Optional.ofNullable(wrapper.routing).ifPresent(request::setRouting);
-        BoolQueryBuilder boolQueryBuilder = WrapperProcessor.initBoolQueryBuilder(wrapper.paramQueue, entityClass);
-        request.setQuery(boolQueryBuilder);
-        BulkByScrollResponse bulkResponse;
-        try {
-            bulkResponse = client.deleteByQuery(request, getRequestOptions());
-        } catch (IOException e) {
-            throw ExceptionUtils.eee("delete error, dsl:%s", e, boolQueryBuilder.toString());
-        }
-        // 单次删除通常不会超过21亿, 这里为了兼容老API设计,仍转为int 2.0版本将调整为long
-        return (int) bulkResponse.getDeleted();
     }
 
     @Override
@@ -498,7 +470,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         String idValue = getIdValue(entity);
 
         // 在每条索引上执行更新
-        return Arrays.stream(getIndexNames(indexNames))
+        return WrapperProcessor.getIndexName(entityClass, indexNames).stream()
                 .mapToInt(indexName -> doUpdateById(entity, idValue, routing, indexName))
                 .sum();
     }
@@ -525,7 +497,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
 
         // 在每条指定索引上批量执行更新
-        return Arrays.stream(getIndexNames(indexNames))
+        return WrapperProcessor.getIndexName(entityClass, indexNames).stream()
                 .mapToInt(indexName -> doUpdateBatchByIds(entityList, routing, indexName))
                 .sum();
     }
@@ -537,7 +509,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
 
         // 在每条指定索引上执行更新操作
-        return Arrays.stream(getIndexNames(updateWrapper.indexNames))
+        return WrapperProcessor.getIndexName(entityClass, updateWrapper.indexNames).stream()
                 .mapToInt(indexName -> doUpdate(entity, updateWrapper, indexName))
                 .sum();
     }
@@ -564,7 +536,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
 
         // 从指定的多条索引上去获取, 返回最先命中的数据
-        return Arrays.stream(getIndexNames(indexNames))
+        return WrapperProcessor.getIndexName(entityClass, indexNames).stream()
                 .map(indexName -> doSelectById(id, routing, indexName))
                 .filter(Objects::nonNull)
                 .findFirst()
@@ -592,7 +564,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
         // 在每条指定索引上执行查询
         List<T> result = new ArrayList<>();
-        Arrays.stream(getIndexNames(indexNames))
+        WrapperProcessor.getIndexName(entityClass, indexNames)
                 .forEach(indexName -> result.addAll(doSelectBatchIds(idList, routing, indexName)));
         return result;
     }
@@ -600,33 +572,33 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     @Override
     public T selectOne(Wrapper<T> wrapper) {
         // 请求es获取数据
-        SearchResponse searchResponse = getSearchResponse(wrapper);
+        SearchResponse<T> searchResponse = getSearchResponse(wrapper);
         long count = parseCount(searchResponse, Objects.nonNull(wrapper.distinctField));
         boolean invalid = (count > ONE && (Objects.nonNull(wrapper.size) && wrapper.size > ONE))
-                || (count > ONE && Objects.isNull(wrapper.size));
+                          || (count > ONE && Objects.isNull(wrapper.size));
         if (invalid) {
             LogUtils.error("found more than one result:" + count, "please use wrapper.limit to limit 1");
             throw ExceptionUtils.eee("found more than one result: %d, please use wrapper.limit to limit 1", count);
         }
 
         // 解析数据
-        SearchHit[] searchHits = parseSearchHitArray(searchResponse);
-        if (ArrayUtils.isEmpty(searchHits)) {
+        List<Hit<T>> searchHits = parseSearchHitArray(searchResponse);
+        if (CollectionUtils.isEmpty(searchHits)) {
             return null;
         }
-        return parseOne(searchHits[0], wrapper);
+        return parseOne(searchHits.get(0), wrapper);
     }
 
     @Override
     public List<T> selectList(Wrapper<T> wrapper) {
         // 请求es获取数据
-        SearchHit[] searchHits = getSearchHitArray(wrapper);
-        if (ArrayUtils.isEmpty(searchHits)) {
+        List<Hit<T>> searchHits = getSearchHits(wrapper);
+        if (CollectionUtils.isEmpty(searchHits)) {
             return Collections.emptyList();
         }
 
         // 批量解析
-        return Arrays.stream(searchHits)
+        return searchHits.stream()
                 .map(searchHit -> parseOne(searchHit, wrapper))
                 .collect(Collectors.toList());
     }
@@ -640,7 +612,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     }
 
     @Override
-    public Boolean setRequestOptions(RequestOptions requestOptions) {
+    public Boolean setRequestOptions(TransportOptions requestOptions) {
         synchronized (this) {
             EntityInfoHelper.getEntityInfo(entityClass).setRequestOptions(requestOptions);
         }
@@ -658,11 +630,6 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
 
         // 设置索引名
         createIndexParam.setIndexName(indexName);
-
-        // 设置分片个副本信息
-        Optional.ofNullable(wrapper.shardsNum).ifPresent(createIndexParam::setShardsNum);
-        Optional.ofNullable(wrapper.replicasNum).ifPresent(createIndexParam::setReplicasNum);
-        Optional.ofNullable(wrapper.maxResultWindow).ifPresent(createIndexParam::setMaxResultWindow);
 
         // 设置用户自定义的settings
         Optional.ofNullable(wrapper.settings).ifPresent(createIndexParam::setSettings);
@@ -693,55 +660,57 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         boolean existsIndex = this.existsIndex(indexName);
         Assert.isTrue(existsIndex, String.format("update index: %s failed, because of this index not exists", indexName));
 
-        // 更新mapping
-        PutMappingRequest putMappingRequest = new PutMappingRequest(indexName);
-
         if (Objects.isNull(wrapper.mapping)) {
             Assert.notEmpty(wrapper.esIndexParamList, String.format("update index: %s failed, because of empty update args", indexName));
-            Map<String, Object> mapping = IndexUtils.initMapping(EntityInfoHelper.getEntityInfo(entityClass), wrapper.esIndexParamList);
-            putMappingRequest.source(mapping);
-        } else {
-            // 用户自行指定的mapping信息
-            putMappingRequest.source(wrapper.mapping);
         }
 
+        TypeMapping.Builder mapping = Objects.nonNull(wrapper.mapping) ? wrapper.mapping :
+                IndexUtils.initMapping(EntityInfoHelper.getEntityInfo(entityClass), wrapper.esIndexParamList);
+        TypeMapping build = mapping.build();
+
+        // 更新mapping
+        PutMappingRequest putMappingRequest = PutMappingRequest.of(a -> a
+                .dateDetection(build.dateDetection())
+                .dynamic(build.dynamic())
+                .dynamicDateFormats(build.dynamicDateFormats())
+                .dynamicTemplates(build.dynamicTemplates())
+                .meta(build.meta())
+                .numericDetection(build.numericDetection())
+                .properties(build.properties())
+                .routing(build.routing())
+                .source(build.source())
+                .runtime(build.runtime())
+                .index(indexName)
+        );
+
         try {
-            AcknowledgedResponse acknowledgedResponse = client.indices().putMapping(putMappingRequest, getRequestOptions());
-            Assert.isTrue(acknowledgedResponse.isAcknowledged(), String.format("update index failed, index: %s", indexName));
+            PrintUtils.printDsl(putMappingRequest, client);
+            AcknowledgedResponse acknowledgedResponse = client.withTransportOptions(getTransportOptions()).indices().putMapping(putMappingRequest);
+            Assert.isTrue(acknowledgedResponse.acknowledged(), String.format("update index failed, index: %s", indexName));
         } catch (IOException e) {
             throw ExceptionUtils.eee("update index exception", e);
         }
     }
 
-    /**
-     * 执行插入单条数据
-     *
-     * @param entity    插入对象
-     * @param routing   路由
-     * @param parentId  父id
-     * @param indexName 索引名
-     * @return 成功条数
-     */
-    private Integer doInsert(T entity, String routing, String parentId, String indexName) {
-        // 构建请求入参
-        IndexRequest indexRequest = buildIndexRequest(entity, routing, parentId, indexName);
+    @Override
+    public Integer delete(Wrapper<T> wrapper) {
+        EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
 
-        Optional.ofNullable(routing).ifPresent(indexRequest::routing);
-        indexRequest.setRefreshPolicy(getRefreshPolicy());
+        DeleteByQueryRequest request = DeleteByQueryRequest.of(a -> a
+                .index(WrapperProcessor.getIndexName(entityClass, wrapper.indexNames))
+                .query(getBoolQuery(wrapper)._toQuery())
+                .routing(wrapper.routing)
+                .refresh(Refresh.True.equals(getRefreshPolicy()))
+                .scrollSize(entityInfo == null ? null : entityInfo.getMaxResultWindow().longValue())
+        );
 
+        PrintUtils.printDsl(request, client);
         try {
-            IndexResponse indexResponse = client.index(indexRequest, getRequestOptions());
-            if (Objects.equals(indexResponse.status(), RestStatus.CREATED)) {
-                setId(entity, indexResponse.getId());
-                return BaseEsConstants.ONE;
-            } else if (Objects.equals(indexResponse.status(), RestStatus.OK)) {
-                // 该id已存在,数据被更新的情况
-                return BaseEsConstants.ZERO;
-            } else {
-                throw ExceptionUtils.eee("insert failed, result:%s entity:%s", indexResponse.getResult(), entity);
-            }
+            DeleteByQueryResponse bulkResponse = client.deleteByQuery(request);
+            // 单次删除通常不会超过21亿, 这里为了兼容老API设计,仍转为int 2.0版本将调整为long
+            return bulkResponse.deleted() == null ? BaseEsConstants.ZERO : bulkResponse.deleted().intValue();
         } catch (IOException e) {
-            throw ExceptionUtils.eee("insert entity:%s exception", e, entity.toString());
+            throw ExceptionUtils.eee("delete error, dsl:%s", e);
         }
     }
 
@@ -755,19 +724,67 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @return 总成功条数
      */
     private Integer doInsertBatch(Collection<T> entityList, String routing, String parentId, String indexName) {
-        // 构建批量请求参数
-        BulkRequest bulkRequest = new BulkRequest();
-        Optional.ofNullable(routing).ifPresent(bulkRequest::routing);
-        bulkRequest.setRefreshPolicy(getRefreshPolicy());
+        List<BulkOperation> operations = new ArrayList<>();
         entityList.forEach(entity -> {
-            IndexRequest indexRequest = buildIndexRequest(entity, routing, parentId, indexName);
-            bulkRequest.add(indexRequest);
+            IndexRequest<T> indexRequest = buildIndexRequest(entity, routing, parentId, indexName).build();
+            BulkOperation operation = BulkOperation.of(b -> b
+                    .index(i -> i
+                            .id(indexRequest.id())
+                            .ifPrimaryTerm(indexRequest.ifPrimaryTerm())
+                            .ifSeqNo(indexRequest.ifSeqNo())
+                            .index(indexRequest.index())
+                            .pipeline(indexRequest.pipeline())
+                            .requireAlias(indexRequest.requireAlias())
+                            .routing(indexRequest.routing())
+                            .version(indexRequest.version())
+                            .versionType(indexRequest.versionType())
+                            .document(indexRequest.document())
+                    )
+            );
+            operations.add(operation);
         });
 
+        // 构建批量请求参数
+        BulkRequest bulkRequest = BulkRequest.of(a -> a
+                .routing(routing)
+                .refresh(getRefreshPolicy())
+                .operations(operations)
+        );
+
         // 执行批量请求并返回结果
-        return doBulkRequest(bulkRequest, getRequestOptions(), entityList);
+        return doBulkRequest(bulkRequest, Result.Created.jsonValue());
     }
 
+    /**
+     * 执行插入单条数据
+     *
+     * @param entity    插入对象
+     * @param routing   路由
+     * @param parentId  父id
+     * @param indexName 索引名
+     * @return 成功条数
+     */
+    private Integer doInsert(T entity, String routing, String parentId, String indexName) {
+        // 构建请求入参
+        IndexRequest<T> indexRequest = buildIndexRequest(entity, routing, parentId, indexName)
+                .refresh(getRefreshPolicy()).build();
+
+        PrintUtils.printDsl(indexRequest, client);
+        try {
+            IndexResponse indexResponse = client.withTransportOptions(getTransportOptions()).index(indexRequest);
+            if (Objects.equals(indexResponse.result(), Result.Created)) {
+                setId(entity, indexResponse.id());
+                return BaseEsConstants.ONE;
+            } else if (Objects.equals(indexResponse.result(), Result.Updated)) {
+                // 该id已存在,数据被更新的情况
+                return BaseEsConstants.ZERO;
+            } else {
+                throw ExceptionUtils.eee("insert failed, result:%s entity:%s", indexResponse.result(), entity);
+            }
+        } catch (IOException e) {
+            throw ExceptionUtils.eee("insert entity:%s exception", e, entity.toString());
+        }
+    }
 
     /**
      * 执行根据id删除指定数据
@@ -778,12 +795,15 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @return 成功条数
      */
     private Integer doDeleteById(Serializable id, String routing, String indexName) {
-        DeleteRequest deleteRequest = generateDelRequest(id, indexName);
-        Optional.ofNullable(routing).ifPresent(deleteRequest::routing);
-        deleteRequest.setRefreshPolicy(getRefreshPolicy());
+        DeleteRequest request = generateDelRequest(id, indexName)
+                .routing(routing)
+                .refresh(getRefreshPolicy())
+                .build();
+
+        PrintUtils.printDsl(request, client);
         try {
-            DeleteResponse deleteResponse = client.delete(deleteRequest, getRequestOptions());
-            if (Objects.equals(deleteResponse.status(), RestStatus.OK)) {
+            DeleteResponse deleteResponse = client.withTransportOptions(getTransportOptions()).delete(request);
+            if (Objects.equals(deleteResponse.result(), Result.Deleted)) {
                 return BaseEsConstants.ONE;
             }
         } catch (IOException e) {
@@ -791,7 +811,6 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
         return BaseEsConstants.ZERO;
     }
-
 
     /**
      * 执行根据id批量删除
@@ -802,14 +821,29 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @return 总成功条数
      */
     private Integer doDeleteBatchIds(Collection<? extends Serializable> idList, String routing, String indexName) {
-        BulkRequest bulkRequest = new BulkRequest();
-        Optional.ofNullable(routing).ifPresent(bulkRequest::routing);
-        bulkRequest.setRefreshPolicy(getRefreshPolicy());
+        List<BulkOperation> operations = new ArrayList<>();
         idList.forEach(id -> {
-            DeleteRequest deleteRequest = generateDelRequest(id, indexName);
-            bulkRequest.add(deleteRequest);
+            DeleteRequest deleteRequest = generateDelRequest(id, indexName).build();
+            BulkOperation operation = BulkOperation.of(a ->
+                    a.delete(b -> b
+                            .id(deleteRequest.id())
+                            .ifPrimaryTerm(deleteRequest.ifPrimaryTerm())
+                            .ifSeqNo(deleteRequest.ifSeqNo())
+                            .index(deleteRequest.index())
+                            .routing(deleteRequest.routing())
+                            .version(deleteRequest.version())
+                            .versionType(deleteRequest.versionType())
+                    ));
+            operations.add(operation);
         });
-        return doBulkRequest(bulkRequest, getRequestOptions());
+
+        BulkRequest request = BulkRequest.of(a -> a
+                .routing(routing)
+                .refresh(getRefreshPolicy())
+                .operations(operations)
+        );
+
+        return doBulkRequest(request, Result.Deleted.jsonValue());
     }
 
     /**
@@ -823,14 +857,17 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     private Integer doUpdateById(T entity, String idValue, String routing, String indexName) {
         // 构建更新请求参数
-        UpdateRequest updateRequest = buildUpdateRequest(entity, idValue, indexName);
-        Optional.ofNullable(routing).ifPresent(updateRequest::routing);
-        updateRequest.setRefreshPolicy(getRefreshPolicy());
+        UpdateRequest<T, T> updateRequest = buildUpdateRequest(entity, idValue, indexName)
+                .routing(routing)
+                .refresh(getRefreshPolicy())
+                .build();
+
+        PrintUtils.printDsl(updateRequest, client);
 
         // 执行更新
         try {
-            UpdateResponse updateResponse = client.update(updateRequest, getRequestOptions());
-            if (Objects.equals(updateResponse.status(), RestStatus.OK)) {
+            UpdateResponse<T> updateResponse = client.withTransportOptions(getTransportOptions()).update(updateRequest, entityClass);
+            if (Objects.equals(updateResponse.result(), Result.Updated)) {
                 return BaseEsConstants.ONE;
             }
         } catch (IOException e) {
@@ -838,29 +875,6 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
 
         return BaseEsConstants.ZERO;
-    }
-
-    /**
-     * 执行根据id批量更新
-     *
-     * @param entityList 更新数据列表
-     * @param routing    路由
-     * @param indexName  索引名
-     * @return 总成功条数
-     */
-    private Integer doUpdateBatchByIds(Collection<T> entityList, String routing, String indexName) {
-        // 封装批量请求参数
-        BulkRequest bulkRequest = new BulkRequest();
-        Optional.ofNullable(routing).ifPresent(bulkRequest::routing);
-        bulkRequest.setRefreshPolicy(getRefreshPolicy());
-        entityList.forEach(entity -> {
-            String idValue = getIdValue(entity);
-            UpdateRequest updateRequest = buildUpdateRequest(entity, idValue, indexName);
-            bulkRequest.add(updateRequest);
-        });
-
-        // 执行批量请求
-        return doBulkRequest(bulkRequest, getRequestOptions());
     }
 
     /**
@@ -879,32 +893,63 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
 
         // 获取更新文档内容
-        String jsonData = Optional.ofNullable(entity)
-                .map(this::buildJsonIndexSource)
-                .orElseGet(() -> buildJsonDoc(updateWrapper));
+        T update = entity == null ? buildUpdateDoc(updateWrapper) : entity;
+
+        List<BulkOperation> operations = new ArrayList<>();
+        for (T item : list) {
+            BulkOperation operation = BulkOperation.of(a -> a.update(b -> b
+                    .index(indexName)
+                    .routing(updateWrapper.routing)
+                    .id(getId(item))
+                    .action(c -> c.doc(update))
+            ));
+            operations.add(operation);
+        }
 
         // 批量更新
-        BulkRequest bulkRequest = new BulkRequest();
-        Optional.ofNullable(updateWrapper.routing).ifPresent(bulkRequest::routing);
-        bulkRequest.setRefreshPolicy(getRefreshPolicy());
-        Method getId = BaseCache.getterMethod(entityClass, getRealIdFieldName());
-        list.forEach(item -> {
-            UpdateRequest updateRequest = new UpdateRequest();
-            try {
-                Object invoke = getId.invoke(item);
-                Optional.ofNullable(invoke).ifPresent(id -> updateRequest.id(id.toString()));
-            } catch (Exception e) {
-                throw ExceptionUtils.eee("update exception", e);
-            }
-            updateRequest.index(indexName);
-            updateRequest.doc(jsonData, XContentType.JSON);
-            Optional.ofNullable(updateWrapper.routing).ifPresent(updateRequest::routing);
-
-            bulkRequest.add(updateRequest);
-        });
-        return doBulkRequest(bulkRequest, getRequestOptions());
+        BulkRequest bulkRequest = BulkRequest.of(a -> a
+                .routing(updateWrapper.routing)
+                .refresh(getRefreshPolicy())
+                .operations(operations)
+        );
+        return doBulkRequest(bulkRequest, Result.Updated.jsonValue());
     }
 
+    /**
+     * 执行根据id批量更新
+     *
+     * @param entityList 更新数据列表
+     * @param routing    路由
+     * @param indexName  索引名
+     * @return 总成功条数
+     */
+    private Integer doUpdateBatchByIds(Collection<T> entityList, String routing, String indexName) {
+        // 封装批量请求参数
+        List<BulkOperation> operations = new ArrayList<>();
+        entityList.forEach(e -> {
+            String idValue = getIdValue(e);
+            UpdateRequest<T, T> updateRequest = buildUpdateRequest(e, idValue, indexName).build();
+            BulkOperation operation = BulkOperation.of(a ->
+                    a.update(b -> b
+                            .id(updateRequest.id())
+                            .ifPrimaryTerm(updateRequest.ifPrimaryTerm())
+                            .ifSeqNo(updateRequest.ifSeqNo())
+                            .index(updateRequest.index())
+                            .requireAlias(updateRequest.requireAlias())
+                            .retryOnConflict(updateRequest.retryOnConflict())
+                            .routing(updateRequest.routing())
+                    ));
+            operations.add(operation);
+        });
+
+        BulkRequest request = BulkRequest.of(a -> a
+                .routing(routing)
+                .refresh(getRefreshPolicy())
+                .operations(operations)
+        );
+
+        return doBulkRequest(request, Result.Updated.jsonValue());
+    }
 
     /**
      * 执行根据id批量查询
@@ -916,22 +961,22 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     private List<T> doSelectBatchIds(Collection<? extends Serializable> idList, String routing, String indexName) {
         // 构造查询参数
-        List<String> stringIdList = idList.stream().map(Object::toString).collect(Collectors.toList());
-        SearchRequest searchRequest = new SearchRequest(getIndexNames(indexName));
-        Optional.ofNullable(routing).ifPresent(searchRequest::routing);
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-        sourceBuilder.query(QueryBuilders.termsQuery(DEFAULT_ES_ID_NAME, stringIdList));
-        sourceBuilder.size(idList.size());
-        searchRequest.source(sourceBuilder);
+        List<String> ids = idList.stream().map(Object::toString).collect(Collectors.toList());
+        SearchRequest searchRequest = new SearchRequest.Builder()
+                .index(WrapperProcessor.getIndexName(entityClass, indexName))
+                .routing(routing)
+                .query(QueryBuilders.ids().values(ids).build()._toQuery())
+                .size(idList.size())
+                .build();
 
         // 请求es获取数据
-        SearchHit[] searchHitArray = getSearchHitArray(searchRequest);
-        if (ArrayUtils.isEmpty(searchHitArray)) {
+        List<Hit<T>> searchHits = getSearchHits(searchRequest);
+        if (CollectionUtils.isEmpty(searchHits)) {
             return Collections.emptyList();
         }
 
         // 批量解析数据
-        return Arrays.stream(searchHitArray)
+        return searchHits.stream()
                 .map(this::parseOne)
                 .collect(Collectors.toList());
     }
@@ -946,57 +991,19 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     private T doSelectById(Serializable id, String routing, String indexName) {
         // 构造查询参数
-        SearchRequest searchRequest = new SearchRequest(indexName);
-        Optional.ofNullable(routing).ifPresent(searchRequest::routing);
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.termQuery(DEFAULT_ES_ID_NAME, id));
-        searchRequest.source(searchSourceBuilder);
-
+        SearchRequest searchRequest = new SearchRequest.Builder()
+                .index(indexName)
+                .routing(routing)
+                .query(QueryBuilders.ids().values(id.toString()).build()._toQuery())
+                .build();
         // 请求es获取数据
-        SearchHit[] searchHits = getSearchHitArray(searchRequest);
-        if (ArrayUtils.isEmpty(searchHits)) {
+        List<Hit<T>> searchHits = getSearchHits(searchRequest);
+        if (CollectionUtils.isEmpty(searchHits)) {
             return null;
         }
 
         // 解析数据并返回
-        return parseOne(searchHits[0]);
-    }
-
-
-    /**
-     * 获取es查询结果返回体
-     *
-     * @param wrapper     条件
-     * @param searchAfter searchAfter参数
-     * @return es返回体
-     */
-    private SearchResponse getSearchResponse(Wrapper<T> wrapper, Object[] searchAfter) {
-        // 构建es restHighLevelClient 查询参数
-        SearchRequest searchRequest = new SearchRequest(getIndexNames(wrapper.indexNames));
-        Optional.ofNullable(wrapper.routing).ifPresent(searchRequest::routing);
-        Optional.ofNullable(wrapper.preference).ifPresent(searchRequest::preference);
-
-        // 用户在wrapper中指定的混合查询条件优先级最高
-        SearchSourceBuilder searchSourceBuilder = Optional.ofNullable(wrapper.searchSourceBuilder)
-                .map(builder -> {
-                    // 兼容混合查询时用户在分页中自定义的分页参数
-                    Optional.ofNullable(wrapper.from).ifPresent(builder::from);
-                    Optional.ofNullable(wrapper.size).ifPresent(builder::size);
-                    return builder;
-                }).orElseGet(() -> WrapperProcessor.buildSearchSourceBuilder(wrapper, entityClass));
-        searchRequest.source(searchSourceBuilder);
-        Optional.ofNullable(searchAfter).ifPresent(searchSourceBuilder::searchAfter);
-        printDSL(searchRequest);
-
-        // 执行查询
-        SearchResponse response;
-        try {
-            response = client.search(searchRequest, getRequestOptions());
-        } catch (IOException e) {
-            throw ExceptionUtils.eee("search exception", e);
-        }
-        printResponseErrors(response);
-        return response;
+        return parseOne(searchHits.get(0));
     }
 
 
@@ -1007,14 +1014,51 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param indexName 索引名
      * @return DelRequest
      */
-    private DeleteRequest generateDelRequest(Serializable id, String indexName) {
+    private DeleteRequest.Builder generateDelRequest(Serializable id, String indexName) {
         if (Objects.isNull(id) || StringUtils.isEmpty(id.toString())) {
             throw ExceptionUtils.eee("id must not be null or empty");
         }
-        DeleteRequest deleteRequest = new DeleteRequest();
-        deleteRequest.id(id.toString());
-        deleteRequest.index(indexName);
-        return deleteRequest;
+        return new DeleteRequest.Builder()
+                .id(id.toString())
+                .index(indexName);
+    }
+
+    /**
+     * 获取es查询结果返回体
+     *
+     * @param wrapper         条件
+     * @param searchAfter     searchAfter参数
+     * @param needSearchAfter 是否需要searchAfter
+     * @return es返回体
+     */
+    private SearchResponse<T> getSearchResponse(Wrapper<T> wrapper, List<FieldValue> searchAfter, boolean needSearchAfter) {
+        // 用户在wrapper中指定的混合查询条件优先级最高
+        SearchRequest.Builder builder = Optional.ofNullable(wrapper.searchBuilder)
+                .orElse(WrapperProcessor.buildSearchBuilder(wrapper, entityClass))
+                .index(WrapperProcessor.getIndexName(entityClass, wrapper.indexNames))
+                .routing(wrapper.routing)
+                .preference(wrapper.preference);
+
+        if (needSearchAfter && CollectionUtils.isNotEmpty(searchAfter)) {
+            builder.searchAfter(searchAfter);
+        }
+
+        SearchRequest searchRequest = builder.build();
+
+        // searchAfter必须要进行排序，不排序无法进行分页
+        if (needSearchAfter && searchRequest.sort().isEmpty()) {
+            throw ExceptionUtils.eee("searchAfter必须要进行排序");
+        }
+        PrintUtils.printDsl(searchRequest, client);
+
+        try {
+            // 执行查询
+            SearchResponse<T> response = client.withTransportOptions(getTransportOptions()).search(searchRequest, entityClass);
+            printResponseErrors(response);
+            return response;
+        } catch (Exception e) {
+            throw ExceptionUtils.eee("search exception", e);
+        }
     }
 
     /**
@@ -1026,85 +1070,43 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     private List<T> selectListByUpdateWrapper(Wrapper<T> wrapper, String indexName) {
         // 构建查询条件
-        SearchRequest searchRequest = new SearchRequest(indexName);
-        Optional.ofNullable(wrapper.routing).ifPresent(searchRequest::routing);
-        Optional.ofNullable(wrapper.preference).ifPresent(searchRequest::preference);
-        SearchSourceBuilder searchSourceBuilder;
-        if (Objects.isNull(wrapper.searchSourceBuilder)) {
-            searchSourceBuilder = new SearchSourceBuilder();
-            // 只查id列,节省内存
-            String[] includes = {DEFAULT_ES_ID_NAME};
-            EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
+        SearchRequest.Builder builder = new SearchRequest.Builder()
+                .index(indexName)
+                .routing(wrapper.routing)
+                .preference(wrapper.preference);
 
-            searchSourceBuilder.fetchSource(includes, null);
-            searchSourceBuilder.trackTotalHits(true);
-            int size = Optional.ofNullable(entityInfo)
-                    .map(EntityInfo::getMaxResultWindow)
-                    .orElse(GlobalConfigCache.getGlobalConfig().getDbConfig().getBatchUpdateThreshold());
-            searchSourceBuilder.size(size);
-            BoolQueryBuilder boolQueryBuilder = WrapperProcessor.initBoolQueryBuilder(wrapper.paramQueue, entityClass);
-            searchSourceBuilder.query(boolQueryBuilder);
+        if (!Objects.isNull(wrapper.searchBuilder)) {
+            builder.query(wrapper.searchBuilder.build().query());
         } else {
-            // 用户在wrapper中指定的混合查询条件优先级最高
-            searchSourceBuilder = wrapper.searchSourceBuilder;
+            EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
+            if (entityInfo == null) {
+                throw ExceptionUtils.eee("entityClass must not be null or empty");
+            }
+            Integer batchUpdateThreshold = GlobalConfigCache.getGlobalConfig().getDbConfig().getBatchUpdateThreshold();
+            int maxResultWindow = entityInfo.getMaxResultWindow();
+            int size = batchUpdateThreshold > maxResultWindow ? maxResultWindow : batchUpdateThreshold;
+            builder
+                    // 只查id列,节省内存
+                    .source(a -> a.filter(b -> b.includes(entityInfo.getKeyProperty())))
+                    .trackTotalHits(a -> a.enabled(true))
+                    .query(WrapperProcessor.initBoolQueryBuilder(wrapper.paramQueue, entityClass).build()._toQuery())
+                    .size(size)
+            ;
         }
-        searchRequest.source(searchSourceBuilder);
-        printDSL(searchRequest);
+
+        SearchRequest searchRequest = builder.build();
+        PrintUtils.printDsl(searchRequest, client);
         try {
             // 查询数据明细
-            SearchResponse response = client.search(searchRequest, getRequestOptions());
+            SearchResponse<T> response = client.withTransportOptions(getTransportOptions()).search(searchRequest, entityClass);
             printResponseErrors(response);
-            SearchHit[] searchHits = parseSearchHitArray(response);
-            return Arrays.stream(searchHits)
+            List<Hit<T>> searchHits = parseSearchHitArray(response);
+            return searchHits.stream()
                     .map(this::parseOne)
                     .collect(Collectors.toList());
         } catch (IOException e) {
             throw ExceptionUtils.eee("selectIdList exception", e);
         }
-    }
-
-    /**
-     * 构建创建数据请求参数
-     *
-     * @param entity    实体
-     * @param routing   路由
-     * @param parentId  父id
-     * @param indexName 索引名
-     * @return es请求参数
-     */
-    private IndexRequest buildIndexRequest(T entity, String routing, String parentId, String indexName) {
-        IndexRequest indexRequest = new IndexRequest();
-
-        // id预处理,除下述情况,其它情况使用es默认的id
-        EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
-
-        if (IdType.UUID.equals(entityInfo.getIdType())) {
-            indexRequest.id(UUID.randomUUID().toString());
-        } else if (IdType.CUSTOMIZE.equals(entityInfo.getIdType())) {
-            indexRequest.id(getIdValue(entity));
-        }
-
-        // 构建插入的json格式数据
-        String jsonData = buildJsonIndexSource(entity);
-
-        // 针对父子类型-追加joinField信息
-        if (StringUtils.isNotBlank(entityInfo.getJoinAlias())) {
-            JSONObject jsonObject = JSON.parseObject(jsonData);
-            JoinField joinField = new JoinField();
-            joinField.setName(entityInfo.getJoinAlias());
-            if (entityInfo.isChild()) {
-                // 子类型,需要追加父
-                joinField.setParent(parentId);
-            }
-            jsonObject.put(entityInfo.getJoinFieldName(), joinField);
-            jsonData = jsonObject.toJSONString();
-        }
-
-        Optional.ofNullable(routing).ifPresent(indexRequest::routing);
-        indexRequest.index(indexName);
-        indexRequest.source(jsonData, XContentType.JSON);
-
-        return indexRequest;
     }
 
     /**
@@ -1115,13 +1117,11 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param indexName 索引名
      * @return 更新请求参数
      */
-    private UpdateRequest buildUpdateRequest(T entity, String idValue, String indexName) {
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.id(idValue);
-        updateRequest.index(indexName);
-        String jsonData = buildJsonIndexSource(entity);
-        updateRequest.doc(jsonData, XContentType.JSON);
-        return updateRequest;
+    private UpdateRequest.Builder<T, T> buildUpdateRequest(T entity, String idValue, String indexName) {
+        return new UpdateRequest.Builder<T, T>()
+                .id(idValue)
+                .index(indexName)
+                .doc(entity);
     }
 
     /**
@@ -1131,18 +1131,18 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param distinct 是否去重统计
      * @return 总数
      */
-    private long parseCount(SearchResponse response, boolean distinct) {
+    private long parseCount(SearchResponse<T> response, boolean distinct) {
         AtomicLong repeatNum = new AtomicLong(0);
         if (distinct) {
-            Optional.ofNullable(response.getAggregations())
+            Optional.ofNullable(response.aggregations())
                     .ifPresent(aggregations -> {
-                        ParsedCardinality parsedCardinality = aggregations.get(BaseEsConstants.REPEAT_NUM_KEY);
-                        Optional.ofNullable(parsedCardinality).ifPresent(p -> repeatNum.getAndAdd(p.getValue()));
+                        Aggregate parsedCardinality = aggregations.get(REPEAT_NUM_KEY);
+                        Optional.ofNullable(parsedCardinality).ifPresent(p -> repeatNum.getAndAdd(p.cardinality().value()));
                     });
         } else {
-            Optional.ofNullable(response.getHits())
-                    .flatMap(searchHits -> Optional.ofNullable(searchHits.getTotalHits()))
-                    .ifPresent(totalHits -> repeatNum.getAndAdd(totalHits.value));
+            Optional.ofNullable(response.hits())
+                    .flatMap(searchHits -> Optional.ofNullable(searchHits.total()))
+                    .ifPresent(totalHits -> repeatNum.getAndAdd(totalHits.value()));
         }
         return repeatNum.get();
     }
@@ -1153,18 +1153,18 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param searchHit es返回数据
      * @return 实际想要的数据
      */
-    private T parseOne(SearchHit searchHit) {
+    private T parseOne(Hit<T> searchHit) {
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
-        T entity = JSON.parseObject(searchHit.getSourceAsString(), entityClass, entityInfo.getExtraProcessor());
+        T entity = searchHit.source();
 
         // id字段处理
-        setId(entity, searchHit.getId());
+        setId(entity, searchHit.id());
 
         // 得分字段处理
-        setScore(entity, searchHit.getScore(), entityInfo);
+        setScore(entity, searchHit.score(), entityInfo);
 
         // 距离字段处理
-        setDistance(entity, searchHit.getSortValues(), entityInfo);
+        setDistance(entity, searchHit.sort(), entityInfo);
 
         return entity;
     }
@@ -1176,35 +1176,35 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param wrapper   参数包装类
      * @return 实际想要的数据
      */
-    private T parseOne(SearchHit searchHit, Wrapper<T> wrapper) {
+    private T parseOne(Hit<T> searchHit, Wrapper<T> wrapper) {
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
 
         // 解析json
-        T entity = JSON.parseObject(searchHit.getSourceAsString(), entityClass, entityInfo.getExtraProcessor());
+        T entity = searchHit.source();
 
         // 主类中高亮字段处理
-        Map<String, HighlightField> highlightFields = searchHit.getHighlightFields();
+        Map<String, List<String>> highlightFields = searchHit.highlight();
         if (CollectionUtils.isNotEmpty(entityInfo.getHighlightParams()) && CollectionUtils.isNotEmpty(highlightFields)) {
             Map<String, String> highlightFieldMap = getHighlightFieldMap();
             highlightFields.forEach((key, value) -> {
-                String highLightValue = Arrays.stream(value.getFragments()).map(Text::string).collect(Collectors.joining());
+                String highLightValue = String.join("", value);
                 setHighlightValue(entity, highlightFieldMap.get(key), highLightValue);
             });
         }
 
         // 嵌套类中的高亮处理
-        setInnerHighlight(searchHit, entity, entityInfo.getNestedHighlightFieldMap());
+        setInnerHighlight(searchHit, entity, entityInfo.getNestedOrObjectHighlightFieldMap());
 
         // 得分字段处理
-        setScore(entity, searchHit.getScore(), entityInfo);
+        setScore(entity, searchHit.score(), entityInfo);
 
         // 距离字段处理
-        setDistance(entity, searchHit.getSortValues(), entityInfo, wrapper.baseSortParams);
+        setDistance(entity, searchHit.sort(), entityInfo, wrapper.baseSortParams);
 
         // id处理
         boolean includeId = WrapperProcessor.includeId(getRealIdFieldName(), wrapper);
         if (includeId) {
-            setId(entity, searchHit.getId());
+            setId(entity, searchHit.id());
         }
 
         return entity;
@@ -1218,28 +1218,28 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param root                    主实体对象
      * @param nestedHighlightFieldMap 字段缓存
      */
-    private void setInnerHighlight(SearchHit searchHit, T root, Map<Class<?>, Map<String, String>> nestedHighlightFieldMap) {
+    private void setInnerHighlight(Hit<T> searchHit, T root, Map<Class<?>, Map<String, String>> nestedHighlightFieldMap) {
         // 遍历innerHits 批量设置
-        if (CollectionUtils.isEmpty(searchHit.getInnerHits())) {
+        if (CollectionUtils.isEmpty(searchHit.innerHits())) {
             return;
         }
-        searchHit.getInnerHits()
+        searchHit.innerHits()
                 .forEach((k, v) -> {
-                    SearchHit[] hits = v.getHits();
-                    Arrays.stream(hits).forEach(hit -> {
-                        SearchHit.NestedIdentity nestedIdentity = hit.getNestedIdentity();
-                        Map<String, HighlightField> highlightFields = hit.getHighlightFields();
+                    List<Hit<JsonData>> hits = v.hits().hits();
+                    hits.forEach(hit -> {
+                        NestedIdentity nestedIdentity = hit.nested();
+                        Map<String, List<String>> highlightFields = hit.highlight();
                         if (CollectionUtils.isNotEmpty(highlightFields) && nestedIdentity != null) {
                             highlightFields.forEach((k1, v1) -> {
-                                String highLightContent = Arrays.stream(v1.getFragments()).map(Text::string).collect(Collectors.joining());
-                                SearchHit.NestedIdentity tmpNestedIdentity = nestedIdentity;
+                                String highLightContent = String.join("", v1);
+                                NestedIdentity tmpNestedIdentity = nestedIdentity;
                                 List<String> pathList = new ArrayList<>();
                                 while (tmpNestedIdentity != null) {
-                                    Optional.ofNullable(tmpNestedIdentity.getField()).ifPresent(field -> pathList.add(field.toString()));
-                                    tmpNestedIdentity = tmpNestedIdentity.getChild();
+                                    Optional.ofNullable(tmpNestedIdentity.field()).ifPresent(pathList::add);
+                                    tmpNestedIdentity = tmpNestedIdentity.nested();
                                 }
                                 String highLightField = k1.replace(String.join(STR_SIGN, pathList) + STR_SIGN, EMPTY_STR);
-                                processInnerHighlight(nestedIdentity.getField().string(), root, nestedIdentity,
+                                processInnerHighlight(nestedIdentity.field(), root, nestedIdentity,
                                         highLightField, highLightContent, nestedHighlightFieldMap);
                             });
                         }
@@ -1251,39 +1251,39 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * 递归处理嵌套类中的高亮
      *
      * @param path                    嵌套类路径
-     * @param root
+     * @param root                    根
      * @param nestedIdentity          嵌套路径
      * @param highlightField          高亮字段
      * @param highlightContent        高亮内容
      * @param nestedHighlightFieldMap 字段缓存
      */
-    private void processInnerHighlight(String path, Object root, SearchHit.NestedIdentity nestedIdentity, String highlightField,
+    private void processInnerHighlight(String path, Object root, NestedIdentity nestedIdentity, String highlightField,
                                        String highlightContent, Map<Class<?>, Map<String, String>> nestedHighlightFieldMap) {
         // 反射, 获取嵌套对象
-        Method method = BaseCache.getterMethod(root.getClass(), nestedIdentity.getField().string());
+        Method method = BaseCache.getterMethod(root.getClass(), nestedIdentity.field());
         Object invoke = null;
         try {
             invoke = method.invoke(root);
         } catch (Throwable e) {
             e.printStackTrace();
             LogUtils.error("processInnerHighlight invoke error, class:%s,methodName:%s",
-                    root.getClass().getSimpleName(), nestedIdentity.getField().string());
+                    root.getClass().getSimpleName(), nestedIdentity.field());
         }
 
         // 嵌套对象为容器的情况
-        if (invoke instanceof Collection) {
+        if (invoke instanceof Collection<?>) {
             Collection<?> coll = (Collection<?>) invoke;
             Iterator<?> iterator = coll.iterator();
             int i = 0;
             while (iterator.hasNext()) {
                 Object next = iterator.next();
                 // 不在nestedIdentity中的项无需处理
-                if (i == nestedIdentity.getOffset()) {
-                    if (path.equals(nestedIdentity.getField().string())) {
-                        final SearchHit.NestedIdentity child = nestedIdentity.getChild();
+                if (i == nestedIdentity.offset()) {
+                    if (path.equals(nestedIdentity.field())) {
+                        final NestedIdentity child = nestedIdentity.nested();
                         if (child != null) {
                             // 递归 对子项执行相同操作
-                            processInnerHighlight(child.getField().string(), next, child, highlightField, highlightContent, nestedHighlightFieldMap);
+                            processInnerHighlight(child.field(), next, child, highlightField, highlightContent, nestedHighlightFieldMap);
                         } else {
                             // 已找到需要被高亮的叶子节点
                             String realHighlightField = Optional.ofNullable(nestedHighlightFieldMap.get(next.getClass()))
@@ -1305,7 +1305,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
         }
     }
 
-    private void setDistance(T entity, Object[] sortValues, EntityInfo entityInfo) {
+    private void setDistance(T entity, List<FieldValue> sortValues, EntityInfo entityInfo) {
         setDistance(entity, sortValues, entityInfo, null);
     }
 
@@ -1317,27 +1317,24 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param entityInfo     实体信息
      * @param baseSortParams 用户输入的排序参数
      */
-    private void setDistance(T entity, Object[] sortValues, EntityInfo entityInfo, List<BaseSortParam> baseSortParams) {
+    private void setDistance(T entity, List<FieldValue> sortValues, EntityInfo entityInfo, List<BaseSortParam> baseSortParams) {
         List<String> distanceFields = entityInfo.getDistanceFields();
-        if (CollectionUtils.isEmpty(distanceFields) || ArrayUtils.isEmpty(sortValues) || CollectionUtils.isEmpty(baseSortParams)) {
+        if (CollectionUtils.isEmpty(distanceFields) || CollectionUtils.isEmpty(sortValues) || CollectionUtils.isEmpty(baseSortParams)) {
             return;
         }
 
         // 按排序器顺序封装排序字段值
-        for (int i = 0, geoFieldIndex = 0; i < sortValues.length; i++, geoFieldIndex++) {
+        for (int i = 0, geoFieldIndex = 0; i < sortValues.size(); i++, geoFieldIndex++) {
             if (OrderTypeEnum.GEO != baseSortParams.get(i).getOrderTypeEnum()) {
                 // 当前sortValue不是地理位置的排序值，geoFieldIndex不需要变动
                 geoFieldIndex--;
                 continue;
             }
-            Object sortValue = sortValues[i];
-            if (!(sortValue instanceof Double)) {
+            FieldValue sortValue = sortValues.get(i);
+            if (sortValue == null || sortValue._get() == null) {
                 continue;
             }
-            double distance = (double) sortValue;
-            if (Double.isNaN(distance)) {
-                continue;
-            }
+            double distance = (double)sortValue._get();
             Integer distanceDecimalPlaces = entityInfo.getDistanceDecimalPlaces().get(geoFieldIndex);
             if (distanceDecimalPlaces > ZERO) {
                 distance = NumericUtils.setDecimalPlaces(distance, distanceDecimalPlaces);
@@ -1347,7 +1344,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
                 invokeMethod.invoke(entity, distance);
             } catch (Throwable e) {
                 // 遇到异常只提示, 不阻断流程 distance未设置不影核心业务
-                LogUtils.formatError("set distance error, entity:%s,sortValues:%s,distanceField:%s,e:%s", entity, JSON.toJSONString(sortValues), distanceFields, e);
+                LogUtils.formatError("set distance error, entity:%s,sortValues:%s,distanceField:%s,e:%s", entity, JsonUtils.toJsonStr(sortValues), distanceFields, e);
             }
         }
     }
@@ -1359,9 +1356,9 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param score      得分
      * @param entityInfo 实体信息
      */
-    private void setScore(T entity, float score, EntityInfo entityInfo) {
+    private void setScore(T entity, Double score, EntityInfo entityInfo) {
         String scoreField = entityInfo.getScoreField();
-        if (Objects.isNull(scoreField) || Float.isNaN(score)) {
+        if (Objects.isNull(scoreField) || Objects.isNull(score)) {
             return;
         }
 
@@ -1384,8 +1381,44 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param wrapper 条件
      * @return 搜索响应体
      */
-    private SearchResponse getSearchResponse(Wrapper<T> wrapper) {
+    private SearchResponse<T> getSearchResponse(Wrapper<T> wrapper) {
         return search(wrapper);
+    }
+
+    /**
+     * 构建创建数据请求参数
+     *
+     * @param entity    实体
+     * @param routing   路由
+     * @param parentId  父id
+     * @param indexName 索引名
+     * @return es请求参数
+     */
+    private IndexRequest.Builder<T> buildIndexRequest(T entity, String routing, String parentId, String indexName) {
+        IndexRequest.Builder<T> indexRequest = new IndexRequest.Builder<T>()
+                .routing(routing)
+                .index(indexName)
+                .document(entity);
+
+        // id预处理,除下述情况,其它情况使用es默认的id
+        EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
+
+        if (IdType.UUID.equals(entityInfo.getIdType())) {
+            indexRequest.id(UUID.randomUUID().toString());
+        } else if (IdType.CUSTOMIZE.equals(entityInfo.getIdType())) {
+            indexRequest.id(getIdValue(entity));
+        }
+
+        // 针对父子类型-追加joinField信息
+        if (StringUtils.isNotBlank(entityInfo.getJoinAlias())) {
+            if (!(entity instanceof BaseJoin)) {
+                throw ExceptionUtils.eee("实体类" + entityClass.getName() + "必须继承BaseJoin实现Join功能");
+            }
+            BaseJoin b = (BaseJoin) entity;
+            b.addJoinField(entityInfo.getJoinFieldName(), entityInfo.getJoinAlias(), entityInfo.isChild() ? parentId : null);
+        }
+
+        return indexRequest;
     }
 
     /**
@@ -1394,95 +1427,16 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param searchRequest 请求参数
      * @return searchHit数组
      */
-    private SearchHit[] getSearchHitArray(SearchRequest searchRequest) {
-        printDSL(searchRequest);
-        SearchResponse response;
+    private List<Hit<T>> getSearchHits(SearchRequest searchRequest) {
+        PrintUtils.printDsl(searchRequest, client);
+        SearchResponse<T> response;
         try {
-            response = client.search(searchRequest, getRequestOptions());
+            response = client.withTransportOptions(getTransportOptions()).search(searchRequest, entityClass);
         } catch (IOException e) {
             throw ExceptionUtils.eee("getSearchHitArray exception,searchRequest:%s", e, searchRequest.toString());
         }
         printResponseErrors(response);
         return parseSearchHitArray(response);
-    }
-
-
-    /**
-     * 从es中请求获取searchHit数组
-     *
-     * @param wrapper 参数包装类
-     * @return searchHit数组
-     */
-    private SearchHit[] getSearchHitArray(Wrapper<T> wrapper) {
-        SearchRequest searchRequest = new SearchRequest(getIndexNames(wrapper.indexNames));
-        Optional.ofNullable(wrapper.routing).ifPresent(searchRequest::routing);
-        Optional.ofNullable(wrapper.preference).ifPresent(searchRequest::preference);
-
-        // 用户在wrapper中指定的混合查询条件优先级最高
-        SearchSourceBuilder searchSourceBuilder = Objects.isNull(wrapper.searchSourceBuilder) ?
-                WrapperProcessor.buildSearchSourceBuilder(wrapper, entityClass) : wrapper.searchSourceBuilder;
-        searchRequest.source(searchSourceBuilder);
-        printDSL(searchRequest);
-        SearchResponse response;
-        try {
-            response = client.search(searchRequest, getRequestOptions());
-        } catch (IOException e) {
-            throw ExceptionUtils.eee("getSearchHitArray IOException, searchRequest:%s", e, searchRequest.toString());
-        }
-        printResponseErrors(response);
-        return parseSearchHitArray(response);
-    }
-
-    /**
-     * 构建,插入/更新 的JSON对象
-     *
-     * @param entity 实体
-     * @return json
-     */
-    private String buildJsonIndexSource(T entity) {
-        // 获取当前类所有字段列表
-        // 根据字段配置的策略 决定是否加入到实际es处理字段中
-        EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
-        List<EntityFieldInfo> fieldList = entityInfo.getFieldList();
-        Set<String> excludeColumn = new HashSet<>();
-        fieldList.forEach(field -> {
-            String column = field.getColumn();
-            Method invokeMethod = BaseCache.getterMethod(entityClass, column);
-            Object invoke;
-            FieldStrategy fieldStrategy = field.getFieldStrategy();
-            try {
-                if (FieldStrategy.NOT_NULL.equals(fieldStrategy)) {
-                    invoke = invokeMethod.invoke(entity);
-                    if (Objects.isNull(invoke)) {
-                        excludeColumn.add(column);
-                    }
-                } else if (FieldStrategy.NOT_EMPTY.equals(fieldStrategy)) {
-                    invoke = invokeMethod.invoke(entity);
-                    if (Objects.isNull(invoke)) {
-                        excludeColumn.add(column);
-                    } else {
-                        if (invoke instanceof String) {
-                            String strValue = (String) invoke;
-                            if (StringUtils.isEmpty(strValue)) {
-                                excludeColumn.add(column);
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                throw ExceptionUtils.eee("buildJsonIndexSource exception, entity:%s", e, entity.toString());
-            }
-        });
-
-        // 字段过滤器
-        List<SerializeFilter> serializeFilters = new ArrayList<>();
-        Optional.ofNullable(entityInfo.getClassSimplePropertyPreFilterMap().get(entityClass))
-                .ifPresent(serializeFilters::addAll);
-
-        // 主类中的字段策略过滤
-        SimplePropertyPreFilter simplePropertyPreFilter = FastJsonUtils.getSimplePropertyPreFilter(entity.getClass(), excludeColumn);
-        Optional.ofNullable(simplePropertyPreFilter).ifPresent(serializeFilters::add);
-        return JSON.toJSONString(entity, serializeFilters.toArray(new SerializeFilter[0]), SerializerFeature.WriteMapNullValue);
     }
 
     /**
@@ -1491,74 +1445,66 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param updateWrapper 条件
      * @return json
      */
-    private String buildJsonDoc(Wrapper<T> updateWrapper) {
-        List<EsUpdateParam> updateParamList = updateWrapper.updateParamList;
-        JSONObject jsonObject = new JSONObject();
-
-        updateParamList.forEach(esUpdateParam -> {
-            String realField = FieldUtils.getRealFieldNotConvertId(esUpdateParam.getField(),
-                    EntityInfoHelper.getEntityInfo(entityClass).getMappingColumnMap(),
-                    GlobalConfigCache.getGlobalConfig().getDbConfig().isMapUnderscoreToCamelCase());
-            jsonObject.put(realField, esUpdateParam.getValue());
-        });
-        return JSON.toJSONString(jsonObject, SerializerFeature.WriteMapNullValue);
+    private T buildUpdateDoc(Wrapper<T> updateWrapper) {
+        try {
+            T t = entityClass.getDeclaredConstructor().newInstance();
+            for (EsUpdateParam param : updateWrapper.updateParamList) {
+                BaseCache.setterInvoke(entityClass, param.getField(), t, param.getValue());
+            }
+            return t;
+        } catch (Exception e) {
+            throw ExceptionUtils.eee("buildUpdateDoc Exception, updateWrapper:%s", e, updateWrapper.toString());
+        }
     }
 
     /**
      * 执行bulk请求,并返回成功个数
      *
-     * @param bulkRequest    批量请求参数
-     * @param requestOptions 类型
+     * @param bulkRequest 批量请求参数
      * @return 成功个数
      */
-    private int doBulkRequest(BulkRequest bulkRequest, RequestOptions requestOptions) {
-        int totalSuccess = 0;
+    private Integer doBulkRequest(BulkRequest bulkRequest, String successResult) {
+        PrintUtils.printDsl(bulkRequest, client);
         try {
-            BulkResponse bulkResponse = client.bulk(bulkRequest, requestOptions);
-            if (bulkResponse.hasFailures()) {
-                LogUtils.error(bulkResponse.buildFailureMessage());
+            BulkResponse bulkResponse = client.withTransportOptions(getTransportOptions()).bulk(bulkRequest);
+            if (bulkResponse.errors()) {
+                LogUtils.error(bulkResponse.toString());
             }
 
-            Iterator<BulkItemResponse> iterator = bulkResponse.iterator();
-            while (iterator.hasNext()) {
-                if (Objects.equals(iterator.next().status(), RestStatus.OK)) {
-                    totalSuccess++;
-                }
-            }
+            return (int) bulkResponse.items().stream()
+                    .filter(item -> Objects.equals(item.result(), successResult))
+                    .count();
         } catch (IOException e) {
-            LogUtils.error("bulk request exception", JSON.toJSONString(e));
+            e.printStackTrace();
+            LogUtils.error("bulk request exception");
+            return 0;
         }
-        return totalSuccess;
     }
 
     /**
-     * 执行bulk创建请求,并返回成功个数,封装id
+     * 从es中请求获取searchHit数组
      *
-     * @param bulkRequest    批量请求参数
-     * @param requestOptions 类型
-     * @param entityList     实体列表
-     * @return 成功个数
+     * @param wrapper 参数包装类
+     * @return searchHit数组
      */
-    private int doBulkRequest(BulkRequest bulkRequest, RequestOptions requestOptions, Collection<T> entityList) {
-        int totalSuccess = 0;
-        try {
-            BulkResponse bulkResponse = client.bulk(bulkRequest, requestOptions);
-            if (bulkResponse.hasFailures()) {
-                LogUtils.error(bulkResponse.buildFailureMessage());
-            }
+    private List<Hit<T>> getSearchHits(Wrapper<T> wrapper) {
+        // 用户在wrapper中指定的混合查询条件优先级最高
+        SearchRequest searchRequest = Optional.ofNullable(wrapper.searchBuilder)
+                .orElse(WrapperProcessor.buildSearchBuilder(wrapper, entityClass))
+                .index(WrapperProcessor.getIndexName(entityClass, wrapper.indexNames))
+                .routing(wrapper.routing)
+                .preference(wrapper.preference)
+                .build();
 
-            Iterator<BulkItemResponse> iterator = bulkResponse.iterator();
-            while (iterator.hasNext()) {
-                BulkItemResponse next = iterator.next();
-                if (Objects.equals(next.status(), RestStatus.CREATED)) {
-                    setId((T) entityList.toArray()[totalSuccess], next.getId());
-                    totalSuccess++;
-                }
-            }
+        PrintUtils.printDsl(searchRequest, client);
+        SearchResponse<T> response;
+        try {
+            response = client.withTransportOptions(getTransportOptions()).search(searchRequest, entityClass);
         } catch (IOException e) {
-            throw ExceptionUtils.eee("bulkRequest exception", e);
+            throw ExceptionUtils.eee("getSearchHitArray IOException, searchRequest:%s", e, searchRequest.toString());
         }
-        return totalSuccess;
+        printResponseErrors(response);
+        return parseSearchHitArray(response);
     }
 
     /**
@@ -1567,42 +1513,11 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * @param searchResponse es返回的响应体
      * @return 响应体中的Hit列表
      */
-    private SearchHit[] parseSearchHitArray(SearchResponse searchResponse) {
+    private List<Hit<T>> parseSearchHitArray(SearchResponse<T> searchResponse) {
         return Optional.ofNullable(searchResponse)
-                .map(SearchResponse::getHits)
-                .map(SearchHits::getHits)
+                .map(SearchResponse::hits)
+                .map(HitsMetadata::hits)
                 .orElseThrow(() -> ExceptionUtils.eee("parseSearchHitArray exception"));
-    }
-
-    /**
-     * 获取兜底索引名称
-     *
-     * @return 索引名称
-     */
-    private String getIndexName(String indexName) {
-        // 优先按wrapper中指定的索引名,若未指定则取当前全局激活的索引名
-        if (StringUtils.isBlank(indexName)) {
-            return EntityInfoHelper.getEntityInfo(entityClass).getIndexName();
-        }
-        return indexName;
-    }
-
-    /**
-     * 获取兜底索引名称数组
-     *
-     * @param indexNames 原始索引名称数组
-     * @return 目标索引名称数组
-     */
-    private String[] getIndexNames(String... indexNames) {
-        // 碰到傻狍子用户锤子索引都没指定, 给个兜底
-        if (ArrayUtils.isEmpty(indexNames)) {
-            return new String[]{EntityInfoHelper.getEntityInfo(entityClass).getIndexName()};
-        }
-
-        // 指定了个空字符串之类的,需要给兜底
-        return Arrays.stream(indexNames)
-                .map(this::getIndexName)
-                .toArray(String[]::new);
     }
 
     /**
@@ -1612,6 +1527,17 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      */
     private String getRealIdFieldName() {
         return EntityInfoHelper.getEntityInfo(entityClass).getKeyProperty();
+    }
+
+    /**
+     * 获取id
+     *
+     * @param obj 实体
+     * @return id
+     */
+    private String getId(Object obj) {
+        Object id = BaseCache.getId(entityClass, obj);
+        return id == null ? null : id.toString();
     }
 
     /**
@@ -1680,34 +1606,6 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     }
 
     /**
-     * 根据全局配置决定是否控制台打印CountDSL语句
-     *
-     * @param countRequest 统计数量查询参数
-     */
-    private void printCountDSL(CountRequest countRequest) {
-        Optional.ofNullable(countRequest.query())
-                .ifPresent(i -> doPrint(i.toString(), countRequest.routing(), countRequest.indices()));
-    }
-
-    /**
-     * 根据全局配置决定是否控制台打印DSL语句
-     *
-     * @param searchRequest es查询请求参数
-     */
-    private void printDSL(SearchRequest searchRequest) {
-        Optional.ofNullable(searchRequest.source())
-                .ifPresent(i -> doPrint(i.toString(), searchRequest.routing(), searchRequest.indices()));
-    }
-
-    private void doPrint(String source, String routing, String[] indices) {
-        GlobalConfig globalConfig = GlobalConfigCache.getGlobalConfig();
-        if (globalConfig.isPrintDsl()) {
-            String prefix = globalConfig.isIKunMode() ? I_KUN_PREFIX : DSL_PREFIX;
-            LogUtils.info(prefix + "\nrouting: " + routing + "\nindex-name: " + String.join(",", indices) + "\nDSL：" + source);
-        }
-    }
-
-    /**
      * 对响应结构进行判断，如果有错误，则抛出异常
      *
      * <p>如下，client方法都需要判定</p>
@@ -1715,11 +1613,11 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      * client.scroll
      * client.explain 等等
      */
-    private void printResponseErrors(SearchResponse searchResponse) {
+    private void printResponseErrors(ResponseBody<T> searchResponse) {
         if (Objects.nonNull(searchResponse)
-                && searchResponse.getShardFailures() != null
-                && searchResponse.getShardFailures().length > ZERO) {
-            String errorMsg = searchResponse.getShardFailures()[0].toString();
+            && searchResponse.shards().failures() != null
+            && searchResponse.shards().failures().size() > ZERO) {
+            String errorMsg = searchResponse.shards().failures().get(0).toString();
             throw ExceptionUtils.eee("search response failed ,failedShards: " + errorMsg);
         }
     }
@@ -1729,10 +1627,17 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      *
      * @return 刷新策略
      */
-    private String getRefreshPolicy() {
+    private Refresh getRefreshPolicy() {
         // 防止傻狍子用户在全局中把刷新策略修改为GLOBAL
         final RefreshPolicy refreshPolicy = Optional.ofNullable(EntityInfoHelper.getEntityInfo(entityClass).getRefreshPolicy()).orElse(RefreshPolicy.NONE);
-        return RefreshPolicy.GLOBAL.equals(refreshPolicy) ? RefreshPolicy.NONE.getValue() : refreshPolicy.getValue();
+        switch (refreshPolicy) {
+            case IMMEDIATE:
+                return Refresh.True;
+            case WAIT_UNTIL:
+                return Refresh.WaitFor;
+            default:
+                return Refresh.False;
+        }
     }
 
     /**
@@ -1740,7 +1645,7 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
      *
      * @return 请求配置
      */
-    private RequestOptions getRequestOptions() {
+    private TransportOptions getTransportOptions() {
         return EntityInfoHelper.getEntityInfo(entityClass).getRequestOptions();
     }
 

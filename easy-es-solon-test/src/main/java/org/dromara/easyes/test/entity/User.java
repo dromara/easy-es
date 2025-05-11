@@ -9,7 +9,6 @@ import org.dromara.easyes.annotation.InnerIndexField;
 import org.dromara.easyes.annotation.MultiIndexField;
 import org.dromara.easyes.annotation.rely.Analyzer;
 import org.dromara.easyes.annotation.rely.FieldType;
-import org.dromara.easyes.test.entity.Faq;
 
 import java.util.Set;
 
@@ -44,7 +43,7 @@ public class User {
     /**
      * 多级嵌套
      */
-    @IndexField(fieldType = FieldType.NESTED, nestedClass = Faq.class)
+    @IndexField(fieldType = FieldType.NESTED, nestedOrObjectClass = Faq.class)
     private Set<Faq> faqs;
     /**
      * 高亮显示的内容

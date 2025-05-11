@@ -1,26 +1,27 @@
 package org.dromara.easyes.solon.register;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.dromara.easyes.annotation.EsDS;
 import org.dromara.easyes.annotation.Intercepts;
 import org.dromara.easyes.common.enums.ProcessIndexStrategyEnum;
 import org.dromara.easyes.common.property.EasyEsProperties;
+import org.dromara.easyes.common.property.GlobalConfig;
+import org.dromara.easyes.common.strategy.AutoProcessIndexStrategy;
 import org.dromara.easyes.common.utils.EEVersionUtils;
+import org.dromara.easyes.common.utils.EsClientUtils;
 import org.dromara.easyes.common.utils.LogUtils;
-import org.dromara.easyes.common.utils.RestHighLevelClientUtils;
 import org.dromara.easyes.common.utils.TypeUtils;
 import org.dromara.easyes.core.biz.EntityInfo;
 import org.dromara.easyes.core.cache.BaseCache;
 import org.dromara.easyes.core.cache.GlobalConfigCache;
-import org.dromara.easyes.common.property.GlobalConfig;
+import org.dromara.easyes.core.cache.JacksonCache;
 import org.dromara.easyes.core.kernel.BaseEsMapper;
 import org.dromara.easyes.core.proxy.EsMapperProxy;
-import org.dromara.easyes.common.strategy.AutoProcessIndexStrategy;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.extension.context.Interceptor;
 import org.dromara.easyes.extension.context.InterceptorChain;
 import org.dromara.easyes.extension.context.InterceptorChainHolder;
 import org.dromara.easyes.solon.factory.IndexStrategyFactory;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.noear.solon.Solon;
 import org.noear.solon.core.AppContext;
 import org.noear.solon.core.BeanBuilder;
@@ -34,7 +35,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.dromara.easyes.common.constants.BaseEsConstants.*;
-import static org.dromara.easyes.common.utils.RestHighLevelClientUtils.DEFAULT_DS;
+import static org.dromara.easyes.common.utils.EsClientUtils.DEFAULT_DS;
 
 /**
  * 注册bean
@@ -117,6 +118,12 @@ public class MapperScannerRegister implements BeanBuilder<EsMapperScan> {
         }
         // 查找es mapper
         for (String doScan : anno.value()) {
+            // 判断是否需要处理${}变量
+            if (doScan.contains("${") && doScan.contains("}")) {
+                String basePackage = Solon.cfg().getByTmpl(doScan);
+                LogUtils.formatInfo("Scan Easy-Es Mapper[%s -> %s]", doScan, basePackage);
+                doScan = basePackage;
+            }
             Collection<Class<?>> classPath = ClassUtil.scanClasses(doScan);
             for (Class<?> clazz : classPath) {
                 // 跳过非ee的mapper,比如瞎几把写的接口,没有继承BaseEsMapper，继承了的推入容器
@@ -135,17 +142,26 @@ public class MapperScannerRegister implements BeanBuilder<EsMapperScan> {
      */
     private void beanWrapPut(Class<?> clazz) {
         EasyEsProperties esConfigProperties = context.getBean(EasyEsProperties.class);
-        RestHighLevelClientUtils restHighLevelClientUtils = context.getBeanOrNew(RestHighLevelClientUtils.class);
+        EsClientUtils esClientUtils = context.getBeanOrNew(EsClientUtils.class);
         EsMapperProxy<?> esMapperProxy = new EsMapperProxy<>(clazz, new ConcurrentHashMap<>());
         // 获取实体类
         Class<?> entityClass = TypeUtils.getInterfaceT(clazz, ZERO);
         // 初始化缓存
         GlobalConfigCache.setGlobalConfig(esConfigProperties.getGlobalConfig());
+
+        // 初始化entity缓存
+        BaseCache.initEntityCache(entityClass);
+
+        // jackson配置缓存
+        JacksonCache.init(EntityInfoHelper.ENTITY_INFO_CACHE);
+
         //获取动态数据源 若未配置多数据源,则使用默认数据源
         String restHighLevelClientId = Optional.ofNullable(clazz.getAnnotation(EsDS.class))
                 .map(EsDS::value).orElse(DEFAULT_DS);
-        RestHighLevelClient client = restHighLevelClientUtils.getClient(restHighLevelClientId);
-        BaseCache.initCache(clazz, entityClass, client);
+        ElasticsearchClient client = esClientUtils.getClient(restHighLevelClientId);
+
+        // 初始化mapper
+        BaseCache.initMapperCache(clazz, entityClass, client);
 
         // 创建代理
         Object mapperProxy = Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz}, esMapperProxy);

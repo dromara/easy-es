@@ -1,6 +1,7 @@
 package org.dromara.easyes.core.conditions.select;
 
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import org.dromara.easyes.core.biz.EsPageInfo;
 import org.dromara.easyes.core.biz.SAPageInfo;
 import org.dromara.easyes.core.kernel.EsChainWrapper;
@@ -71,7 +72,7 @@ public interface EsChainQuery<T> extends EsChainWrapper<T> {
         return getBaseEsMapper().pageQuery(getWrapper(), pageNum, pageSize);
     }
 
-    default SAPageInfo<T> searchAfterPage(List<Object> searchAfter, Integer pageSize) {
+    default SAPageInfo<T> searchAfterPage(List<FieldValue> searchAfter, Integer pageSize) {
         return getBaseEsMapper().searchAfterPage(getWrapper(), searchAfter, pageSize);
     }
 }

@@ -3,6 +3,7 @@ package org.dromara.easyes.spring;
 import lombok.Setter;
 import org.dromara.easyes.common.utils.EEVersionUtils;
 import org.dromara.easyes.common.utils.LogUtils;
+import org.dromara.easyes.common.utils.StringUtils;
 import org.dromara.easyes.spring.config.ClassPathMapperScanner;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValue;
@@ -62,17 +63,22 @@ public class MapperScannerConfigurer
                 prc.postProcessBeanFactory(factory);
             }
             PropertyValues values = mapperScannerBean.getPropertyValues();
-            this.basePackage = getPropertyValue("basePackage", values);
+            // 如果在环境变量中取扫描的包，需要从easy-es.mappers进行取值，与mybatis配置mapper相似，但这里不做配置推荐
+            String propertyValue = getPropertyValue("easy-es.mappers", values);
+            if (StringUtils.isNotBlank(propertyValue)) {
+                this.basePackage = propertyValue;
+            }
         }
 
         // 取变量
         this.basePackage = Optional.ofNullable(this.basePackage)
-                .map(getEnvironment()::resolvePlaceholders).orElse(null);
+                .map(getEnvironment()::resolvePlaceholders).orElse(EMPTY_STR);
         // 做扫包的操作了、与注解扫包类似，只不过这里是spring配置方式
         // 在mybatis中配置了很多扫描拦截属性，这里放到后面拓展
         ClassPathMapperScanner scanner = new ClassPathMapperScanner(beanDefinitionRegistry, getEnvironment());
         scanner.registerFilters();
-        scanner.doScan(this.basePackage);
+        String[] packages = this.basePackage.split(COMMA);
+        scanner.doScan(packages);
     }
 
     private String getPropertyValue(String propertyName, PropertyValues values) {

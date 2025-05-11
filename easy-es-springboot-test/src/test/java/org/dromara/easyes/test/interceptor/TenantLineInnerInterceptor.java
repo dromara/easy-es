@@ -1,13 +1,13 @@
 package org.dromara.easyes.test.interceptor;
 
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.transport.TransportOptions;
 import org.dromara.easyes.annotation.Intercepts;
 import org.dromara.easyes.annotation.Signature;
 import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
 import org.dromara.easyes.core.kernel.BaseEsMapper;
 import org.dromara.easyes.extension.context.Interceptor;
 import org.dromara.easyes.extension.context.Invocation;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.client.RequestOptions;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 @Intercepts(
         {
                 @Signature(type = BaseEsMapper.class, method = "select.*", args = {LambdaEsQueryWrapper.class}, useRegexp = true),
-                @Signature(type = BaseEsMapper.class, method = "search", args = {SearchRequest.class, RequestOptions.class}),
+                @Signature(type = BaseEsMapper.class, method = "search", args = {SearchRequest.class, TransportOptions.class}),
                 @Signature(type = BaseEsMapper.class, method = "insert|update", args = {Object.class}, useRegexp = true),
                 @Signature(type = BaseEsMapper.class, method = ".*ById", args = {Object.class}, useRegexp = true),
         }
@@ -52,7 +52,7 @@ public class TenantLineInnerInterceptor implements Interceptor {
         //     wrapper.eq("tenantId", "1");
         //     return invocation.proceed();
         // }
-        System.out.println("增则拦截方法");
+        System.out.println("easy-es intercept...");
         return invocation.proceed();
     }
 }

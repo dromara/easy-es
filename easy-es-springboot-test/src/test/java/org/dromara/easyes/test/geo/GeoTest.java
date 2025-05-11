@@ -1,12 +1,11 @@
 package org.dromara.easyes.test.geo;
 
+import co.elastic.clients.elasticsearch._types.*;
 import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
+import org.dromara.easyes.core.toolkit.GeoUtils;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
 import org.dromara.easyes.test.mapper.DocumentMapper;
-import org.elasticsearch.common.geo.GeoPoint;
-import org.elasticsearch.common.geo.ShapeRelation;
-import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.geometry.Circle;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
@@ -34,9 +33,9 @@ public class GeoTest {
         // 查询位于下面左上点和右下点坐标构成的长方形内的所有点
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         // 左上点坐标
-        GeoPoint leftTop = new GeoPoint(41.187328D, 115.498353D);
+        GeoLocation leftTop = GeoUtils.create(41.187328D, 115.498353D);
         // 右下点坐标
-        GeoPoint bottomRight = new GeoPoint(39.084509D, 117.610461D);
+        GeoLocation bottomRight = GeoUtils.create(39.084509D, 117.610461D);
         wrapper.geoBoundingBox(Document::getLocation, leftTop, bottomRight);
         // 查不在此长方形内的所有点
 //         wrapper.notInGeoBoundingBox(Document::getLocation, leftTop, bottomRight);
@@ -48,9 +47,9 @@ public class GeoTest {
     public void testGeoDistance() {
         // 查询以纬度为41.0,经度为115.0为圆心,半径168.8公里内的所有点
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.geoDistance(Document::getLocation, 168.8, DistanceUnit.KILOMETERS, new GeoPoint(41.0, 116.0));
+        wrapper.geoDistance(Document::getLocation, 168.8, DistanceUnit.Kilometers, GeoUtils.create(41.0, 116.0));
         // 上面语法也可以写成下面这几种形式,效果是一样的,兼容不同用户习惯而已:
-//        wrapper.geoDistance(Document::getLocation,"1.5km",new GeoPoint(41.0,115.0));
+//        wrapper.geoDistance(Document::getLocation,"1.5km",GeoUtils.create(41.0,115.0));
 //        wrapper.geoDistance(Document::getLocation, "1.5km", "41.0,115.0");
 
         List<Document> documents = documentMapper.selectList(wrapper);
@@ -61,10 +60,10 @@ public class GeoTest {
     public void testGeoPolygon() {
         // 查询以给定点列表构成的不规则图形内的所有点,点数至少为3个
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        List<GeoPoint> geoPoints = new ArrayList<>();
-        GeoPoint geoPoint = new GeoPoint(40.178012, 116.577188);
-        GeoPoint geoPoint1 = new GeoPoint(40.169329, 116.586315);
-        GeoPoint geoPoint2 = new GeoPoint(40.178288, 116.591813);
+        List<GeoLocation> geoPoints = new ArrayList<>();
+        GeoLocation geoPoint = GeoUtils.create(40.178012, 116.577188);
+        GeoLocation geoPoint1 = GeoUtils.create(40.169329, 116.586315);
+        GeoLocation geoPoint2 = GeoUtils.create(40.178288, 116.591813);
         geoPoints.add(geoPoint);
         geoPoints.add(geoPoint1);
         geoPoints.add(geoPoint2);
@@ -98,7 +97,7 @@ public class GeoTest {
         // 这里以圆形为例演示,其中x,y为圆心坐标,r为半径. 其它图形请读者自行演示,篇幅原因不一一演示了
         Circle circle = new Circle(13, 14, 100);
         // shapeRelation支持多种,如果不传则默认为within
-        wrapper.geoShape(Document::getGeoLocation, circle, ShapeRelation.INTERSECTS);
+        wrapper.geoShape(Document::getGeoLocation, circle, GeoShapeRelation.Intersects);
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);
     }
@@ -107,29 +106,30 @@ public class GeoTest {
     public void testOrderByDistance() {
         // 1.数据准备与入库,经纬度数据来源于腾讯地图
 
+        String centerPoint = "28.194124244622135, 113.01327520919799";
+        GeoLocation center = GeoUtils.create(centerPoint);
+
         // 长沙站
         Document centerDoc = new Document();
         centerDoc.setEsId("1");
         centerDoc.setTitle("长沙站");
         centerDoc.setContent("长沙站臭豆腐店");
-        GeoPoint center = new GeoPoint(28.194124244622135, 113.01327520919799);
-        centerDoc.setLocation(center.toString());
+        LatLonGeoLocation geoPoint0 = center.latlon();
+        centerDoc.setLocation("28.194124244622135, 113.01327520919799");
 
         // 长沙火车站
         Document document1 = new Document();
         document1.setEsId("2");
         document1.setTitle("长沙火车站");
         document1.setContent("长沙火车站臭豆腐店");
-        GeoPoint geoPoint1 = new GeoPoint(28.193708185086585, 113.01100069595336);
-        document1.setLocation(geoPoint1.toString());
+        document1.setLocation("28.193708185086585, 113.01100069595336");
 
         // 长沙站南广场
         Document document2 = new Document();
         document2.setEsId("3");
         document2.setTitle("长沙站南广场");
         document2.setContent("长沙站南广场臭豆腐店");
-        GeoPoint geoPoint2 = new GeoPoint(28.192195227668382, 113.01173025680541);
-        document2.setLocation(geoPoint2.toString());
+        document2.setLocation("28.192195227668382, 113.01173025680541");
 
 
         // 长沙市中医院(东院区)
@@ -137,40 +137,35 @@ public class GeoTest {
         document3.setEsId("4");
         document3.setTitle("长沙市中医院");
         document3.setContent("长沙市中医院臭豆腐店");
-        GeoPoint geoPoint3 = new GeoPoint(28.193367771534916, 113.00911242080687);
-        document3.setLocation(geoPoint3.toString());
+        document3.setLocation("28.193367771534916, 113.00911242080687");
 
         // 阿波罗商业广场
         Document document4 = new Document();
         document4.setEsId("5");
         document4.setTitle("阿波罗商业广场");
         document4.setContent("阿波罗商业广场臭豆腐店");
-        GeoPoint geoPoint4 = new GeoPoint(28.196582745180983, 113.00962740493773);
-        document4.setLocation(geoPoint4.toString());
+        document4.setLocation("28.196582745180983, 113.00962740493773");
 
         // 朝阳一村
         Document document5 = new Document();
         document5.setEsId("6");
         document5.setTitle("朝阳一村");
         document5.setContent("朝阳一村臭豆腐店");
-        GeoPoint geoPoint5 = new GeoPoint(28.188980122051586, 113.01177317214965);
-        document5.setLocation(geoPoint5.toString());
+        document5.setLocation("28.188980122051586, 113.01177317214965");
 
         // 铭威大厦
         Document document6 = new Document();
         document6.setEsId("7");
         document6.setTitle("铭威大厦");
         document6.setContent("铭威大厦臭豆腐店");
-        GeoPoint geoPoint6 = new GeoPoint(28.1905309497745, 113.01825338912963);
-        document6.setLocation(geoPoint6.toString());
+        document6.setLocation("28.1905309497745, 113.01825338912963");
 
         // 袁家岭
         Document document7 = new Document();
         document7.setEsId("8");
         document7.setTitle("袁家岭");
         document7.setContent("袁家岭豆腐店");
-        GeoPoint geoPoint7 = new GeoPoint(28.19450247915946, 113.00070101333617);
-        document7.setLocation(geoPoint7.toString());
+        document7.setLocation("28.19450247915946, 113.00070101333617");
 
         List<Document> documents = Arrays.asList(centerDoc, document1, document2, document3, document4, document5, document6, document7);
         int count = documentMapper.insertBatch(documents);

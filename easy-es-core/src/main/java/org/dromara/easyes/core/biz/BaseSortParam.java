@@ -1,13 +1,11 @@
 package org.dromara.easyes.core.biz;
 
-import org.dromara.easyes.common.enums.OrderTypeEnum;
+import co.elastic.clients.elasticsearch._types.*;
 import lombok.Builder;
 import lombok.Data;
-import org.elasticsearch.common.geo.GeoDistance;
-import org.elasticsearch.common.geo.GeoPoint;
-import org.elasticsearch.common.unit.DistanceUnit;
-import org.elasticsearch.search.sort.SortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
+import org.dromara.easyes.common.enums.OrderTypeEnum;
+
+import java.util.List;
 
 /**
  * 排序基本参数
@@ -30,7 +28,7 @@ public class BaseSortParam {
     /**
      * 用户自定义的原生语法排序器
      */
-    private SortBuilder<?> sortBuilder;
+    private SortOptions sortBuilder;
 
     /**
      * 排序类型
@@ -40,7 +38,7 @@ public class BaseSortParam {
     /**
      * 计算方式 ARC PLANE 默认PLANE
      */
-    private GeoDistance geoDistance;
+    private GeoDistanceType geoDistanceType;
     /**
      * 距离单位 默认为km
      */
@@ -48,5 +46,5 @@ public class BaseSortParam {
     /**
      * 排序坐标点
      */
-    private GeoPoint[] geoPoints;
+    private List<GeoLocation> geoPoints;
 }

@@ -1,10 +1,9 @@
 package org.dromara.easyes.core.biz;
 
 
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import lombok.Data;
 import lombok.experimental.Accessors;
-
-import java.util.Map;
 
 /**
  * es索引信息
@@ -33,5 +32,5 @@ public class EsIndexInfo {
     /**
      * 索引字段信息
      */
-    private Map<String, Object> mapping;
+    private TypeMapping.Builder builder;
 }

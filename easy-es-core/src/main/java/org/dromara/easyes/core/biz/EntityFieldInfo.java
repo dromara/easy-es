@@ -1,6 +1,5 @@
 package org.dromara.easyes.core.biz;
 
-import com.alibaba.fastjson.serializer.NameFilter;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
@@ -97,7 +96,6 @@ public class EntityFieldInfo {
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     private String sqlSelect;
-    private NameFilter nameFilter;
 
     /**
      * 复制字段

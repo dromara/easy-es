@@ -1,5 +1,4 @@
 # Auto Configure
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   org.dromara.easyes.starter.EsAutoConfiguration,\
-  org.dromara.easyes.spring.config.EasyEsConfiguration,\
   org.dromara.easyes.starter.config.GeneratorConfiguration
