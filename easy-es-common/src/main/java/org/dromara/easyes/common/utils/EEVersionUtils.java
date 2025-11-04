@@ -1,9 +1,8 @@
 package org.dromara.easyes.common.utils;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -43,11 +42,11 @@ public class EEVersionUtils {
      * @param restHighLevelClient es高级客户端
      * @return client version
      */
-    public static String getClientVersion(RestHighLevelClient restHighLevelClient) {
+    public static String getClientVersion(ElasticsearchClient restHighLevelClient) {
         try {
-            return restHighLevelClient.info(RequestOptions.DEFAULT)
-                    .getVersion()
-                    .getNumber();
+            return restHighLevelClient.info()
+                    .version()
+                    .number();
         } catch (IOException e) {
             LogUtils.formatWarn("get client version error");
         }

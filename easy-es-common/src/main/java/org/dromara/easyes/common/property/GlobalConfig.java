@@ -72,6 +72,10 @@ public class GlobalConfig {
          */
         private IdType idType = IdType.NONE;
         /**
+         * es id是否写入到source中
+         */
+        private boolean id2Source = false;
+        /**
          * Field update strategy default nonNull 字段更新策略,默认非null
          */
         private FieldStrategy fieldStrategy = FieldStrategy.NOT_NULL;

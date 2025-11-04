@@ -5,6 +5,7 @@ import lombok.Data;
 import org.dromara.easyes.annotation.IndexField;
 import org.dromara.easyes.annotation.IndexId;
 import org.dromara.easyes.annotation.rely.FieldType;
+import org.dromara.easyes.common.join.BaseJoin;
 
 
 /**
@@ -13,7 +14,7 @@ import org.dromara.easyes.annotation.rely.FieldType;
  * Copyright © 2024 xpc1024 All Rights Reserved
  **/
 @Data
-public class Author {
+public class Author extends BaseJoin {
     /**
      * 作者id
      */

@@ -1,13 +1,14 @@
 package org.dromara.easyes.core.toolkit;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.dromara.easyes.annotation.rely.FieldType;
 import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.common.params.SFunction;
-import org.dromara.easyes.common.utils.StringUtils;
-import org.dromara.easyes.core.cache.GlobalConfigCache;
 import org.dromara.easyes.common.property.GlobalConfig;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import org.dromara.easyes.common.utils.StringUtils;
+import org.dromara.easyes.core.biz.EntityInfo;
+import org.dromara.easyes.core.cache.GlobalConfigCache;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -19,7 +20,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.dromara.easyes.common.constants.BaseEsConstants.*;
+import static org.dromara.easyes.common.constants.BaseEsConstants.DEFAULT_ES_ID_NAME;
+import static org.dromara.easyes.common.constants.BaseEsConstants.KEYWORD_SUFFIX;
 
 /**
  * 核心 处理字段名称工具类
@@ -36,12 +38,7 @@ public class FieldUtils {
      * @return 泛型
      */
     public static <R> String getFieldName(R func) {
-        String fieldName = getFieldNameNotConvertId(func);
-        if (DEFAULT_ID_NAME.equals(fieldName)) {
-            // id统一转为_id
-            fieldName = DEFAULT_ES_ID_NAME;
-        }
-        return fieldName;
+        return getFieldNameNotConvertId(func);
     }
 
     /**
@@ -156,7 +153,7 @@ public class FieldUtils {
      * @return 首字母大写后的结果
      */
     public static String firstToUpperCase(String param) {
-        if (Objects.isNull(param) || "".equals(param)) {
+        if (Objects.isNull(param) || param.isEmpty()) {
             return "";
         }
         return param.substring(0, 1).toUpperCase() + param.substring(1);
@@ -165,14 +162,27 @@ public class FieldUtils {
     /**
      * 获取实际字段名
      *
-     * @param field                      原字段名
-     * @param mappingColumnMap           字段映射关系map
+     * @param field            原字段名
+     * @param mappingColumnMap 字段映射关系map
+     * @param entityInfo       索引信息
      * @return 实际字段名
      */
-    public static String getRealField(String field, Map<String, String> mappingColumnMap) {
+    public static String getRealField(String field, Map<String, String> mappingColumnMap, EntityInfo entityInfo) {
         String customField = mappingColumnMap.get(field);
         if (Objects.nonNull(customField)) {
-            return DEFAULT_ID_NAME.equals(customField) ? DEFAULT_ES_ID_NAME : customField;
+            if (entityInfo.isId2Source()) {
+                return customField;
+            }
+            // 直接用_id去查询, 但是有些版本需要开启集群配置: indices.id_field_data.enabled
+            /*
+             * PUT /_cluster/settings
+             *   {
+             *     "persistent": {
+             *       "indices.id_field_data.enabled": true
+             *     }
+             *   }
+             */
+            return entityInfo.getKeyProperty().equals(field) ? DEFAULT_ES_ID_NAME : customField;
         } else {
             GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
             if (dbConfig.isMapUnderscoreToCamelCase()) {
@@ -184,18 +194,44 @@ public class FieldUtils {
     }
 
     /**
+     * 获取实际字段名
+     *
+     * @param field            原字段名
+     * @param mappingColumnMap 字段映射关系map
+     * @param entityInfo       索引信息
+     * @return 实际字段名
+     */
+    public static String getRealFieldAndSuffix(String field, Map<String, String> mappingColumnMap, EntityInfo entityInfo) {
+        GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
+        String realField = getRealField(field, mappingColumnMap, entityInfo);
+        String fieldType = entityInfo.getFieldTypeMap().get(field);
+        boolean addSuffix = dbConfig.isSmartAddKeywordSuffix()
+                            && FieldType.KEYWORD_TEXT.getType().equals(fieldType)
+                            && !DEFAULT_ES_ID_NAME.equals(realField);
+        return addSuffix ? realField + KEYWORD_SUFFIX : realField;
+    }
+
+    /**
      * 获取实际字段名 并且根据配置智能追加.keyword后缀
      *
      * @param field            字段
      * @param fieldTypeMap     字段与es字段类型映射
      * @param mappingColumnMap 实体字段与es实际字段映射
+     * @param entityInfo       索引信息
      * @return 最终的字段
      */
-    public static String getRealFieldAndSuffix(String field, Map<String, String> fieldTypeMap, Map<String, String> mappingColumnMap) {
+    public static String getRealFieldAndSuffix(
+            String field,
+            Map<String, String> fieldTypeMap,
+            Map<String, String> mappingColumnMap,
+            EntityInfo entityInfo
+    ) {
         GlobalConfig.DbConfig dbConfig = GlobalConfigCache.getGlobalConfig().getDbConfig();
-        String realField = getRealField(field, mappingColumnMap);
+        String realField = getRealField(field, mappingColumnMap, entityInfo);
         String fieldType = fieldTypeMap.get(field);
-        boolean addSuffix = dbConfig.isSmartAddKeywordSuffix() && FieldType.KEYWORD_TEXT.getType().equals(fieldType);
+        boolean addSuffix = dbConfig.isSmartAddKeywordSuffix()
+                            && FieldType.KEYWORD_TEXT.getType().equals(fieldType)
+                            && !DEFAULT_ES_ID_NAME.equals(realField);
         if (addSuffix) {
             return realField + KEYWORD_SUFFIX;
         }
@@ -229,13 +265,13 @@ public class FieldUtils {
      *
      * @param fields           原字段名数组
      * @param mappingColumnMap 字段映射关系map
+     * @param entityInfo       索引信息
      * @return 实际字段数组
      */
-    public static String[] getRealFields(String[] fields, Map<String, String> mappingColumnMap) {
+    public static List<String> getRealFields(String[] fields, Map<String, String> mappingColumnMap, EntityInfo entityInfo) {
         return Arrays.stream(fields)
-                .map(field -> getRealField(field, mappingColumnMap))
-                .collect(Collectors.toList())
-                .toArray(new String[]{});
+                .map(field -> getRealField(field, mappingColumnMap, entityInfo))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -243,10 +279,12 @@ public class FieldUtils {
      *
      * @param fields           原字段名数组
      * @param mappingColumnMap 字段映射关系map
+     * @param entityInfo       索引信息
      * @return 实际字段数组
      */
-    public static List<String> getRealFields(List<String> fields, Map<String, String> mappingColumnMap) {
-        return Arrays.stream(getRealFields(fields.toArray(new String[0]), mappingColumnMap))
+    public static List<String> getRealFields(List<String> fields, Map<String, String> mappingColumnMap, EntityInfo entityInfo) {
+        return fields.stream()
+                .map(field -> getRealField(field, mappingColumnMap, entityInfo))
                 .collect(Collectors.toList());
     }
 

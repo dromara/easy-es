@@ -1,9 +1,9 @@
 package org.dromara.easyes.core.biz;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import lombok.Data;
 import org.dromara.easyes.common.enums.EsQueryTypeEnum;
 import org.dromara.easyes.core.toolkit.Tree;
-import lombok.Data;
-import org.elasticsearch.index.query.QueryBuilder;
 
 /**
  * 查询参数树
@@ -68,5 +68,5 @@ public class Param extends Tree {
     /**
      * 混合查询 原生查询条件
      */
-    private QueryBuilder queryBuilder;
+    private Query query;
 }

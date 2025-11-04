@@ -1,12 +1,13 @@
 easy-es:
   #  enable: true
   address: 10.18.2.45:9200
+  compatible: true
   #  schema: http
-  #  username: elastic
-  #  password: WG7WVmuNMtM4GwNYkyWH
+#  username: elastic
+#  password: mg123456
   keep-alive-millis: 18000
   global-config:
-    i-kun-mode: true
+    i-kun-mode: false
     process-index-mode: manual
     async-process-index-blocking: true
     print-dsl: true

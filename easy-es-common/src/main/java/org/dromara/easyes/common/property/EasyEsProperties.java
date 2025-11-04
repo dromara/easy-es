@@ -20,6 +20,10 @@ public class EasyEsProperties {
      */
     private boolean banner = true;
     /**
+     * 是否开启兼容性(超低版本的es, 比如7.0.0开启该特性)
+     */
+    private boolean compatible = false;
+    /**
      * es client address es客户端地址
      */
     private String address = "127.0.0.1:9200";

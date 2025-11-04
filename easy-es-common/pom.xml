@@ -6,15 +6,15 @@
     <parent>
         <groupId>org.dromara.easy-es</groupId>
         <artifactId>easy-es-parent</artifactId>
-        <version>2.1.0</version>
+        <version>3.0.0</version>
         <relativePath>../easy-es-parent</relativePath>
     </parent>
 
     <artifactId>easy-es-common</artifactId>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -22,18 +22,27 @@
             <groupId>org.dromara.easy-es</groupId>
             <artifactId>easy-es-annotation</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
+            <artifactId>elasticsearch-geo</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>jakarta.json</groupId>
+            <artifactId>jakarta.json-api</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

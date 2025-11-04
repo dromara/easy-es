@@ -43,7 +43,7 @@ public class User {
     /**
      * 多级嵌套
      */
-    @IndexField(fieldType = FieldType.NESTED, nestedClass = Faq.class)
+    @IndexField(fieldType = FieldType.NESTED, nestedOrObjectClass = Faq.class)
     private Set<Faq> faqs;
     /**
      * 高亮显示的内容

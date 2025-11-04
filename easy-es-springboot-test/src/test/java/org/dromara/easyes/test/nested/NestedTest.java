@@ -128,7 +128,7 @@ public class NestedTest {
         System.out.println(documents2);
 
         LambdaEsQueryWrapper<Document> wrapper3 = new LambdaEsQueryWrapper<>();
-        wrapper3.nested("users.faqs", w -> w.match("users.faqs.faq_name", "q3").or().match("users.faqs.faq_name", "q4"));
+        wrapper3.nested("users.faqs", w -> w.match("users.faqs.faq_name", "q2").or().match("users.faqs.faq_name", "q4"));
         List<Document> documents3 = documentMapper.selectList(wrapper3);
         System.out.println(documents3);
     }

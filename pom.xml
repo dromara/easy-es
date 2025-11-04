@@ -6,7 +6,7 @@
 
     <groupId>org.dromara.easy-es</groupId>
     <artifactId>easy-es</artifactId>
-    <version>2.1.0</version>
+    <version>3.0.0</version>
 
     <name>easy-es</name>
     <description>easy use for elastic search</description>
@@ -22,7 +22,7 @@
 
     <properties>
         <junit.version>5.4.0</junit.version>
-        <spring-boot.version>2.7.0</spring-boot.version>
+        <spring-boot.version>2.7.17</spring-boot.version>
         <solon.version>3.0.5</solon.version>
         <commons-lang3>3.9</commons-lang3>
     </properties>
@@ -35,7 +35,7 @@
             </dependency>
             <dependency>
                 <groupId>org.dromara.easy-es</groupId>
-                <artifactId>easy-es-solon</artifactId>
+                <artifactId>easy-es-solon-plugin</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

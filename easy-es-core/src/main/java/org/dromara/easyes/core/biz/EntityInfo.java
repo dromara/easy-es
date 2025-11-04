@@ -1,8 +1,8 @@
 package org.dromara.easyes.core.biz;
 
-import com.alibaba.fastjson.PropertyNamingStrategy;
-import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
-import com.alibaba.fastjson.serializer.SerializeFilter;
+import co.elastic.clients.elasticsearch.indices.IndexSettings;
+import co.elastic.clients.transport.TransportOptions;
+import co.elastic.clients.transport.rest_client.RestClientOptions;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.dromara.easyes.annotation.rely.IdType;
@@ -28,9 +28,9 @@ import static org.dromara.easyes.common.constants.BaseEsConstants.ZERO;
 @Accessors(chain = true)
 public class EntityInfo {
     /**
-     * 请求配置 默认值为官方内置的默认配置
+     * 嵌套类 实体字段->高亮返回结果字段
      */
-    private RequestOptions requestOptions = RequestOptions.DEFAULT;
+    private final Map<Class<?>, Map<String, String>> nestedOrObjectHighlightFieldMap = new HashMap<>();
     /**
      * 表主键ID 类型
      */
@@ -39,6 +39,10 @@ public class EntityInfo {
      * id数据类型 如Long.class String.class
      */
     private Class<?> idClass;
+    /**
+     * id列是否需要写入到source
+     */
+    private boolean id2Source;
     /**
      * 索引名称(原索引名)
      */
@@ -56,9 +60,9 @@ public class EntityInfo {
      */
     private String retrySuccessIndexName;
     /**
-     * 最大返回数
+     * 嵌套类不需要序列化JSON的字段 不存在字段,高亮字段等
      */
-    private Integer maxResultWindow = DEFAULT_MAX_RESULT_WINDOW;
+    private final Map<Class<?>, Set<String>> nestedOrObjectNotSerializeField = new HashMap<>();
     /**
      * 表映射结果集
      */
@@ -116,9 +120,9 @@ public class EntityInfo {
      */
     private Class<?> joinFieldClass = JoinField.class;
     /**
-     * 嵌套类的字段信息列表
+     * 嵌套类型 实体字段名->字段类型
      */
-    private Map<Class<?>, List<EntityFieldInfo>> nestedFieldListMap = new HashMap<>();
+    private final Map<Class<?>, Map<String, String>> nestedOrObjectClassFieldTypeMap = new HashMap<>();
     /**
      * 表字段信息列表
      */
@@ -148,25 +152,17 @@ public class EntityInfo {
      */
     private List<HighLightParam> highlightParams = new ArrayList<>();
     /**
-     * 嵌套类-高亮字段列表
+     * 嵌套类型 实体字段->es实际字段映射
      */
-    private Map<Class<?>, List<HighLightParam>> nestedHighLightParamsMap = new HashMap<>();
-    /**
-     * fastjson 字段命名策略
-     */
-    private PropertyNamingStrategy propertyNamingStrategy;
-    /**
-     * fastjson 实体中不存在的字段处理器
-     */
-    private ExtraProcessor extraProcessor;
+    private final Map<Class<?>, Map<String, String>> nestedOrObjectClassMappingColumnMap = new HashMap<>();
     /**
      * 实体字段->高亮返回结果 键值对
      */
     private final Map<String, String> highlightFieldMap = new HashMap<>();
     /**
-     * 嵌套类 实体字段->高亮返回结果字段
+     * 嵌套类型 es实际字段映射->实体字段 (仅包含被重命名字段)
      */
-    private final Map<Class<?>, Map<String, String>> nestedHighlightFieldMap = new HashMap<>();
+    private final Map<Class<?>, Map<String, String>> nestedOrObjectClassColumnMappingMap = new HashMap<>();
     /**
      * 实体字段名->es字段类型
      */
@@ -184,33 +180,29 @@ public class EntityInfo {
      */
     private final Set<String> notSerializeField = new HashSet<>();
     /**
-     * 嵌套类不需要序列化JSON的字段 不存在字段,高亮字段等
+     * 父子类型 join字段名字 K为父,v为子
      */
-    private final Map<Class<?>, Set<String>> nestedNotSerializeField = new HashMap<>();
+    private final Map<String, List<String>> relationMap = new HashMap<>();
     /**
      * 嵌套类型 path和class对应关系
      */
     private final Map<String, Class<?>> pathClassMap = new HashMap<>();
     /**
-     * 嵌套类型 实体字段名->字段类型
+     * 通过自定义注解指定的索引settings
      */
-    private final Map<Class<?>, Map<String, String>> nestedClassFieldTypeMap = new HashMap<>();
+    private final IndexSettings.Builder indexSettings = new IndexSettings.Builder();
     /**
-     * 嵌套类型 实体字段->es实际字段映射
+     * 请求配置 默认值为官方内置的默认配置
      */
-    private final Map<Class<?>, Map<String, String>> nestedClassMappingColumnMap = new HashMap<>();
+    private TransportOptions requestOptions = new RestClientOptions(RequestOptions.DEFAULT);
     /**
-     * 嵌套类型 es实际字段映射->实体字段 (仅包含被重命名字段)
+     * 最大返回数
      */
-    private final Map<Class<?>, Map<String, String>> nestedClassColumnMappingMap = new HashMap<>();
+    private Integer maxResultWindow = DEFAULT_MAX_RESULT_WINDOW;
     /**
-     * fastjson 过滤器
+     * 嵌套类/object类的字段信息列表
      */
-    private final Map<Class<?>, List<SerializeFilter>> classSimplePropertyPreFilterMap = new HashMap<>();
-    /**
-     * 父子类型 join字段名字 K为父,v为子
-     */
-    private final Map<String, Object> relationMap = new HashMap<>();
+    private Map<Class<?>, List<EntityFieldInfo>> nestedOrObjectFieldListMap = new HashMap<>();
     /**
      * 父子类型 join字段类 K为父,v为子
      */
@@ -220,9 +212,9 @@ public class EntityInfo {
      */
     private RefreshPolicy refreshPolicy;
     /**
-     * 通过自定义注解指定的索引settings
+     * 嵌套类-高亮字段列表
      */
-    private final Map<String, Object> settingsMap = new HashMap<>();
+    private Map<Class<?>, List<HighLightParam>> nestedOrObjectHighLightParamsMap = new HashMap<>();
     /**
      * 日期字段格式规则Map
      */
@@ -271,8 +263,8 @@ public class EntityInfo {
      *
      * @return 嵌套类集合
      */
-    public Set<Class<?>> getAllNestedClass() {
-        return nestedClassColumnMappingMap.keySet();
+    public Set<Class<?>> getAllNestedOrObjectClass() {
+        return nestedOrObjectClassColumnMappingMap.keySet();
     }
 
     /**
@@ -281,9 +273,9 @@ public class EntityInfo {
      * @param path 路径
      * @return 字段关系map
      */
-    public Map<String, String> getNestedMappingColumnMapByPath(String path) {
+    public Map<String, String> getNestedOrObjectMappingColumnMapByPath(String path) {
         return Optional.ofNullable(pathClassMap.get(path))
-                .map(nestedClassMappingColumnMap::get)
+                .map(nestedOrObjectClassMappingColumnMap::get)
                 .orElse(Collections.emptyMap());
     }
 

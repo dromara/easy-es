@@ -1,24 +1,20 @@
 package org.dromara.easyes.test.vector;
 
-
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.json.JsonData;
 import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
 import org.dromara.easyes.test.mapper.DocumentMapper;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptType;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 向量测试
@@ -54,15 +50,17 @@ public class VectorTest {
 
     @Test
     public void testVectorSearch() {
-        Map<String, Object> params = new HashMap<>();
-        params.put("vector", new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594});
-        String scriptCode = "cosineSimilarity(params.vector, 'vector') + 1.0";
-        QueryBuilder queryBuilder = QueryBuilders.scriptScoreQuery(QueryBuilders.matchAllQuery(), new Script(ScriptType.INLINE, Script.DEFAULT_SCRIPT_LANG, scriptCode, params));
+        Query query = Query.of(a -> a.scriptScore(b -> b
+                .query(QueryBuilders.matchAll().build()._toQuery())
+                .script(d -> d.inline(e -> e
+                        .lang("painless")
+                        .params("vector", JsonData.of(new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594}))
+                        .source("cosineSimilarity(params.vector, 'vector') + 1.0")
+                ))
+        ));
 
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(queryBuilder);
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.setSearchSourceBuilder(searchSourceBuilder);
+        wrapper.setSearchBuilder(new SearchRequest.Builder().query(query));
 
         List<Document> Documents = documentMapper.selectList(wrapper);
         Assertions.assertFalse(Documents.isEmpty());

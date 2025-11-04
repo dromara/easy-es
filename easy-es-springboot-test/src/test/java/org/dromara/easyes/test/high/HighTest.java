@@ -1,6 +1,11 @@
 package org.dromara.easyes.test.high;
 
-
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.ScriptSortType;
+import co.elastic.clients.elasticsearch._types.SortOptions;
+import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import org.dromara.easyes.common.utils.jackson.JsonUtils;
 import org.dromara.easyes.core.biz.EsPageInfo;
 import org.dromara.easyes.core.biz.OrderByParam;
 import org.dromara.easyes.core.biz.SAPageInfo;
@@ -9,11 +14,6 @@ import org.dromara.easyes.core.kernel.EsWrappers;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
 import org.dromara.easyes.test.mapper.DocumentMapper;
-import com.alibaba.fastjson.JSON;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.script.Script;
-import org.elasticsearch.search.sort.ScriptSortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -138,7 +138,7 @@ public class HighTest {
         //第一页
         System.out.println(saPageInfo);
         //获取下一页
-        List<Object> nextSearchAfter = saPageInfo.getNextSearchAfter();
+        List<FieldValue> nextSearchAfter = saPageInfo.getNextSearchAfter();
         SAPageInfo<Document> documentSAPageInfo = documentMapper.searchAfterPage(lambdaEsQueryWrapper, nextSearchAfter, 10);
         System.out.println(documentSAPageInfo);
     }
@@ -147,7 +147,7 @@ public class HighTest {
     public void testSortByScore() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getContent, "技术");
-        wrapper.sortByScore(SortOrder.ASC);
+        wrapper.sortByScore(SortOrder.Asc);
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);
     }
@@ -155,8 +155,8 @@ public class HighTest {
     @Test
     public void testOrderByParams() {
         // 此处假设此参数由前端通过xxQuery类传入,排序根据标题降序,根据内容升序
-        String jsonParam = "[{\"order\":\"title\",\"sort\":\"DESC\"},{\"order\":\"creator\",\"sort\":\"ASC\"}]";
-        List<OrderByParam> orderByParams = JSON.parseArray(jsonParam, OrderByParam.class);
+        String jsonParam = "[{\"order\":\"title.keyword\",\"sort\":\"DESC\"},{\"order\":\"creator.keyword\",\"sort\":\"ASC\"}]";
+        List<OrderByParam> orderByParams = JsonUtils.toList(jsonParam, OrderByParam.class);
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getContent, "技术")
                 .orderBy(orderByParams);
@@ -169,9 +169,10 @@ public class HighTest {
         // 测试复杂排序,SortBuilder的子类非常多,这里仅演示一种, 比如有用户提出需要随机获取数据 0.9.7+
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getContent, "技术");
-        Script script = new Script("Math.random()");
-        ScriptSortBuilder scriptSortBuilder = new ScriptSortBuilder(script, ScriptSortBuilder.ScriptSortType.NUMBER);
-        wrapper.sort(scriptSortBuilder);
+        wrapper.sort(SortOptions.of(a -> a.script(b -> b
+                .type(ScriptSortType.Number)
+                .script(c -> c.inline(e -> e.source("Math.random()")))
+        )));
         List<Document> documents = documentMapper.selectList(wrapper);
         System.out.println(documents);
     }

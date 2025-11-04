@@ -1,8 +1,8 @@
 package org.dromara.easyes.starter.config;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.dromara.easyes.core.config.GeneratorConfig;
 import org.dromara.easyes.core.toolkit.Generator;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class GeneratorConfiguration extends Generator {
 
     @Autowired
-    private RestHighLevelClient client;
+    private ElasticsearchClient client;
 
     @Override
     public Boolean generate(GeneratorConfig config) {

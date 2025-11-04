@@ -1,18 +1,23 @@
 package org.dromara.easyes.core.kernel;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch.core.ScrollRequest;
+import co.elastic.clients.elasticsearch.core.ScrollResponse;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
+import co.elastic.clients.transport.TransportOptions;
+import org.dromara.easyes.common.enums.MethodEnum;
 import org.dromara.easyes.core.biz.EsPageInfo;
 import org.dromara.easyes.core.biz.SAPageInfo;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchScrollRequest;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.indices.GetIndexResponse;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+
+import static org.dromara.easyes.common.constants.BaseEsConstants.DSL_ENDPOINT;
 
 /**
  * 核心 所有支持方法接口
@@ -90,6 +95,15 @@ public interface BaseEsMapper<T> {
     Boolean deleteIndex(String... indexNames);
 
     /**
+     * 删除当前mapper索引，无需传递索引名
+     * @return {@link Boolean} 是否成功
+     * @author MoJie
+     */
+    default Boolean deleteIndex() {
+        return this.deleteIndex(EntityInfoHelper.getIndexName(this.getEntityClass()));
+    }
+
+    /**
      * 刷新索引
      *
      * @return 刷新成功分片总数
@@ -120,7 +134,9 @@ public interface BaseEsMapper<T> {
      * @param dsl dsl语句
      * @return 执行结果 jsonString
      */
-    String executeDSL(String dsl);
+    default String executeDSL(String dsl) {
+        return executeDSL(dsl, EntityInfoHelper.getEntityInfo(getEntityClass()).getIndexName());
+    }
 
     /**
      * 执行静态dsl语句 可指定作用的索引
@@ -129,7 +145,19 @@ public interface BaseEsMapper<T> {
      * @param indexName 作用的索引名
      * @return 执行结果 jsonString
      */
-    String executeDSL(String dsl, String indexName);
+    default String executeDSL(String dsl, String indexName) {
+        return executeDSL(MethodEnum.GET.name(), indexName + DSL_ENDPOINT, dsl);
+    }
+
+    /**
+     * 执行静态dsl语句 可指定作用的索引
+     *
+     * @param method   方法名
+     * @param endpoint 端点
+     * @param dsl      dsl语句
+     * @return 执行结果 jsonString
+     */
+    String executeDSL(String method, String endpoint, String dsl);
 
     /**
      * 混合查询
@@ -137,15 +165,15 @@ public interface BaseEsMapper<T> {
      * @param wrapper 条件
      * @return es标准结果
      */
-    SearchResponse search(Wrapper<T> wrapper);
+    SearchResponse<T> search(Wrapper<T> wrapper);
 
     /**
-     * 获取SearchSourceBuilder,可用于本框架生成基础查询条件,不支持的高阶语法用户可通过SearchSourceBuilder 进一步封装
+     * 获取SearchSourceBuilder,可用于本框架生成基础查询条件,不支持的高阶语法用户可通过SearchRequest.Builder 进一步封装
      *
      * @param wrapper 条件
      * @return 查询参数
      */
-    SearchSourceBuilder getSearchSourceBuilder(Wrapper<T> wrapper);
+    SearchRequest.Builder getSearchBuilder(Wrapper<T> wrapper);
 
     /**
      * es原生查询
@@ -155,7 +183,7 @@ public interface BaseEsMapper<T> {
      * @return es原生返回结果
      * @throws IOException IO异常
      */
-    SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions) throws IOException;
+    SearchResponse<T> search(SearchRequest searchRequest, TransportOptions requestOptions) throws IOException;
 
     /**
      * es原生滚动查询
@@ -165,7 +193,7 @@ public interface BaseEsMapper<T> {
      * @return es原生返回结果
      * @throws IOException IO异常
      */
-    SearchResponse scroll(SearchScrollRequest searchScrollRequest, RequestOptions requestOptions) throws IOException;
+    ScrollResponse<T> scroll(ScrollRequest searchScrollRequest, TransportOptions requestOptions) throws IOException;
 
     /**
      * 获取通过本框架生成的查询参数,可用于检验本框架生成的查询参数是否正确
@@ -193,7 +221,7 @@ public interface BaseEsMapper<T> {
      * @param pageSize    每页条数
      * @return 指定的返回类型
      */
-    SAPageInfo<T> searchAfterPage(Wrapper<T> wrapper, List<Object> searchAfter, Integer pageSize);
+    SAPageInfo<T> searchAfterPage(Wrapper<T> wrapper, List<FieldValue> searchAfter, Integer pageSize);
 
     /**
      * 获取总数(智能推断:若wrapper中指定了去重字段则去重,若未指定则不去重 推荐使用)
@@ -483,6 +511,16 @@ public interface BaseEsMapper<T> {
     /**
      * 根据 whereEntity 条件，更新记录
      *
+     * @param updateWrapper 条件
+     * @return 成功条数
+     */
+    default Integer update(Wrapper<T> updateWrapper) {
+        return update(null, updateWrapper);
+    }
+
+    /**
+     * 根据 whereEntity 条件，更新记录
+     *
      * @param entity        更新对象
      * @param updateWrapper 条件
      * @return 成功条数
@@ -586,10 +624,10 @@ public interface BaseEsMapper<T> {
     Boolean setCurrentActiveIndex(String indexName);
 
     /**
-     * 设置当前Mapper默认的RequestOptions,不设置则使用默认配置,务必谨慎操作,设置后全局生效,永驻jvm,除非项目重启
+     * 设置当前Mapper默认的TransportOptions,不设置则使用默认配置,务必谨慎操作,设置后全局生效,永驻jvm,除非项目重启
      *
      * @param requestOptions 请求配置
      * @return 是否成功
      */
-    Boolean setRequestOptions(RequestOptions requestOptions);
+    Boolean setRequestOptions(TransportOptions requestOptions);
 }

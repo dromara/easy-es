@@ -11,9 +11,9 @@
 
     <bean id="easyEsProperties" class="org.dromara.easyes.common.property.EasyEsProperties">
         <property name="enable" value="true"/>
-        <property name="address" value="127.0.0.1:9200"/>
+        <property name="address" value="192.168.0.18:9200"/>
         <property name="keepAliveMillis" value="18000"/>
-        <property name="globalConfig.IKunMode" value="true"/>
+        <property name="globalConfig.IKunMode" value="false"/>
         <property name="globalConfig.processIndexMode" value="MANUAL"/>
         <property name="globalConfig.asyncProcessIndexBlocking" value="true"/>
         <property name="globalConfig.printDsl" value="true"/>
@@ -30,6 +30,6 @@
 
     <!-- easy-es配置 -->
     <bean id="mapperScannerConfigurer" class="org.dromara.easyes.spring.MapperScannerConfigurer">
-        <property name="basePackage" value="org.dromara.easyes.test.mapper"/>
+        <property name="basePackage" value="org.dromara.easyes.test.mapper,org.dromara.easyes.test.mapper2"/>
     </bean>
 </beans>

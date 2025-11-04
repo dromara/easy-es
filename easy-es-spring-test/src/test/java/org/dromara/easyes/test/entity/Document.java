@@ -1,9 +1,11 @@
 package org.dromara.easyes.test.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.dromara.easyes.annotation.*;
 import org.dromara.easyes.annotation.rely.*;
+import org.dromara.easyes.common.join.BaseJoin;
 import org.dromara.easyes.test.settings.MySettingsProvider;
 
 import java.math.BigDecimal;
@@ -21,17 +23,18 @@ import java.util.List;
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
+@EqualsAndHashCode(callSuper = false)
 @Data
 @Accessors(chain = true)
 @Settings(shardsNum = 3, replicasNum = 2, settingsProvider = MySettingsProvider.class)
-@IndexName(value = "easyes_document", keepGlobalPrefix = true, refreshPolicy = RefreshPolicy.IMMEDIATE)
+@IndexName(value = "easyes_document_spring_xml", keepGlobalPrefix = true, refreshPolicy = RefreshPolicy.IMMEDIATE)
 @Join(nodes = {@Node(parentClass = Document.class, childClasses = {Author.class, Comment.class}), @Node(parentClass = Author.class, childClasses = Contact.class)})
-public class Document {
+public class Document extends BaseJoin {
     /**
      * es中的唯一id,字段名随便起,我这里演示用esId,你也可以用id(推荐),bizId等.
      * 如果你想自定义es中的id为你提供的id,比如MySQL中的id,请将注解中的type指定为customize或直接在全局配置文件中指定,如此id便支持任意数据类型)
      */
-    @IndexId(type = IdType.CUSTOMIZE)
+    @IndexId(type = IdType.CUSTOMIZE, writeToSource = true)
     private String esId;
     /**
      * 文档标题,不指定类型默认被创建为keyword类型,可进行精确查询
@@ -110,14 +113,14 @@ public class Document {
     /**
      * 嵌套类型 注意,务必像下面示例一样指定类型为nested及其nested class,否则会导致框架无法正常运行
      */
-    @IndexField(fieldType = FieldType.NESTED, nestedClass = User.class)
+    @IndexField(fieldType = FieldType.NESTED, nestedOrObjectClass = User.class)
     private List<User> users;
 
     /**
      * es返回的得分字段,字段名字随便取,只要加了@Score注解即可
      */
     @Score(decimalPlaces = 2)
-    private Float score;
+    private Double score;
     /**
      * es返回的距离,字段名字随便取,距离单位以用户在序器中指定的为准,不指定es默认为:米
      */

@@ -38,7 +38,7 @@ public class EsIndexParam {
     /**
      * 索引权重
      */
-    private Float boost;
+    private Double boost;
     /**
      * 查询分词器
      */

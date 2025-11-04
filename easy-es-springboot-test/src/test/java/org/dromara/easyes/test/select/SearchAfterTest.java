@@ -1,6 +1,7 @@
 package org.dromara.easyes.test.select;
 
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import org.dromara.easyes.core.biz.SAPageInfo;
 import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
 import org.dromara.easyes.core.kernel.EsWrappers;
@@ -62,7 +63,7 @@ public class SearchAfterTest {
         System.out.println(saPageInfo);
 
         // 第二页,从saPageInfo中把上一次的nextSearchAfter回传给后端
-        List<Object> nextSearchAfter = saPageInfo.getNextSearchAfter();
+        List<FieldValue> nextSearchAfter = saPageInfo.getNextSearchAfter();
         SAPageInfo<Document> saPageInfo1 = documentMapper.searchAfterPage(wrapper, nextSearchAfter, 10);
         System.out.println(saPageInfo1);
     }

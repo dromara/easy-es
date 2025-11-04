@@ -1,8 +1,8 @@
 package org.dromara.easyes.solon.config;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.dromara.easyes.core.config.GeneratorConfig;
 import org.dromara.easyes.core.toolkit.Generator;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.noear.solon.annotation.Component;
 import org.noear.solon.annotation.Inject;
 
@@ -15,7 +15,7 @@ import org.noear.solon.annotation.Inject;
 public class GeneratorConfiguration extends Generator {
 
     @Inject
-    private RestHighLevelClient client;
+    private ElasticsearchClient client;
 
     @Override
     public Boolean generate(GeneratorConfig config) {

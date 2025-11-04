@@ -1,11 +1,11 @@
 package org.dromara.easyes.test.agg;
 
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import org.dromara.easyes.core.biz.EsPageInfo;
 import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
 import org.dromara.easyes.test.mapper.DocumentMapper;
-import org.elasticsearch.action.search.SearchResponse;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -41,7 +41,7 @@ public class AggTest {
         wrapper.eq(Document::getTitle, "老汉")
                 .groupBy(Document::getSubTitle)
                 .max(Document::getStarNum);
-        SearchResponse response = documentMapper.search(wrapper);
+        SearchResponse<Document> response = documentMapper.search(wrapper);
         System.out.println(response);
     }
 
@@ -55,7 +55,7 @@ public class AggTest {
                 .groupBy(Document::getTitle)
                 .max(Document::getStarNum)
                 .min(Document::getStarNum);
-        SearchResponse response = documentMapper.search(wrapper);
+        SearchResponse<Document> response = documentMapper.search(wrapper);
         System.out.println(response);
     }
 
@@ -71,7 +71,7 @@ public class AggTest {
                 .min(true, Document::getStarNum, Document::getScore)
                 .max(false, Document::getStarNum, Document::getScore)
                 .sum(false, false, Document::getStarNum, Document::getScore);
-        SearchResponse response = documentMapper.search(wrapper);
+        SearchResponse<Document> response = documentMapper.search(wrapper);
         System.out.println(response);
     }
 
@@ -86,7 +86,7 @@ public class AggTest {
                 .min(true, "starNum", "score")
                 .max(false, "starNum", "score")
                 .sum(false, false, "starNum", "score");
-        SearchResponse response = documentMapper.search(wrapper);
+        SearchResponse<Document> response = documentMapper.search(wrapper);
         System.out.println(response);
     }
 
@@ -97,7 +97,7 @@ public class AggTest {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         // 指定启用管道聚合为false
         wrapper.groupBy(false, Document::getTitle, Document::getSubTitle);
-        SearchResponse response = documentMapper.search(wrapper);
+        SearchResponse<Document> response = documentMapper.search(wrapper);
         System.out.println(response);
     }
 }

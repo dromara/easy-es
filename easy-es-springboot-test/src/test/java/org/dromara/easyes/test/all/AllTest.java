@@ -1,44 +1,34 @@
 package org.dromara.easyes.test.all;
 
-
+import co.elastic.clients.elasticsearch._types.*;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.json.JsonData;
+import co.elastic.clients.transport.rest_client.RestClientOptions;
 import org.dromara.easyes.common.constants.BaseEsConstants;
+import org.dromara.easyes.core.biz.EntityInfo;
 import org.dromara.easyes.core.biz.EsPageInfo;
 import org.dromara.easyes.core.biz.OrderByParam;
 import org.dromara.easyes.core.biz.SAPageInfo;
 import org.dromara.easyes.core.conditions.select.LambdaEsQueryWrapper;
 import org.dromara.easyes.core.conditions.update.LambdaEsUpdateWrapper;
 import org.dromara.easyes.core.kernel.EsWrappers;
+import org.dromara.easyes.core.kernel.WrapperProcessor;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.core.toolkit.FieldUtils;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
 import org.dromara.easyes.test.mapper.DocumentMapper;
-import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.HttpAsyncResponseConsumerFactory;
 import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.common.geo.GeoDistance;
-import org.elasticsearch.common.geo.GeoPoint;
-import org.elasticsearch.common.geo.ShapeRelation;
-import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.geometry.Circle;
 import org.elasticsearch.geometry.Point;
 import org.elasticsearch.geometry.Rectangle;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptType;
-import org.elasticsearch.search.aggregations.bucket.terms.ParsedLongTerms;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.elasticsearch.search.aggregations.metrics.ParsedAvg;
-import org.elasticsearch.search.aggregations.metrics.ParsedMax;
-import org.elasticsearch.search.aggregations.metrics.ParsedMin;
-import org.elasticsearch.search.aggregations.metrics.ParsedSum;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.GeoDistanceSortBuilder;
-import org.elasticsearch.search.sort.SortBuilders;
-import org.elasticsearch.search.sort.SortOrder;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -96,6 +86,7 @@ public class AllTest {
         document.setEnglish("Calcium Gluconate");
         document.setBigNum(new BigDecimal("66.66"));
         document.setVector(new double[]{0.39684247970581666, 0.768707156181666, 0.5145490765571666});
+//        System.out.println(JsonUtils.toJsonPrettyStr(document));
         int successCount = documentMapper.insert(document);
         Assertions.assertEquals(successCount, 1);
     }
@@ -116,7 +107,6 @@ public class AllTest {
             document.setGeoLocation(point.toString());
             document.setStarNum(i);
             document.setVector(new double[]{35.89684247970581666, 86.268707156181666, 133.1145490765571666});
-
             // 针对个别数据 造一些差异项 方便测试不同场景
             if (i == 2) {
                 document.setLocation("40.17836693398477,116.64002551005981");
@@ -150,12 +140,12 @@ public class AllTest {
         wrapper.eq(Document::getTitle, "测试文档2");
         wrapper.set(Document::getContent, "测试文档内容2的内容被更新了");
 
-        int count = documentMapper.update(null, wrapper);
+        int count = documentMapper.update(wrapper);
         Assertions.assertEquals(1, count);
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     public void testUpdateByChainWrapper() {
         int count = EsWrappers.lambdaChainUpdate(documentMapper)
                 .eq(Document::getTitle, "测试文档3")
@@ -165,12 +155,16 @@ public class AllTest {
     }
 
     @Test
-    @Order(4)
+    @Order(6)
     public void testUpdateBySetSearchSourceBuilder() {
         LambdaEsUpdateWrapper<Document> wrapper = new LambdaEsUpdateWrapper<>();
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.termQuery(FieldUtils.val(Document::getTitle) + KEYWORD_SUFFIX, "测试文档2"));
-        wrapper.setSearchSourceBuilder(searchSourceBuilder);
+        SearchRequest.Builder searchBuilder = new SearchRequest.Builder();
+        searchBuilder.query(QueryBuilders.term()
+                .field(FieldUtils.val(Document::getTitle) + KEYWORD_SUFFIX)
+                .value("测试文档2")
+                .build()._toQuery()
+        );
+        wrapper.setSearchBuilder(searchBuilder);
 
         Document document = new Document();
         document.setContent("测试文档内容2的内容再次被更新了");
@@ -179,7 +173,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(5)
+    @Order(7)
     public void testUpdateByWrapperAndEntity() {
         LambdaEsUpdateWrapper<Document> wrapper = new LambdaEsUpdateWrapper<>();
         wrapper.match(Document::getCreator, "老汉");
@@ -192,7 +186,7 @@ public class AllTest {
     // 3.查询
 
     @Test
-    @Order(6)
+    @Order(8)
     public void testSQL() {
         // 注意 sql中的from后面跟的是要被查询的索引名,也可以是索引别名(效果一样) 由于索引名可能会变,所以此处我采用别名ee_default_alias进行查询
         String sql = "select count(*) from ee_default_alias where star_num > 0";
@@ -202,7 +196,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(9)
     public void testDSL() {
         String dsl = "{\"query\":{\"bool\":{\"must\":[{\"term\":{\"title.keyword\":{\"value\":\"测试文档3\",\"boost\":1.0}}}],\"adjust_pure_negative\":true,\"boost\":1.0}},\"track_total_hits\":2147483647,\"highlight\":{\"pre_tags\":[\"<em>\"],\"post_tags\":[\"</em>\"],\"fragment_size\":2,\"fields\":{\"content\":{\"type\":\"unified\"}}}}";
         String jsonResult = documentMapper.executeDSL(dsl);
@@ -211,7 +205,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(10)
     public void testSelectOne() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getContent, "内容")
@@ -222,7 +216,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(11)
     public void testOne() {
         // 链式调用
         Document document = EsWrappers.lambdaChainQuery(documentMapper).eq(Document::getTitle, "测试文档3").one();
@@ -230,14 +224,14 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
-    public void testDefaultMethod(){
+    @Order(12)
+    public void testDefaultMethod() {
         List<Document> documents = documentMapper.testDefaultMethod();
-        Assertions.assertEquals(documents.size(),1);
+        Assertions.assertEquals(documents.size(), 1);
     }
 
     @Test
-    @Order(6)
+    @Order(13)
     public void testSelectById() {
         Document document = documentMapper.selectById(1);
         Assertions.assertEquals("1", document.getEsId());
@@ -245,14 +239,14 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(14)
     public void testSelectBatchIds() {
         List<Document> documents = documentMapper.selectBatchIds(Arrays.asList("1", "2"));
         Assertions.assertEquals(2, documents.size());
     }
 
     @Test
-    @Order(6)
+    @Order(15)
     public void testSelectList() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCustomField, "字段");
@@ -261,7 +255,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(16)
     public void testIgnoreCase() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq(Document::getCaseTest, "test");
@@ -270,7 +264,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(17)
     public void testIp() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq(Document::getIpAddress, "192.168.0.0/16");
@@ -279,7 +273,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(18)
     public void testSelectCount() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCustomField, "字段");
@@ -288,7 +282,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(19)
     public void testSelectCountDistinct() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCustomField, "字段");
@@ -298,7 +292,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(20)
     public void testConditionAllEq() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         Map<String, Object> map = new HashMap<>();
@@ -312,7 +306,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(21)
     public void testConditionEq() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq(Document::getTitle, "测试文档10");
@@ -322,7 +316,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(22)
     public void testConditionGt() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.gt(Document::getStarNum, 20);
@@ -331,7 +325,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(23)
     public void testConditionGe() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.ge(Document::getStarNum, 20);
@@ -340,7 +334,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(24)
     public void testConditionLt() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.lt(Document::getStarNum, 3);
@@ -349,7 +343,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(25)
     public void testConditionLe() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.le(Document::getStarNum, 3);
@@ -358,7 +352,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(26)
     public void testConditionBetween() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.between(Document::getStarNum, 1, 10);
@@ -367,7 +361,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(27)
     public void testConditionLike() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.like(Document::getTitle, "试文档");
@@ -376,7 +370,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(28)
     public void testConditionLikeLeft() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.likeLeft(Document::getTitle, "文档10");
@@ -385,7 +379,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(29)
     public void testConditionLikeRight() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.likeRight(Document::getTitle, "测试文");
@@ -394,7 +388,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(30)
     public void testConditionIsNotNull() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.isNotNull(Document::getNullField);
@@ -403,7 +397,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(31)
     public void testConditionExists() {
         // exists等价于isNotNull 在es中更推荐此种语法
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
@@ -412,9 +406,8 @@ public class AllTest {
         Assertions.assertEquals(1, documents.size());
     }
 
-
     @Test
-    @Order(6)
+    @Order(32)
     public void testConditionIn() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.in(Document::getEsId, "1", "2", "3");
@@ -428,70 +421,63 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(33)
     public void testConditionGroupBy() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getContent, "测试")
                 .groupBy(Document::getStarNum);
-        SearchResponse response = documentMapper.search(wrapper);
-        ParsedLongTerms parsedLongTerms = response.getAggregations()
-                .get("starNumTerms");
-        Terms.Bucket bucket = parsedLongTerms.getBuckets().get(0);
-        Assertions.assertTrue(bucket.getKey().equals(1L) && bucket.getDocCount() == 2L);
+        SearchResponse<Document> response = documentMapper.search(wrapper);
+        Aggregate aggregate = response.aggregations().get("starNumTerms");
+        LongTermsBucket bucket = aggregate.lterms().buckets().array().get(0);
+        Assertions.assertTrue(bucket.key().equals("1") && bucket.docCount() == 2L);
     }
 
     @Test
-    @Order(6)
+    @Order(34)
     public void testConditionMax() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getContent, "测试")
                 .max(Document::getStarNum);
-        SearchResponse response = documentMapper.search(wrapper);
-        ParsedMax parsedMax = response.getAggregations()
-                .get("starNumMax");
-        Assertions.assertTrue(parsedMax.getValue() > 21);
+        SearchResponse<Document> response = documentMapper.search(wrapper);
+        Aggregate agg = response.aggregations().get("starNumMax");
+        Assertions.assertTrue(agg.max().value() > 21);
     }
 
     @Test
-    @Order(6)
+    @Order(35)
     public void testConditionMin() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getContent, "测试")
                 .min(Document::getStarNum);
-        SearchResponse response = documentMapper.search(wrapper);
-        ParsedMin parsedMin = response.getAggregations()
-                .get("starNumMin");
-        Assertions.assertTrue(parsedMin.getValue() > 0 && parsedMin.getValue() < 2);
+        SearchResponse<Document> response = documentMapper.search(wrapper);
+        double parsedMin = response.aggregations().get("starNumMin").min().value();
+        Assertions.assertTrue(parsedMin > 0 && parsedMin < 2);
     }
 
     @Test
-    @Order(6)
+    @Order(36)
     public void testConditionSum() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getContent, "测试")
                 .sum(Document::getStarNum);
-        SearchResponse response = documentMapper.search(wrapper);
-        ParsedSum parsedSum = response.getAggregations()
-                .get("starNumSum");
-        Assertions.assertTrue(parsedSum.getValue() >= 252);
+        SearchResponse<Document> response = documentMapper.search(wrapper);
+        double parsedSum = response.aggregations().get("starNumSum").sum().value();
+        Assertions.assertTrue(parsedSum >= 252);
     }
 
-
     @Test
-    @Order(6)
+    @Order(37)
     public void testConditionAvg() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getContent, "测试")
                 .avg(Document::getStarNum);
-        SearchResponse response = documentMapper.search(wrapper);
-        ParsedAvg parsedAvg = response.getAggregations()
-                .get("starNumAvg");
-        Assertions.assertTrue(parsedAvg.getValue() > 11 && parsedAvg.getValue() < 12);
+        SearchResponse<Document> response = documentMapper.search(wrapper);
+        double parsedAvg = response.aggregations().get("starNumAvg").avg().value();
+        Assertions.assertTrue(parsedAvg > 11 && parsedAvg < 12);
     }
 
-
     @Test
-    @Order(6)
+    @Order(38)
     public void testConditionDistinct() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getContent, "测试")
@@ -501,7 +487,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(39)
     public void testConditionLimit() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉")
@@ -511,7 +497,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(40)
     public void testConditionFromAndSize() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉")
@@ -522,7 +508,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(41)
     public void testConditionIndex() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉")
@@ -532,22 +518,25 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(42)
     public void testSetSearchSourceBuilder() {
+        EntityInfo e = EntityInfoHelper.getEntityInfo(Document.class);
         // 测试混合查询的另一种方式
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.matchQuery(FieldUtils.val(Document::getCreator), "老汉"));
-        Optional.ofNullable(EntityInfoHelper.getEntityInfo(Document.class))
-                .flatMap(i -> Optional.ofNullable(i.getMaxResultWindow()))
-                .ifPresent(searchSourceBuilder::size);
+        SearchRequest.Builder searchSourceBuilder = new SearchRequest.Builder()
+                .query(QueryBuilders.match()
+                        .field(FieldUtils.val(Document::getCreator))
+                        .query("老汉")
+                        .build()._toQuery()
+                )
+                .size(e.getMaxResultWindow().intValue());
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.setSearchSourceBuilder(searchSourceBuilder);
+        wrapper.setSearchBuilder(searchSourceBuilder);
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(22, documents.size());
     }
 
     @Test
-    @Order(6)
+    @Order(43)
     public void testConditionAnd() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.in(Document::getStarNum, 1, 2, 3, 4, 10, 11)
@@ -557,7 +546,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(44)
     public void testConditionOr() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.in(Document::getStarNum, 1, 10, 12, 13)
@@ -567,7 +556,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(45)
     public void testConditionOrInner() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq(Document::getTitle, "测试文档10")
@@ -578,7 +567,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(46)
     public void testConditionFilter() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq(Document::getStarNum, 10)
@@ -588,7 +577,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(47)
     public void testConditionNot() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.in(Document::getStarNum, 10, 11, 12, 13)
@@ -597,9 +586,8 @@ public class AllTest {
         Assertions.assertEquals(2, documents.size());
     }
 
-
     @Test
-    @Order(6)
+    @Order(48)
     public void testPageQuery() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉");
@@ -609,7 +597,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(49)
     public void testChainPage() {
         // 链式
         EsPageInfo<Document> pageInfo = EsWrappers.lambdaChainQuery(documentMapper)
@@ -619,9 +607,8 @@ public class AllTest {
         Assertions.assertEquals(22, pageInfo.getTotal());
     }
 
-
     @Test
-    @Order(6)
+    @Order(50)
     public void testSearchAfter() {
         LambdaEsQueryWrapper<Document> lambdaEsQueryWrapper = EsWrappers.lambdaQuery(Document.class);
         lambdaEsQueryWrapper.size(10);
@@ -632,13 +619,13 @@ public class AllTest {
         Assertions.assertEquals(10, saPageInfo.getList().size());
 
         //获取下一页
-        List<Object> nextSearchAfter = saPageInfo.getNextSearchAfter();
+        List<FieldValue> nextSearchAfter = saPageInfo.getNextSearchAfter();
         SAPageInfo<Document> next = documentMapper.searchAfterPage(lambdaEsQueryWrapper, nextSearchAfter, 10);
         Assertions.assertEquals(10, next.getList().size());
     }
 
     @Test
-    @Order(6)
+    @Order(51)
     public void testFilterField() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq(Document::getTitle, "测试文档10")
@@ -650,7 +637,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(52)
     public void testNotFilterField() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq(Document::getTitle, "测试文档10")
@@ -662,7 +649,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(53)
     public void testOrderByDesc() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉");
@@ -673,7 +660,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(54)
     public void testOrderByAsc() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉");
@@ -684,13 +671,13 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(55)
     public void testOrderBy() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉");
         List<OrderByParam> orderByParams = new ArrayList<>();
         OrderByParam orderByParam = new OrderByParam();
-        orderByParam.setOrder("star_num");
+        orderByParam.setOrder("starNum");
         orderByParam.setSort("DESC");
         orderByParams.add(orderByParam);
         wrapper.orderBy(orderByParams);
@@ -700,10 +687,10 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(56)
     public void testOrderByDistanceAsc() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        GeoPoint centerPoint = new GeoPoint(41.0, 116.0);
+        GeoLocation centerPoint = GeoLocation.of(a -> a.latlon(a1 -> a1.lat(41.0).lon(116.0)));
         wrapper.match(Document::getCreator, "老汉")
                 .geoDistance(Document::getLocation, 168.8, centerPoint)
                 .orderByDistanceAsc(Document::getLocation, centerPoint);
@@ -713,10 +700,10 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(57)
     public void testOrderByDistanceDesc() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        GeoPoint centerPoint = new GeoPoint(41.0, 116.0);
+        GeoLocation centerPoint = GeoLocation.of(a -> a.latlon(a1 -> a1.lat(41.0).lon(116.0)));
         wrapper.match(Document::getCreator, "老汉")
                 .geoDistance(Document::getLocation, 168.8, centerPoint)
                 .orderByDistanceDesc(Document::getLocation, centerPoint);
@@ -726,11 +713,11 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(58)
     public void testOrderByDistanceMulti() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        GeoPoint centerPoint = new GeoPoint(41.0, 116.0);
-        GeoPoint centerPoint1 = new GeoPoint(42.0, 118.0);
+        GeoLocation centerPoint = GeoLocation.of(a -> a.latlon(a1 -> a1.lat(41.0).lon(116.0)));
+        GeoLocation centerPoint1 = GeoLocation.of(a -> a.latlon(a1 -> a1.lat(42.0).lon(118.0)));
         wrapper.match(Document::getCreator, "老汉")
                 .geoDistance(Document::getLocation, 168.8, centerPoint)
                 .orderByDistanceDesc(Document::getLocation, centerPoint)
@@ -741,7 +728,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(59)
     public void testSortByScore() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉11");
@@ -751,23 +738,28 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(60)
     public void testSort() {
+        EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(Document.class);
+        String realField = FieldUtils.getRealFieldAndSuffix(
+                FieldUtils.val(Document::getStarNum),
+                entityInfo.getMappingColumnMap(),
+                entityInfo
+        );
+
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉");
-        FieldSortBuilder fieldSortBuilder = SortBuilders.
-                fieldSort(FieldUtils.getRealField(
-                        FieldUtils.val(Document::getStarNum),
-                        EntityInfoHelper.getEntityInfo(Document.class).getMappingColumnMap()));
-        fieldSortBuilder.order(SortOrder.DESC);
-        wrapper.sort(fieldSortBuilder);
+        wrapper.sort(SortOptions.of(a -> a.field(b -> b
+                .field(realField)
+                .order(SortOrder.Desc)
+        )));
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals("22", documents.get(0).getEsId());
         Assertions.assertEquals("21", documents.get(1).getEsId());
     }
 
     @Test
-    @Order(6)
+    @Order(61)
     public void testMatch() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉");
@@ -776,12 +768,12 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(62)
     public void testMatchPhrase() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.matchPhrase(Document::getContent, "测试");
         List<Document> documents = documentMapper.selectList(wrapper);
-        Assertions.assertTrue(documents.size() > 0);
+        Assertions.assertFalse(documents.isEmpty());
 
         LambdaEsQueryWrapper<Document> wrapper1 = new LambdaEsQueryWrapper<>();
         wrapper1.matchPhrase(Document::getContent, "内容测试");
@@ -790,7 +782,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(63)
     public void testMatchAllQuery() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.matchAllQuery();
@@ -799,7 +791,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(64)
     public void testMatchPhrasePrefixQuery() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.matchPhrasePrefixQuery(Document::getContent, "测试");
@@ -808,7 +800,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(65)
     public void testMultiMatchQuery() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.multiMatchQuery("老汉", Document::getContent, Document::getCreator, Document::getCustomField);
@@ -823,7 +815,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(66)
     public void testQueryStringQuery() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.queryStringQuery("老汉");
@@ -832,7 +824,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(67)
     public void testPrefixQuery() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.prefixQuery(Document::getContent, "测试");
@@ -841,51 +833,51 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(68)
     public void testHighLight() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getContent, "测试")
-                .match(Document::getCustomField,"字段");
+                .match(Document::getCustomField, "字段");
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertTrue(documents.get(0).getHighlightContent().contains("测试"));
     }
 
     @Test
-    @Order(6)
+    @Order(69)
     public void testGeoBoundingBox() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        GeoPoint leftTop = new GeoPoint(41.187328D, 115.498353D);
-        GeoPoint bottomRight = new GeoPoint(39.084509D, 117.610461D);
+        GeoLocation leftTop = GeoLocation.of(a -> a.latlon(a1 -> a1.lat(41.187328D).lon(115.498353D)));
+        GeoLocation bottomRight = GeoLocation.of(a -> a.latlon(a1 -> a1.lat(39.084509D).lon(117.610461D)));
         wrapper.geoBoundingBox(Document::getLocation, leftTop, bottomRight);
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(4, documents.size());
     }
 
-
     @Test
-    @Order(6)
+    @Order(70)
     public void testGeoDistance() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        GeoPoint geoPoint = new GeoPoint(41.0, 116.0);
-        wrapper.geoDistance(Document::getLocation, 168.8, DistanceUnit.KILOMETERS, geoPoint);
-        GeoDistanceSortBuilder geoDistanceSortBuilder = SortBuilders.geoDistanceSort(FieldUtils.val(Document::getLocation), geoPoint)
-                .unit(DistanceUnit.KILOMETERS)
-                .geoDistance(GeoDistance.ARC)
-                .order(SortOrder.DESC);
-
-        wrapper.sort(geoDistanceSortBuilder);
+        GeoLocation geoPoint = GeoLocation.of(a -> a.latlon(a1 -> a1.lat(41.0).lon(116.0)));
+        wrapper.geoDistance(Document::getLocation, 168.8, DistanceUnit.Kilometers, geoPoint);
+        wrapper.sort(SortOptions.of(a -> a.geoDistance(b -> b
+                .field(FieldUtils.val(Document::getLocation))
+                .location(geoPoint)
+                .unit(DistanceUnit.Kilometers)
+                .distanceType(GeoDistanceType.Arc)
+                .order(SortOrder.Desc)
+        )));
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(4, documents.size());
     }
 
     @Test
-    @Order(6)
+    @Order(71)
     public void testGeoPolygon() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        List<GeoPoint> geoPoints = new ArrayList<>();
-        GeoPoint geoPoint = new GeoPoint(40.178012, 116.577188);
-        GeoPoint geoPoint1 = new GeoPoint(40.169329, 116.586315);
-        GeoPoint geoPoint2 = new GeoPoint(40.178288, 116.591813);
+        List<GeoLocation> geoPoints = new ArrayList<>();
+        GeoLocation geoPoint = GeoLocation.of(a -> a.latlon(a1 -> a1.lat(40.178012).lon(116.577188)));
+        GeoLocation geoPoint1 = GeoLocation.of(a -> a.latlon(a1 -> a1.lat(40.169329).lon(116.586315)));
+        GeoLocation geoPoint2 = GeoLocation.of(a -> a.latlon(a1 -> a1.lat(40.178288).lon(116.591813)));
         geoPoints.add(geoPoint);
         geoPoints.add(geoPoint1);
         geoPoints.add(geoPoint2);
@@ -895,17 +887,17 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(72)
     public void testGeoShape() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         Circle circle = new Circle(13, 14, 100);
-        wrapper.geoShape(Document::getGeoLocation, circle, ShapeRelation.DISJOINT);
+        wrapper.geoShape(Document::getGeoLocation, circle, GeoShapeRelation.Disjoint);
         List<Document> documents = documentMapper.selectList(wrapper);
         Assertions.assertEquals(22, documents.size());
     }
 
     @Test
-    @Order(6)
+    @Order(73)
     public void testMultiFieldSelect() {
         // 药品 中文名叫葡萄糖酸钙口服溶液 英文名叫 Calcium Gluconate 汉语拼音为 putaotangsuangaikoufurongye
         // 用户可以通过模糊检索,例如输入 Calcium 或 葡萄糖 或 putaotang时对应药品均可以被检索到
@@ -920,45 +912,47 @@ public class AllTest {
     }
 
     @Test
-    @Order(6)
+    @Order(74)
     public void testVector() {
         // 向量查询, 查询条件构造
-        Map<String, Object> params = new HashMap<>();
-        params.put("vector", new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594});
-        String scriptCode = "cosineSimilarity(params.vector, 'vector') + 1.0";
-        QueryBuilder queryBuilder = QueryBuilders.scriptScoreQuery(QueryBuilders.matchAllQuery(), new Script(ScriptType.INLINE, Script.DEFAULT_SCRIPT_LANG, scriptCode, params));
-
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(queryBuilder);
+        Query query = Query.of(a -> a.scriptScore(b -> b
+                .query(QueryBuilders.matchAll().build()._toQuery())
+                .script(d -> d.inline(e -> e
+                        .lang("painless")
+                        .params("vector", JsonData.of(new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594}))
+                        .source("cosineSimilarity(params.vector, 'vector') + 1.0")
+                ))
+        ));
+        SearchRequest.Builder searchSourceBuilder = new SearchRequest.Builder();
+        searchSourceBuilder.query(query);
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
-        wrapper.setSearchSourceBuilder(searchSourceBuilder);
+        wrapper.setSearchBuilder(searchSourceBuilder);
 
         List<Document> Documents = documentMapper.selectList(wrapper);
         Assertions.assertFalse(Documents.isEmpty());
     }
 
     @Test
-    @Order(6)
+    @Order(75)
     public void testSetRequestOptions() {
         // 可设置自定义请求参数,覆盖默认配置, 解决报错 entity content is too long [168583249] for the configured buffer limit [104857600]
-        RequestOptions.Builder options = RequestOptions.DEFAULT.toBuilder();
-        options.setHttpAsyncResponseConsumerFactory(
+        RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
+        builder.setHttpAsyncResponseConsumerFactory(
                 new HttpAsyncResponseConsumerFactory.HeapBufferedResponseConsumerFactory(4 * 104857600));
-        final RequestOptions requestOptions = options.build();
-        Boolean success = documentMapper.setRequestOptions(requestOptions);
+        Boolean success = documentMapper.setRequestOptions(new RestClientOptions(builder.build()));
         Assertions.assertTrue(success);
     }
 
     // 4.删除
     @Test
-    @Order(7)
+    @Order(76)
     public void testDeleteById() {
         int count = documentMapper.deleteById("1");
         Assertions.assertEquals(1, count);
     }
 
     @Test
-    @Order(8)
+    @Order(77)
     public void testDeleteBatchIds() {
         List<String> idList = Arrays.asList("2", "3", "4");
         int count = documentMapper.deleteBatchIds(idList);
@@ -966,7 +960,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(9)
+    @Order(78)
     public void testDeleteByWrapper() {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.match(Document::getCreator, "老汉");
@@ -976,7 +970,7 @@ public class AllTest {
     }
 
     @Test
-    @Order(10)
+    @Order(80)
     public void testDeleteIndex() {
         boolean deleted = documentMapper.deleteIndex(EntityInfoHelper.getEntityInfo(Document.class).getIndexName());
         boolean lockDeleted = documentMapper.deleteIndex(BaseEsConstants.LOCK_INDEX);
@@ -985,20 +979,29 @@ public class AllTest {
     }
 
     @Test
-    @Order(9)
+    @Order(79)
     public void testComplex() {
         // SQL写法
         // where business_type = 1 and (state = 9 or (state = 8 and bidding_sign = 1)) or (business_type = 2 and state in (2,3))
 
-        // RestHighLevelClient写法
-        List<Integer> values = Arrays.asList(2, 3);
-        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-        boolQueryBuilder.must(QueryBuilders.termQuery("business_type", 1));
-        boolQueryBuilder.must(QueryBuilders.boolQuery().must(QueryBuilders.termQuery("state", 9))
-                .should(QueryBuilders.boolQuery().must(QueryBuilders.termQuery("state", 8)).must(QueryBuilders.termQuery("bidding_sign", 1))));
-        boolQueryBuilder.should(QueryBuilders.boolQuery().must(QueryBuilders.termQuery("business_type", 2)).must(QueryBuilders.termsQuery("state", values)));
+        // ElasticsearchClient写法
+        List<FieldValue> values = Arrays.asList(WrapperProcessor.fieldValue(2), WrapperProcessor.fieldValue(3));
+        BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool()
+                .must(a -> a.term(b -> b.field("business_type").value(1)))
+                .must(a -> a.bool(b -> b
+                        .must(c -> c.term(d -> d.field("state").value(9)))
+                        .should(c -> c.bool(d -> d
+                                .must(f -> f.term(e -> e.field("state").value(8)))
+                                .must(f -> f.term(e -> e.field("bidding_sign").value(1)))
+                        ))
+                ))
+                .should(a -> a.bool(c -> c
+                        .must(d -> d.term(e -> e.field("business_type").value(2)))
+                        .must(d -> d.terms(e -> e.field("state").terms(f -> f.value(values))))
+                ));
 
-        System.out.println(boolQueryBuilder);
+        Query query = boolQueryBuilder.build()._toQuery();
+        System.out.println(query.toString());
         System.out.println("--------------------");
 
         // MP及EE写法
@@ -1006,7 +1009,12 @@ public class AllTest {
         wrapper.eq("business_type", 1)
                 .and(a -> a.eq("state", 9).or(b -> b.eq("state", 8).eq("bidding_sign", 1)))
                 .or(i -> i.eq("business_type", 2).in("state", 2, 3));
-        documentMapper.selectList(wrapper);
+        SearchRequest.Builder searchBuilder = documentMapper.getSearchBuilder(wrapper);
+        Query qry = searchBuilder.build().query();
+        if (qry != null) {
+            System.out.println(qry);
+        }
+        List<Document> documents = documentMapper.selectList(wrapper);
     }
 
 }

@@ -7,6 +7,7 @@ import org.dromara.easyes.annotation.IndexName;
 import org.dromara.easyes.annotation.rely.Analyzer;
 import org.dromara.easyes.annotation.rely.FieldType;
 import org.dromara.easyes.annotation.rely.JoinField;
+import org.dromara.easyes.common.join.BaseJoin;
 
 
 /**
@@ -15,7 +16,7 @@ import org.dromara.easyes.annotation.rely.JoinField;
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 @Data
-public class Comment {
+public class Comment extends BaseJoin {
     /**
      * 评论id
      */

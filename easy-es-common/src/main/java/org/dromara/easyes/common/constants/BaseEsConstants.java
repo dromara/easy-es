@@ -1,5 +1,8 @@
 package org.dromara.easyes.common.constants;
 
+import co.elastic.clients.elasticsearch._types.Conflicts;
+import co.elastic.clients.elasticsearch._types.OpType;
+
 /**
  * EasyEs的常量
  * <p>
@@ -174,11 +177,11 @@ public interface BaseEsConstants {
     /**
      * 默认迁移操作规则
      */
-    String DEFAULT_DEST_OP_TYPE = "create";
+    OpType DEFAULT_DEST_OP_TYPE = OpType.Create;
     /**
      * 默认冲突处理
      */
-    String DEFAULT_CONFLICTS = "proceed";
+    Conflicts DEFAULT_CONFLICTS = Conflicts.Proceed;
     /**
      * 更新索引时自动创建的索引后缀s 灵感来源于jvm young区s0,s1垃圾回收
      */
@@ -191,10 +194,6 @@ public interface BaseEsConstants {
      * 更新索引时自动创建的索引后缀s1
      */
     String S1_SUFFIX = "_s1";
-    /**
-     * 分布式锁提示内容
-     */
-    String DISTRIBUTED_LOCK_TIP_JSON = "{\"tip\":\"Do not delete unless deadlock occurs\"}";
     /**
      * 获取/释放 分布式锁 最大失败重试次数
      */

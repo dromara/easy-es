@@ -1,6 +1,6 @@
 package org.dromara.easyes.common.strategy;
 
-import org.elasticsearch.client.RestHighLevelClient;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 
 /**
  * 自动托管索引策略接口
@@ -21,5 +21,5 @@ public interface AutoProcessIndexStrategy {
      * @param entityClass 实体类
      * @param client      restHighLevelClient
      */
-    void processIndexAsync(Class<?> entityClass, RestHighLevelClient client);
+    void processIndexAsync(Class<?> entityClass, ElasticsearchClient client);
 }

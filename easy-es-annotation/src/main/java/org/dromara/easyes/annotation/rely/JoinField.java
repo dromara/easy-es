@@ -15,6 +15,14 @@ public class JoinField {
      */
     private String parent;
 
+    public JoinField() {
+    }
+
+    public JoinField(String name, String parent) {
+        this.name = name;
+        this.parent = parent;
+    }
+
     public String getName() {
         return name;
     }

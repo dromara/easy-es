@@ -1,5 +1,6 @@
 package org.dromara.easyes.core.cache;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.common.utils.CollectionUtils;
 import org.dromara.easyes.common.utils.ExceptionUtils;
@@ -7,7 +8,6 @@ import org.dromara.easyes.core.biz.EntityInfo;
 import org.dromara.easyes.core.kernel.BaseEsMapperImpl;
 import org.dromara.easyes.core.toolkit.EntityInfoHelper;
 import org.dromara.easyes.core.toolkit.FieldUtils;
-import org.elasticsearch.client.RestHighLevelClient;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -29,27 +29,34 @@ public class BaseCache {
     private static final Map<Class<?>, Map<String, Method>> baseEsEntityMethodMap = new ConcurrentHashMap<>();
 
     /**
-     * 初始化缓存
-     *
+     * 初始化mapper缓存
      * @param mapperInterface mapper接口
-     * @param client          es客户端
-     * @param entityClass     实体类
+     * @param entityClass 实体类
+     * @param client es客户端
+     * @param <T> 泛型
      */
-    public static void initCache(Class<?> mapperInterface, Class<?> entityClass, RestHighLevelClient client) {
+    public static <T> void initMapperCache(Class<?> mapperInterface, Class<T> entityClass, ElasticsearchClient client) {
         // 初始化baseEsMapper的所有实现类实例
-        BaseEsMapperImpl baseEsMapper = new BaseEsMapperImpl();
+        BaseEsMapperImpl<T> baseEsMapper = new BaseEsMapperImpl<>();
         baseEsMapper.setClient(client);
 
         baseEsMapper.setEntityClass(entityClass);
         baseEsMapperInstanceMap.put(mapperInterface, baseEsMapper);
+    }
 
+    /**
+     * 初始化entity缓存
+     *
+     * @param entityClass 实体类
+     */
+    public static void initEntityCache(Class<?> entityClass) {
         // 初始化entity中所有字段(注解策略生效)
         Map<String, Method> invokeMethodsMap = initInvokeMethodsMap(entityClass);
         baseEsEntityMethodMap.putIfAbsent(entityClass, invokeMethodsMap);
 
         EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
         // 初始化嵌套类中的所有方法
-        Set<Class<?>> allNestedClass = entityInfo.getAllNestedClass();
+        Set<Class<?>> allNestedClass = entityInfo.getAllNestedOrObjectClass();
         if (CollectionUtils.isNotEmpty(allNestedClass)) {
             allNestedClass.forEach(nestedClass -> {
                 Map<String, Method> nestedInvokeMethodsMap = initInvokeMethodsMap(nestedClass);
@@ -76,7 +83,7 @@ public class BaseCache {
                 .forEach(entityMethod -> {
                     String methodName = entityMethod.getName();
                     if (methodName.startsWith(BaseEsConstants.GET_FUNC_PREFIX) || methodName.startsWith(BaseEsConstants.IS_FUNC_PREFIX)
-                            || methodName.startsWith(BaseEsConstants.SET_FUNC_PREFIX)) {
+                        || methodName.startsWith(BaseEsConstants.SET_FUNC_PREFIX)) {
                         invokeMethodsMap.put(methodName, entityMethod);
                     }
                 });
@@ -124,5 +131,49 @@ public class BaseCache {
         return Optional.ofNullable(baseEsEntityMethodMap.get(entityClass))
                 .map(b -> b.get(BaseEsConstants.SET_FUNC_PREFIX + FieldUtils.firstToUpperCase(methodName)))
                 .orElseThrow(() -> ExceptionUtils.eee("no such method:", entityClass, methodName));
+    }
+
+    /**
+     * 执行缓存中对应entity和methodName的setter方法
+     *
+     * @param entityClass 实体
+     * @param methodName  方法名
+     * @param obj         对象
+     * @param value       值
+     */
+    public static void setterInvoke(Class<?> entityClass, String methodName, Object obj, Object value) {
+        try {
+            setterMethod(entityClass, methodName).invoke(obj, value);
+        } catch (Exception e) {
+            throw ExceptionUtils.eee("setterMethod exception", e);
+        }
+    }
+
+    /**
+     * 执行缓存中对应entity和methodName的getter方法
+     *
+     * @param entityClass 实体
+     * @param methodName  方法名
+     * @param obj         对象
+     * @return 执行方法
+     */
+    public static Object getterInvoke(Class<?> entityClass, String methodName, Object obj) {
+        try {
+            return getterMethod(entityClass, methodName).invoke(obj);
+        } catch (Exception e) {
+            throw ExceptionUtils.eee("getterInvoke exception", e);
+        }
+    }
+
+    /**
+     * 获取id
+     *
+     * @param entityClass 实体
+     * @param obj         对象
+     * @return 执行方法
+     */
+    public static Object getId(Class<?> entityClass, Object obj) {
+        String idFieldName = EntityInfoHelper.getEntityInfo(entityClass).getKeyProperty();
+        return getterInvoke(entityClass, idFieldName, obj);
     }
 }

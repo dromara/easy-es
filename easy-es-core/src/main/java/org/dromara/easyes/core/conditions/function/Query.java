@@ -85,7 +85,7 @@ public interface Query<Children, T, R> extends Serializable {
      * @param score 最小得分
      * @return wrapper
      */
-    Children minScore(Float score);
+    Children minScore(Double score);
 
     /**
      * 开启计算得分 默认值为关闭状态

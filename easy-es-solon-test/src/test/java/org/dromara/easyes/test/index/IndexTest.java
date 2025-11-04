@@ -1,12 +1,13 @@
 package org.dromara.easyes.test.index;
 
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
+import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
 import org.dromara.easyes.annotation.rely.Analyzer;
 import org.dromara.easyes.annotation.rely.FieldType;
 import org.dromara.easyes.core.conditions.index.LambdaEsIndexWrapper;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
 import org.dromara.easyes.test.mapper.DocumentMapper;
-import org.elasticsearch.client.indices.GetIndexResponse;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -15,8 +16,6 @@ import org.noear.solon.test.SolonTest;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 不了解Es索引概念的建议先去了解 懒汉可以简单理解为MySQL中的一张表
@@ -52,16 +51,16 @@ public class IndexTest {
         wrapper.indexName(Document.class.getSimpleName().toLowerCase());
 
         // 此处将文章标题映射为keyword类型(不支持分词),文档内容映射为text类型(支持分词查询)
-        wrapper.mapping(Document::getTitle, FieldType.KEYWORD, 2.0f)
+        wrapper.mapping(Document::getTitle, FieldType.KEYWORD)
                 .mapping(Document::getLocation, FieldType.GEO_POINT)
                 .mapping(Document::getGeoLocation, FieldType.GEO_SHAPE)
                 .mapping(Document::getContent, FieldType.TEXT, Analyzer.IK_SMART, Analyzer.IK_MAX_WORD);
 
         // 0.9.8+版本,增加对符串字段名称的支持,Document实体中须在对应字段上加上@Tablefield(value="wu-la")用于映射此字段值
-        wrapper.mapping("wu-la", FieldType.TEXT, Analyzer.IK_MAX_WORD, Analyzer.IK_MAX_WORD);
+        wrapper.mapping("wu-la2", FieldType.TEXT, Analyzer.IK_MAX_WORD, Analyzer.IK_MAX_WORD);
 
         // 设置分片及副本信息,可缺省
-        wrapper.settings(3, 2);
+        wrapper.settings(5, 6, 10);
 
         // 设置别名信息,可缺省
         String aliasName = "daily";
@@ -85,9 +84,9 @@ public class IndexTest {
 
     @Test
     public void testGetIndex() {
-        GetIndexResponse indexResponse = documentMapper.getIndex();
+        GetIndexResponse response = documentMapper.getIndex();
         // 这里打印下索引结构信息 其它分片等信息皆可从indexResponse中取
-        indexResponse.getMappings().forEach((k, v) -> System.out.println(v.getSourceAsMap()));
+        response.result().forEach((k, v) -> System.out.println(k +": " + v));
     }
 
     @Test
@@ -117,13 +116,9 @@ public class IndexTest {
         // 演示通过自定义map创建索引,最为灵活,若我提供的创建索引API不能满足时可用此方法
         LambdaEsIndexWrapper<Document> wrapper = new LambdaEsIndexWrapper<>();
         wrapper.indexName(Document.class.getSimpleName().toLowerCase());
-        wrapper.settings(3, 2);
-        Map<String, Object> map = new HashMap<>();
-        Map<String, Object> prop = new HashMap<>();
-        Map<String, String> field = new HashMap<>();
-        field.put("type", FieldType.KEYWORD.getType());
-        prop.put("this_is_field", field);
-        map.put("properties", prop);
+        wrapper.settings(1, 1, 10000);
+        TypeMapping.Builder map = new TypeMapping.Builder();
+        map.properties("this_is_field", a -> a.keyword(b -> b));
         wrapper.mapping(map);
         boolean isOk = documentMapper.createIndex(wrapper);
         Assertions.assertTrue(isOk);

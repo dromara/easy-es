@@ -1,8 +1,7 @@
 package org.dromara.easyes.core.conditions.function;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import org.dromara.easyes.core.toolkit.FieldUtils;
-import org.apache.lucene.search.join.ScoreMode;
-import org.elasticsearch.index.query.Operator;
 
 import java.io.Serializable;
 import java.time.ZoneId;
@@ -592,7 +591,7 @@ public interface Compare<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children multiMatchQuery(boolean condition, Object val, R... columns) {
-        return multiMatchQuery(condition, val, Operator.OR, DEFAULT_MIN_SHOULD_MATCH, DEFAULT_BOOST, columns);
+        return multiMatchQuery(condition, val, Operator.Or, DEFAULT_MIN_SHOULD_MATCH, DEFAULT_BOOST, columns);
     }
 
     /**
@@ -604,7 +603,7 @@ public interface Compare<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children multiMatchQuery(Object val, Float boost, R... columns) {
-        return multiMatchQuery(true, val, Operator.OR, DEFAULT_MIN_SHOULD_MATCH, boost, columns);
+        return multiMatchQuery(true, val, Operator.Or, DEFAULT_MIN_SHOULD_MATCH, boost, columns);
     }
 
     /**
@@ -616,7 +615,7 @@ public interface Compare<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children multiMatchQuery(Object val, int minimumShouldMatch, R... columns) {
-        return multiMatchQuery(true, val, Operator.OR, minimumShouldMatch, DEFAULT_BOOST, columns);
+        return multiMatchQuery(true, val, Operator.Or, minimumShouldMatch, DEFAULT_BOOST, columns);
     }
 
     /**
@@ -654,7 +653,7 @@ public interface Compare<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children multiMatchQuery(Object val, int minimumShouldMatch, Float boost, R... columns) {
-        return multiMatchQuery(true, val, Operator.OR, minimumShouldMatch, boost, columns);
+        return multiMatchQuery(true, val, Operator.Or, minimumShouldMatch, boost, columns);
     }
 
     /**
@@ -704,7 +703,7 @@ public interface Compare<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children multiMatchQuery(boolean condition, Object val, String... columns) {
-        return multiMatchQuery(condition, val, Operator.OR, DEFAULT_MIN_SHOULD_MATCH, DEFAULT_BOOST, columns);
+        return multiMatchQuery(condition, val, Operator.Or, DEFAULT_MIN_SHOULD_MATCH, DEFAULT_BOOST, columns);
     }
 
     /**
@@ -716,7 +715,7 @@ public interface Compare<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children multiMatchQuery(Object val, Float boost, String... columns) {
-        return multiMatchQuery(true, val, Operator.OR, DEFAULT_MIN_SHOULD_MATCH, boost, columns);
+        return multiMatchQuery(true, val, Operator.Or, DEFAULT_MIN_SHOULD_MATCH, boost, columns);
     }
 
     /**
@@ -728,7 +727,7 @@ public interface Compare<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children multiMatchQuery(Object val, int minimumShouldMatch, String... columns) {
-        return multiMatchQuery(true, val, Operator.OR, minimumShouldMatch, DEFAULT_BOOST, columns);
+        return multiMatchQuery(true, val, Operator.Or, minimumShouldMatch, DEFAULT_BOOST, columns);
     }
 
     /**
@@ -766,7 +765,7 @@ public interface Compare<Children, R> extends Serializable {
      * @return wrapper
      */
     default Children multiMatchQuery(Object val, int minimumShouldMatch, Float boost, String... columns) {
-        return multiMatchQuery(true, val, Operator.OR, minimumShouldMatch, boost, columns);
+        return multiMatchQuery(true, val, Operator.Or, minimumShouldMatch, boost, columns);
     }
 
     /**
