@@ -27,6 +27,7 @@
         <module>../easy-es-common</module>
         <module>../easy-es-solon-plugin</module>
         <module>../easy-es-spring</module>
+        <module>../easy-es-actuator</module>
     </modules>
 
     <properties>
@@ -141,6 +142,11 @@
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-aop</artifactId>
                 <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-actuator-autoconfigure</artifactId>
+                <version>${spring-boot.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
