@@ -175,8 +175,8 @@ QQ | 微信:252645816
 
 > 我们的广告投放商,如果您期望Easy-Es能够走得更远,不妨点击下图,支持一下我们的广告商Thanks♪(･ω･)ﾉ
 
-<a href="https://www.misboot.com/?from=easy-es">
-  <img alt="ad" src="https://iknow.hs.net/68963214-7a61-4f38-b5b5-a068c07a35f1.png">
+<a href="https://ai.haozcloud.com/">
+  <img alt="ad" src="https://iknow.hs.net/40a46cfb-9057-467e-af09-ef446aae51f1.jpg">
 </a>
 
 </br>
