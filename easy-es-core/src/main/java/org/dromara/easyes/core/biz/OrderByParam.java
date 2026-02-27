@@ -1,5 +1,6 @@
 package org.dromara.easyes.core.biz;
 
+import co.elastic.clients.elasticsearch._types.SortMode;
 import lombok.Data;
 
 /**
@@ -17,4 +18,8 @@ public class OrderByParam {
      * 排序规则 ASC:升序 DESC:降序
      */
     private String sort;
+    /**
+     * 排序模式
+     */
+    private SortMode mode;
 }

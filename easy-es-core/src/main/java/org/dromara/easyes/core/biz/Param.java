@@ -2,6 +2,7 @@ package org.dromara.easyes.core.biz;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.dromara.easyes.common.enums.EsQueryTypeEnum;
 import org.dromara.easyes.core.toolkit.Tree;
 
@@ -11,6 +12,7 @@ import org.dromara.easyes.core.toolkit.Tree;
  * Copyright © 2022 xpc1024 All Rights Reserved
  **/
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class Param extends Tree {
     /**
      * 上一节点类型

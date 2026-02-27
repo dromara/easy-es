@@ -1742,4 +1742,49 @@ public interface Func<Children, R> extends Serializable {
      * @return wrapper
      */
     Children bucketOrder(boolean condition, List<NamedValue<SortOrder>> bucketOrders);
+
+    default Children knn(R column, float[] queryVec, int k) {
+        return knn(true, column, queryVec, k);
+    }
+
+    default Children knn(boolean condition, R column, float[] queryVec, int k) {
+        return knn(condition, FieldUtils.getFieldName(column), queryVec, k);
+    }
+
+    /**
+     * knn算法向量查询
+     *
+     * @param condition 执行条件
+     * @param column    字段
+     * @param queryVec  查询向量
+     * @param k         需要返回的最相似的结果数量
+     * @return wrapper
+     */
+    Children knn(boolean condition, String column, float[] queryVec, int k);
+
+    default Children ann(R column, float[] queryVec, int k) {
+        return ann(true, column, queryVec, k, k * 10);
+    }
+
+    default Children ann(R column, float[] queryVec, int k, int numCandidates) {
+        return ann(true, column, queryVec, k, numCandidates);
+    }
+
+
+    default Children ann(boolean condition, R column, float[] queryVec, int k, int numCandidates) {
+        return ann(condition, FieldUtils.getFieldName(column), queryVec, k, numCandidates);
+    }
+
+
+    /**
+     * ann算法向量查询
+     *
+     * @param condition     执行条件
+     * @param column        字段
+     * @param queryVec      查询向量
+     * @param k             需要返回的最相似的结果数量
+     * @param numCandidates 候选数量
+     * @return wrapper
+     */
+    Children ann(boolean condition, String column, float[] queryVec, int k, int numCandidates);
 }

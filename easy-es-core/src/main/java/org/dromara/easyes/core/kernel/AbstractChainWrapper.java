@@ -776,4 +776,16 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
         getWrapper().join(column, parentName, childName);
         return typedThis;
     }
+
+    @Override
+    public Children knn(boolean condition, String column, float[] queryVec, int k) {
+        getWrapper().knn(condition, column, queryVec, k);
+        return typedThis;
+    }
+
+    @Override
+    public Children ann(boolean condition, String column, float[] queryVec, int k, int numCandidates) {
+        getWrapper().ann(condition, column, queryVec, k, numCandidates);
+        return typedThis;
+    }
 }

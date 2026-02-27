@@ -21,6 +21,7 @@ import org.dromara.easyes.core.toolkit.GeoUtils;
 import org.dromara.easyes.core.toolkit.TreeBuilder;
 import org.elasticsearch.geometry.Geometry;
 
+import java.io.StringReader;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -145,7 +146,7 @@ public class WrapperProcessor {
                         .field(realField)
                         .gt(JsonData.of(param.getVal()))
                         .timeZone(param.getExt1() == null ? null : ((ZoneId) param.getExt1()).getId())
-                        .format((String)param.getExt2())
+                        .format((String) param.getExt2())
                         .boost(param.getBoost())
                 ));
                 setBool(bool, query, param.getPrevQueryType());
@@ -156,7 +157,7 @@ public class WrapperProcessor {
                         .field(realField)
                         .gte(JsonData.of(param.getVal()))
                         .timeZone(param.getExt1() == null ? null : ((ZoneId) param.getExt1()).getId())
-                        .format((String)param.getExt2())
+                        .format((String) param.getExt2())
                         .boost(param.getBoost())
                 ));
                 setBool(bool, query, param.getPrevQueryType());
@@ -167,7 +168,7 @@ public class WrapperProcessor {
                         .field(realField)
                         .lt(JsonData.of(param.getVal()))
                         .timeZone(param.getExt1() == null ? null : ((ZoneId) param.getExt1()).getId())
-                        .format((String)param.getExt2())
+                        .format((String) param.getExt2())
                         .boost(param.getBoost())
                 ));
                 setBool(bool, query, param.getPrevQueryType());
@@ -178,7 +179,7 @@ public class WrapperProcessor {
                         .field(realField)
                         .lte(JsonData.of(param.getVal()))
                         .timeZone(param.getExt1() == null ? null : ((ZoneId) param.getExt1()).getId())
-                        .format((String)param.getExt2())
+                        .format((String) param.getExt2())
                         .boost(param.getBoost())
                 ));
                 setBool(bool, query, param.getPrevQueryType());
@@ -190,7 +191,7 @@ public class WrapperProcessor {
                         .gte(JsonData.of(param.getExt1()))
                         .lte(JsonData.of(param.getExt2()))
                         .timeZone(param.getExt3() == null ? null : ((ZoneId) param.getExt3()).getId())
-                        .format((String)param.getExt4())
+                        .format((String) param.getExt4())
                         .boost(param.getBoost())
                 ));
                 setBool(bool, query, param.getPrevQueryType());
@@ -262,6 +263,26 @@ public class WrapperProcessor {
                         .build()._toQuery();
                 setBool(bool, query, param.getPrevQueryType());
                 break;
+            // 向量
+            case KNN:
+                realField = getRealField(param.getColumn(), mappingColumnMap, entityInfo);
+                if (entityInfo.isEnableKnnPlugin()) {
+                    query = buildKnnQueryWithPlugin(realField, (float[]) param.getVal(), (int) param.getExt1());
+                } else {
+                    query = buildKnnQuery(realField, (float[]) param.getVal(), (int) param.getExt1());
+                }
+                setBool(bool, query, param.getPrevQueryType());
+                break;
+            case ANN:
+                realField = getRealField(param.getColumn(), mappingColumnMap, entityInfo);
+                if (entityInfo.isEnableKnnPlugin()) {
+                    query = buildAnnQueryWithPlugin(realField, (float[]) param.getVal(), (int) param.getExt1(), (int) param.getExt2());
+                } else {
+                    query = buildAnnQuery(realField, (float[]) param.getVal(), (int) param.getExt1(), (int) param.getExt2());
+                }
+                setBool(bool, query, param.getPrevQueryType());
+                break;
+
             case PARENT_ID:
                 realField = getRealField(param.getColumn(), mappingColumnMap, entityInfo);
                 query = Query.of(q -> q.parentId(p -> p.type(realField).id((String) param.getVal())));
@@ -288,6 +309,7 @@ public class WrapperProcessor {
                 // 设置bool查询参数
                 setBool(bool, Query.of(x -> x.nested(nestedQueryBuilder.build())), param.getPrevQueryType());
                 break;
+
             case HAS_PARENT:
                 // 如果用户没指定type框架可根据entityInfo上下文自行推断出其父type
                 String column = Optional.ofNullable(param.getColumn()).orElse(entityInfo.getParentJoinAlias());
@@ -470,9 +492,10 @@ public class WrapperProcessor {
 
     /**
      * 获取兜底索引名称
+     *
      * @param entityClass 实体类
-     * @param indexName 索引名
-     * @param <T> 泛型
+     * @param indexName   索引名
+     * @param <T>         泛型
      * @return 索引名称
      */
     public static <T> String getIndexName(Class<T> entityClass, String indexName) {
@@ -487,8 +510,8 @@ public class WrapperProcessor {
      * 获取兜底索引名称数组
      *
      * @param entityClass 实体类
-     * @param indexNames 原始索引名称数组
-     * @param <T> 泛型
+     * @param indexNames  原始索引名称数组
+     * @param <T>         泛型
      * @return 目标索引名称数组
      */
     public static <T> List<String> getIndexName(Class<T> entityClass, String[] indexNames) {
@@ -506,9 +529,10 @@ public class WrapperProcessor {
 
     /**
      * 获取兜底索引名称数组
+     *
      * @param entityClass 实体类
-     * @param indexNames 原始索引名称数组
-     * @param <T> 泛型
+     * @param indexNames  原始索引名称数组
+     * @param <T>         泛型
      * @return 目标索引名称数组
      */
     public static <T> List<String> getIndexName(Class<T> entityClass, Collection<String> indexNames) {
@@ -597,6 +621,7 @@ public class WrapperProcessor {
                 );
                 highlightBuilder.fields(highlightField, field);
                 highlightBuilder.fragmentSize(highLightParam.getFragmentSize());
+                highlightBuilder.noMatchSize(highLightParam.getNoMatchSize());
                 Optional.ofNullable(highLightParam.getNumberOfFragments()).ifPresent(highlightBuilder::numberOfFragments);
             }
         });
@@ -642,6 +667,10 @@ public class WrapperProcessor {
                 }
                 if (SortOrder.Desc.toString().equalsIgnoreCase(orderByParam.getSort())) {
                     fieldSortBuilder.order(SortOrder.Desc);
+                }
+                // 设置排序模式
+                if (Objects.nonNull(orderByParam.getMode())) {
+                    fieldSortBuilder.mode(orderByParam.getMode());
                 }
                 searchBuilder.sort(x -> x.field(fieldSortBuilder.build()));
             });
@@ -778,5 +807,128 @@ public class WrapperProcessor {
             default:
                 throw new IllegalArgumentException();
         }
+    }
+
+
+    /**
+     * 方法1: 构建一个 KNN (近似最近邻) 查询。
+     * <p>
+     * 由于此方法签名中没有 'k'，我们将调用 buildKnnQuery 并使用一个预设的默认值。
+     *
+     * @param column   进行向量搜索的 dense_vector 字段名。
+     * @param queryVec 查询向量。
+     * @return 用于Elasticsearch搜索请求的Query对象。
+     */
+    private static Query buildKnnQuery(String column, float[] queryVec, int k) {
+        return buildAnnQuery(column, queryVec, k, k * 10);
+    }
+
+    /**
+     * 方法2: 构建一个 ANN (K最近邻) 查询。
+     * <p>
+     * 此实现通过构造一个JSON字符串并使用 Query.withJson() 方法来创建查询，
+     * 以兼容不包含原生 KnnQuery Builder 的 7.17.28 客户端版本。
+     *
+     * @param column        进行向量搜索的 dense_vector 字段名。
+     * @param queryVec      查询向量。
+     * @param k             需要返回的最相似的结果数量。
+     * @param numCandidates 候选数量
+     * @return 用于Elasticsearch搜索请求的Query对象。
+     */
+    private static Query buildAnnQuery(String column, float[] queryVec, int k, int numCandidates) {
+        if (queryVec == null || queryVec.length == 0) {
+            throw new IllegalArgumentException("查询向量(queryVec)不能为空。");
+        }
+        if (k <= 0) {
+            throw new IllegalArgumentException("K值必须为正整数。");
+        }
+
+        // 1. 将 float[] 转换为 JSON 数组格式的字符串, e.g., "[0.1, 0.5, -0.2]"
+        // 1. 使用StringJoiner安全构建JSON数组字符串（兼容JDK 8）
+        StringJoiner sj = new StringJoiner(", ", "[", "]");
+        for (float v : queryVec) {
+            sj.add(String.valueOf(v)); // 直接转字符串，行为等同于Float::toString
+        }
+        String vectorAsString = sj.toString();
+
+        // 2. 构建完整的 KNN 查询 JSON 字符串
+        String knnQueryJson = String.format(
+                "{" +
+                        "  \"knn\": {" +
+                        "    \"field\": \"%s\"," +
+                        "    \"query_vector\": %s," +
+                        "    \"k\": %d," +
+                        "    \"num_candidates\": %d" +
+                        "  }" +
+                        "}",
+                column,
+                vectorAsString,
+                k,
+                numCandidates
+        );
+
+        // 3. 使用 withJson 方法将 JSON 字符串包装成 Query 对象
+        // Query.of() 接受一个 lambda，我们用它来配置查询变体
+        // q.withJson() 接受一个 Reader，所以我们用 StringReader 包装我们的 JSON 字符串
+        return Query.of(q -> q.withJson(new StringReader(knnQueryJson)));
+    }
+
+
+    /**
+     * 方法1: 构建一个基于 script_score 的 kNN 查询。
+     * 这种方法使用 Elasticsearch 的内建脚本能力进行向量相似度计算（例如余弦相似度），
+     * 它是一种精确的 K-NN 搜索，但在大数据集上性能可能不如专门的 k-NN 插件。
+     *
+     * @param column   包含向量的字段名 (类型应为 dense_vector)
+     * @param queryVec 用于查询的浮点数组向量。
+     * @return 用于 script_score 的 Query 对象。
+     */
+    private static Query buildKnnQueryWithPlugin(String column, float[] queryVec, int k) {
+        // Painless 脚本，用于计算余弦相似度。
+        // Elasticsearch 的 cosineSimilarity 返回值在 [-1, 1] 之间。
+        // ES 的 score 要求为非负数，所以 +1.0 将其范围移动到 [0, 2]。
+        // 分数越高，表示相似度越高。
+        String scriptSource = "cosineSimilarity(params.query_vector, doc['" + column + "']) + 1.0";
+        Map<String, JsonData> params = new HashMap<>();
+        params.put("query_vector", JsonData.of(queryVec));
+        params.put("k", JsonData.of(k));
+
+        ScriptScoreQuery scriptScoreQuery = ScriptScoreQuery.of(ssq -> ssq
+                // 基础查询，通常使用 match_all 搜索所有文档
+                .query(q -> q.matchAll(ma -> ma))
+                // 定义脚本和参数
+                .script(s -> s
+                        .inline(i -> i
+                                .source(scriptSource)
+                                .params(params)
+                        )
+                )
+        );
+
+        return new Query(scriptScoreQuery);
+    }
+
+    /**
+     * 方法2: 构建一个使用 K-NN 插件的查询。
+     * 这种方法依赖于 OpenDistro/OpenSearch 的 k-NN 插件，它提供了专门的 `knn` 查询类型，
+     * 用于执行高效的近似最近邻（ANN）搜索。
+     * 注意：因为 'knn' 不是 Elasticsearch 官方原生支持的查询类型（在7.x版本中），
+     * 我们需要使用 `_custom` 方法来构建这个自定义查询。
+     *
+     * @param column        包含向量的字段名 (类型应为 knn_vector)。
+     * @param queryVec      用于查询的浮点数组向量。
+     * @param k             期望返回的最近邻结果数量。
+     * @param numCandidates 候选数量
+     * @return 用于 k-NN 插件的 Query 对象。
+     */
+    private static Query buildAnnQueryWithPlugin(String column, float[] queryVec, int k, int numCandidates) {
+        // 构建完整的自定义查询 payload
+        Map<String, Object> knnQueryPayload = new LinkedHashMap<>();
+        knnQueryPayload.put("field", column);
+        knnQueryPayload.put("query_vector", queryVec);
+        knnQueryPayload.put("k", k);
+        knnQueryPayload.put("num_candidates", numCandidates);
+        // 使用 _custom 方法构建非标准的 "knn" 查询
+        return Query.of(q -> q._custom("knn", knnQueryPayload));
     }
 }

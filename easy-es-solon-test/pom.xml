@@ -4,9 +4,10 @@
     <parent>
         <groupId>org.dromara.easy-es</groupId>
         <artifactId>easy-es</artifactId>
-        <version>3.0.0</version>
+        <version>3.0.1</version>
     </parent>
     <artifactId>easy-es-solon-test</artifactId>
+    <name>easy-es-solon-test</name>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -29,6 +30,11 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

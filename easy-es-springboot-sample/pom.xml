@@ -5,11 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>easy-es-springboot-sample</artifactId>
+    <name>easy-es-springboot-sample</name>
 
     <parent>
         <groupId>org.dromara.easy-es</groupId>
         <artifactId>easy-es</artifactId>
-        <version>3.0.0</version>
+        <version>3.0.1</version>
     </parent>
 
     <properties>

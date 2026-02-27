@@ -7,10 +7,20 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.introspect.AnnotationIntrospectorPair;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.dromara.easyes.common.utils.StringUtils;
+import org.dromara.easyes.common.utils.jackson.deserializer.DateDeserializer;
+import org.dromara.easyes.common.utils.jackson.deserializer.LocalDateDeserializer;
+import org.dromara.easyes.common.utils.jackson.deserializer.LocalDateTimeDeserializer;
+import org.dromara.easyes.common.utils.jackson.serializer.DateSerializer;
+import org.dromara.easyes.common.utils.jackson.serializer.LocalDateSerializer;
+import org.dromara.easyes.common.utils.jackson.serializer.LocalDateTimeSerializer;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,65 +37,102 @@ public class JsonUtils {
     /**
      * 默认jackson配置
      */
-    public static ObjectMapper OM_DEFAULT = base();
+    private static final ObjectMapper objectMapper = base();
     private static final DefaultPrettyPrinter DEFAULT_PRETTY_PRINTER = new DefaultPrettyPrinter();
 
-    public static JsonMapper base() {
-        JsonMapper base = JsonMapper.builder()
-                // 反序列化时是否将一个对象封装成单元素数组
-                .configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
-                .configure(SerializationFeature.INDENT_OUTPUT, false)
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .build();
-        AnnotationIntrospector anno = base.getSerializerProviderInstance().getAnnotationIntrospector();
-        base.setAnnotationIntrospector(new AnnotationIntrospectorPair(anno, new JacksonCustomAnnotationIntrospector()));
-        return base;
+    /**
+     * 框架内部使用
+     * @return
+     */
+    private static JsonMapper base() {
+        return buildJsonMapper(builder -> {
+            JavaTimeModule javaTimeModule = new JavaTimeModule();
+            javaTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer());
+            javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer());
+            javaTimeModule.addSerializer(Date.class, new DateSerializer());
+            javaTimeModule.addDeserializer(Date.class, new DateDeserializer());
+            javaTimeModule.addSerializer(LocalDate.class, new LocalDateSerializer());
+            javaTimeModule.addDeserializer(LocalDate.class, new LocalDateDeserializer());
+
+            builder.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
+                    .configure(SerializationFeature.INDENT_OUTPUT, false)
+                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                    .addModule(javaTimeModule);
+        });
+    }
+
+    public static JsonMapper buildJsonMapper(EasyEsObjectMapperCustomizer consumer) {
+        JsonMapper.Builder builder = JsonMapper.builder();
+        consumer.customize(builder);
+        JsonMapper jsonMapper = builder.build();
+
+        // 必须执行，用于指定序列化后的字段名称，日期格式
+        AnnotationIntrospector anno = jsonMapper.getSerializerProviderInstance().getAnnotationIntrospector();
+        jsonMapper.setAnnotationIntrospector(new AnnotationIntrospectorPair(anno, new JacksonCustomAnnotationIntrospector()));
+        return jsonMapper;
+    }
+
+    public static JsonMapper buildJsonMapperWithDateFormat(String dateFormat) {
+        return buildJsonMapper(builder -> {
+            JavaTimeModule javaTimeModule = new JavaTimeModule();
+            javaTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(dateFormat));
+            javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(dateFormat));
+            javaTimeModule.addSerializer(Date.class, new DateSerializer(dateFormat));
+            javaTimeModule.addDeserializer(Date.class, new DateDeserializer(dateFormat));
+            javaTimeModule.addSerializer(LocalDate.class, new LocalDateSerializer(dateFormat));
+            javaTimeModule.addDeserializer(LocalDate.class, new LocalDateDeserializer(dateFormat));
+
+            builder.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
+                    .configure(SerializationFeature.INDENT_OUTPUT, false)
+                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                    .addModule(javaTimeModule);
+        });
     }
 
     public static String toJsonStr(Object data) {
-        return toJsonStr(OM_DEFAULT, data);
+        return toJsonStr(objectMapper, data);
     }
 
     public static byte[] toBytes(Object data) {
-        return toBytes(OM_DEFAULT, data);
+        return toBytes(objectMapper, data);
     }
 
     public static String toJsonPrettyStr(Object data) {
-        return toJsonPrettyStr(OM_DEFAULT, data);
+        return toJsonPrettyStr(objectMapper, data);
     }
 
     public static <T> T toBean(String json, Class<T> type) {
-        return toBean(OM_DEFAULT, json, type);
+        return toBean(objectMapper, json, type);
     }
 
     public static <T> T toBean(String json, TypeReference<T> type) {
-        return toBean(OM_DEFAULT, json, type);
+        return toBean(objectMapper, json, type);
     }
 
     public static <T> T toBean(String json, Type type) {
-        return toBean(OM_DEFAULT, json, type);
+        return toBean(objectMapper, json, type);
     }
 
     public static <V> List<V> toList(String json, Class<V> v) {
-        return toList(OM_DEFAULT, json, v);
+        return toList(objectMapper, json, v);
     }
 
 
     public static <V> Set<V> toSet(String json, Class<V> v) {
-        return toSet(OM_DEFAULT, json, v);
+        return toSet(objectMapper, json, v);
     }
 
 
     public static <K, V> Map<K, V> toMap(String json, Class<K> k, Class<V> v) {
-        return toMap(OM_DEFAULT, json, k, v);
+        return toMap(objectMapper, json, k, v);
     }
 
     public static <T> T toCollection(String json, Class<?> parametrized, Class<?>... parameterClasses) throws Exception {
-        return toCollection(OM_DEFAULT, json, parametrized, parameterClasses);
+        return toCollection(objectMapper, json, parametrized, parameterClasses);
     }
 
     public static JsonNode readTree(String json) {
-        return readTree(OM_DEFAULT, json);
+        return readTree(objectMapper, json);
     }
 
     public static String toJsonStr(ObjectMapper om, Object data) {

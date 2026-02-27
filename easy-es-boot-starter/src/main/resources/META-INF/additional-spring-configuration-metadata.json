@@ -145,6 +145,12 @@
             "type": "java.lang.Boolean"
         },
         {
+            "defaultValue": "yyyy-MM-dd HH:mm:ss",
+            "name": "easy-es.global-config.db-config.default_date_format",
+            "description": "default_date_format,默认使用的时间格式",
+            "type": "java.lang.String"
+        },
+        {
             "defaultValue": "none",
             "name": "easy-es.global-config.db-config.refresh-policy",
             "description": "data refresh policy 数据刷新策略,es默认的数据刷新策略为NONE.",

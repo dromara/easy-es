@@ -381,6 +381,16 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
+    public Children knn(boolean condition, String column, float[] queryVec, int k) {
+        return addParam(condition, KNN, column, queryVec, k, null, null);
+    }
+
+    @Override
+    public Children ann(boolean condition, String column, float[] queryVec, int k, int numCandidates) {
+        return addParam(condition, ANN, column, queryVec, k, numCandidates, null);
+    }
+
+    @Override
     public final Children orderBy(boolean condition, boolean isAsc, String... columns) {
         if (ArrayUtils.isEmpty(columns)) {
             return typedThis;
@@ -836,24 +846,6 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     /**
-     * 追加查询参数
-     *
-     * @param condition     条件
-     * @param queryTypeEnum 查询类型
-     * @param column        列
-     * @param val           值
-     * @param boost         权重
-     * @return wrapper
-     */
-    private Children addParam(boolean condition, EsQueryTypeEnum queryTypeEnum, String column, Object val, Float boost) {
-        if (condition) {
-            Param param = new Param();
-            addBaseParam(param, queryTypeEnum, column, val, boost);
-        }
-        return typedThis;
-    }
-
-    /**
      * 重载，追加拓展参数
      *
      * @param condition     条件
@@ -920,6 +912,14 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
             param.setExt2(minimumShouldMatch);
             param.setColumns(columns);
             addBaseParam(param, MULTI_MATCH, null, val, boost);
+        }
+        return typedThis;
+    }
+
+    private Children addParam(boolean condition, EsQueryTypeEnum queryTypeEnum, String column, Object val, Float boost) {
+        if (condition) {
+            Param param = new Param();
+            addBaseParam(param, queryTypeEnum, column, val, boost);
         }
         return typedThis;
     }

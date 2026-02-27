@@ -29,10 +29,7 @@ import static org.dromara.easyes.common.constants.BaseEsConstants.*;
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 public class EntityInfoHelper {
-    /**
-     * 获取索引settings方法名
-     */
-    private final static String GET_SETTINGS_METHOD = "getSettings";
+
     /**
      * 储存反射类表信息
      */
@@ -84,12 +81,14 @@ public class EntityInfoHelper {
         entityInfo = new EntityInfo();
         // 初始化表名(索引名)相关
         initIndexName(clazz, globalConfig, entityInfo);
-        // 初始化索引settings相关
-        initSettings(clazz, entityInfo);
         // 初始化字段相关
         initIndexFields(clazz, globalConfig, entityInfo);
+        // 初始化索引settings相关
+        initSettings(clazz, entityInfo);
         // 初始化封装@Join父子类型注解信息
         initJoin(clazz, globalConfig, entityInfo);
+        // 初始化knn插件配置
+        entityInfo.setEnableKnnPlugin(globalConfig.getDbConfig().isEnableKnnPlugin());
 
         // 放入缓存
         ENTITY_INFO_CACHE.put(clazz, entityInfo);
@@ -272,11 +271,11 @@ public class EntityInfoHelper {
             }
 
             // 日期格式化信息初始化
-            String format = StringUtils.isBlank(indexField.dateFormat()) ? DEFAULT_DATE_TIME_FORMAT : indexField.dateFormat();
-            initClassDateFormatMap(indexField.fieldType(), field.getName(), entityInfo, clazz, format);
+            String format = StringUtils.isBlank(indexField.dateFormat()) ? dbConfig.getDefaultDateFormat() : indexField.dateFormat();
+            FieldType fieldType = FieldType.getByType(IndexUtils.getEsFieldType(indexField.fieldType(), field.getType().getSimpleName()));
+            initClassDateFormatMap(fieldType, field.getName(), entityInfo, clazz, format);
 
             // 是否忽略大小写
-            FieldType fieldType = FieldType.getByType(IndexUtils.getEsFieldType(indexField.fieldType(), field.getType().getSimpleName()));
             if (FieldType.KEYWORD.equals(fieldType)) {
                 // 仅对keyword类型设置,其它类型es不支持
                 entityFieldInfo.setIgnoreCase(indexField.ignoreCase());
@@ -409,6 +408,7 @@ public class EntityInfoHelper {
         // 置入高亮查询参数缓存
         HighLightParam highlightParam = new HighLightParam();
         highlightParam.setFragmentSize(highLight.fragmentSize())
+                .setNoMatchSize(highLight.noMatchSize())
                 .setPreTag(highLight.preTag())
                 .setPostTag(highLight.postTag())
                 .setHighLightField(realHighLightField)
@@ -476,7 +476,7 @@ public class EntityInfoHelper {
                 entityFieldInfo.setColumnType(field.getType().getSimpleName());
 
                 // 日期类型,如果没加注解, 设置默认的日期format
-                initClassDateFormatMap(fieldType, field.getName(), entityInfo, nestedOrObjectClass, DEFAULT_DATE_TIME_FORMAT);
+                initClassDateFormatMap(fieldType, field.getName(), entityInfo, nestedOrObjectClass, dbConfig.getDefaultDateFormat());
 
                 entityFieldInfoList.add(entityFieldInfo);
             } else {
@@ -509,7 +509,7 @@ public class EntityInfoHelper {
                     }
 
                     // 日期格式化信息初始化
-                    String format = StringUtils.isBlank(indexField.dateFormat()) ? DEFAULT_DATE_TIME_FORMAT : indexField.dateFormat();
+                    String format = StringUtils.isBlank(indexField.dateFormat()) ? dbConfig.getDefaultDateFormat() : indexField.dateFormat();
                     initClassDateFormatMap(indexField.fieldType(), field.getName(), entityInfo, nestedOrObjectClass, format);
 
                     // 缩放因子
@@ -597,7 +597,7 @@ public class EntityInfoHelper {
         if (FieldType.DATE.equals(fieldType)) {
             Map<Class<?>, Map<String, String>> classDateFormatMap = entityInfo.getClassDateFormatMap();
             Map<String, String> dateFormatMap = Optional.ofNullable(classDateFormatMap.get(clazz)).orElse(new HashMap<>());
-            dateFormatMap.putIfAbsent(field.getName(), DEFAULT_DATE_TIME_FORMAT);
+            dateFormatMap.putIfAbsent(field.getName(), dbConfig.getDefaultDateFormat());
             classDateFormatMap.putIfAbsent(clazz, dateFormatMap);
         }
 
@@ -787,8 +787,8 @@ public class EntityInfoHelper {
         entityInfo.setReplicasNum(settings.replicasNum());
         entityInfo.setShardsNum(settings.shardsNum());
 
-        IndexSettings.Builder builder = entityInfo.getIndexSettings()
-                .numberOfReplicas(settings.replicasNum() + "")
+        IndexSettings.Builder builder = new IndexSettings.Builder();
+        builder.numberOfReplicas(settings.replicasNum() + "")
                 .numberOfShards(settings.shardsNum() + "")
                 .maxResultWindow(settings.maxResultWindow());
 
@@ -798,6 +798,14 @@ public class EntityInfoHelper {
 
         ISettingsProvider provider = settings.settingsProvider().getDeclaredConstructor().newInstance();
         provider.settings(builder);
+        if (CollectionUtils.isNotEmpty(entityInfo.getFieldList())) {
+            // 只要有其中一个字段加了忽略大小写,则在索引中创建此自定义配置,否则无需创建,不浪费资源
+            if (entityInfo.getFieldList().stream().anyMatch(EntityFieldInfo::isIgnoreCase)) {
+                builder.analysis(b -> b.normalizer(LOWERCASE_NORMALIZER,
+                        c -> c.custom(d -> d.filter(LOWERCASE))));
+            }
+        }
+        entityInfo.setIndexSettings(builder.build());
     }
 
     /**

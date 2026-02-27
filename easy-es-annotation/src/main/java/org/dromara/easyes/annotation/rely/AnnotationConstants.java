@@ -19,6 +19,10 @@ public interface AnnotationConstants {
      */
     int DEFAULT_FRAGMENT_SIZE = 100;
     /**
+     * 如果没有匹配的高亮片段，从字段开头返回的文本长度.默认与100
+     */
+    int DEFAULT_MATCH_SIZE = 100;
+    /**
      * 默认分片数
      */
     int DEFAULT_SHARDS = 1;

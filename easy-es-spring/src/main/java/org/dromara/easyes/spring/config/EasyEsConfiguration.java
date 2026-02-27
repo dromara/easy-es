@@ -6,7 +6,10 @@ import org.dromara.easyes.common.constants.BaseEsConstants;
 import org.dromara.easyes.common.property.EasyEsDynamicProperties;
 import org.dromara.easyes.common.property.EasyEsProperties;
 import org.dromara.easyes.common.strategy.AutoProcessIndexStrategy;
+import org.dromara.easyes.common.utils.EasyEsHeadersCustomizer;
 import org.dromara.easyes.common.utils.EsClientUtils;
+import org.dromara.easyes.common.utils.jackson.EasyEsObjectMapperCustomizer;
+import org.dromara.easyes.core.config.ObjectMapperBean;
 import org.dromara.easyes.core.index.AutoProcessIndexNotSmoothlyStrategy;
 import org.dromara.easyes.core.index.AutoProcessIndexSmoothlyStrategy;
 import org.dromara.easyes.spring.factory.IndexStrategyFactory;
@@ -14,6 +17,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
@@ -26,6 +30,7 @@ import java.util.Map;
  * @since 2.0
  */
 @Configuration
+@Conditional(EasyEsConfiguredCondition.class)
 public class EasyEsConfiguration implements InitializingBean, EnvironmentAware {
 
     private Environment environment;
@@ -64,7 +69,12 @@ public class EasyEsConfiguration implements InitializingBean, EnvironmentAware {
     }
 
     @Bean
-    public EsClientUtils esClientUtils() {
+    public ObjectMapperBean objectMapperBean(@Autowired(required = false) EasyEsObjectMapperCustomizer customizer) {
+        return new ObjectMapperBean(customizer, easyEsProperties);
+    }
+
+    @Bean
+    public EsClientUtils esClientUtils(ObjectMapperBean objectMapperBean, @Autowired(required = false) EasyEsHeadersCustomizer easyEsHeadersCustomizer) {
         EsClientUtils esClientUtils = new EsClientUtils();
         if (this.easyEsDynamicProperties == null) {
             this.easyEsDynamicProperties = new EasyEsDynamicProperties();
@@ -76,7 +86,8 @@ public class EasyEsConfiguration implements InitializingBean, EnvironmentAware {
         }
         for (String key : datasourceMap.keySet()) {
             EasyEsProperties easyEsConfigProperties = datasourceMap.get(key);
-            EsClientUtils.registerClient(key, () -> EsClientUtils.buildClient(easyEsConfigProperties));
+            EsClientUtils.registerClient(key,
+                    () -> EsClientUtils.buildClient(easyEsConfigProperties, objectMapperBean.getObjectMapper(), easyEsHeadersCustomizer));
         }
         return esClientUtils;
     }

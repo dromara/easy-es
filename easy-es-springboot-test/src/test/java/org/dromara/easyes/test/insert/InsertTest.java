@@ -1,8 +1,11 @@
 package org.dromara.easyes.test.insert;
 
+import org.dromara.easyes.common.utils.DateUtil;
 import org.dromara.easyes.test.TestEasyEsApplication;
 import org.dromara.easyes.test.entity.Document;
+import org.dromara.easyes.test.entity.UserEntity;
 import org.dromara.easyes.test.mapper.DocumentMapper;
+import org.dromara.easyes.test.mapper.UserMapper;
 import org.elasticsearch.geometry.Point;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
@@ -25,6 +28,8 @@ import java.util.List;
 public class InsertTest {
     @Resource
     private DocumentMapper documentMapper;
+    @Resource
+    private UserMapper userMapper;
 
     @Test
     public void testInsert() {
@@ -42,7 +47,7 @@ public class InsertTest {
         document.setGeoLocation(point.toString());
         document.setStarNum(0);
         int successCount = documentMapper.insert(document);
-        Assertions.assertEquals(successCount, 1);
+        Assertions.assertEquals(1, successCount);
     }
 
     @Test
@@ -110,6 +115,28 @@ public class InsertTest {
         documentMapper.insert(document);
         Document document1 = documentMapper.selectById(id);
         System.out.println("更新后的数据:" + document1);
+    }
+
+    @Test
+    public void testCreateUser() {
+        // 创建测试用户
+        UserEntity user = new UserEntity();
+        user.setUsername("tester001");
+        user.setName("张三");
+        user.setAge(25);
+        user.setEmail("zhangsan@example.com");
+        user.setAddress("北京市朝阳区");
+        user.setStatus(1);
+        user.setTags(new String[]{"Java", "Spring", "Elasticsearch"});
+        user.setDescription("这是一个测试用户，专门用于演示Easy-ES的功能");
+        user.setVersion(2L);
+        user.setDeleted(true);
+        user.setCreateBy("system");
+        user.setUpdateBy("system");
+        user.setCreateTime(DateUtil.format(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss"));
+        user.setUpdateTime(DateUtil.format(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss"));
+        // 创建用户
+        Assertions.assertEquals(1, userMapper.insert(user));
     }
 
 }

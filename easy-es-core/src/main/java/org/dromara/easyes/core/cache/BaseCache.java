@@ -130,7 +130,7 @@ public class BaseCache {
     public static Method setterMethod(Class<?> entityClass, String methodName) {
         return Optional.ofNullable(baseEsEntityMethodMap.get(entityClass))
                 .map(b -> b.get(BaseEsConstants.SET_FUNC_PREFIX + FieldUtils.firstToUpperCase(methodName)))
-                .orElseThrow(() -> ExceptionUtils.eee("no such method:", entityClass, methodName));
+                .orElseThrow(() -> ExceptionUtils.eee("no such method:%s-%s", entityClass, methodName));
     }
 
     /**

@@ -7,11 +7,12 @@
     <parent>
         <groupId>org.dromara.easy-es</groupId>
         <artifactId>easy-es-parent</artifactId>
-        <version>3.0.0</version>
+        <version>3.0.1</version>
         <relativePath>../easy-es-parent</relativePath>
     </parent>
 
     <artifactId>easy-es-annotation</artifactId>
+    <name>easy-es-annotation</name>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>

@@ -64,6 +64,19 @@ public class ReflectionKit {
         return fieldList;
     }
 
+    public static Field getField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+        try {
+            return clazz.getDeclaredField(fieldName);
+        } catch (NoSuchFieldException e) {
+            if (clazz.getSuperclass() != null) {
+                return getField(clazz.getSuperclass(), fieldName);
+            } else {
+                String msg = String.format("Error: NoSuchField in %s.  Cause: %s", clazz.getName(), e);
+                throw new RuntimeException(msg);
+            }
+        }
+    }
+
     public static Method getMethod(Class<?> cls, Field field) {
         try {
             return cls.getDeclaredMethod(ReflectionKit.getMethodCapitalize(field, field.getName()));

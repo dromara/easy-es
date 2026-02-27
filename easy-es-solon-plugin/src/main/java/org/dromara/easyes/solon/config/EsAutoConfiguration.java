@@ -5,7 +5,10 @@ import org.dromara.easyes.common.property.EasyEsDynamicProperties;
 import org.dromara.easyes.common.property.EasyEsProperties;
 import org.dromara.easyes.common.strategy.AutoProcessIndexStrategy;
 import org.dromara.easyes.common.utils.CollectionUtils;
+import org.dromara.easyes.common.utils.EasyEsHeadersCustomizer;
 import org.dromara.easyes.common.utils.EsClientUtils;
+import org.dromara.easyes.common.utils.jackson.EasyEsObjectMapperCustomizer;
+import org.dromara.easyes.core.config.ObjectMapperBean;
 import org.dromara.easyes.core.index.AutoProcessIndexNotSmoothlyStrategy;
 import org.dromara.easyes.core.index.AutoProcessIndexSmoothlyStrategy;
 import org.noear.solon.annotation.Bean;
@@ -24,6 +27,9 @@ import java.util.Map;
 @Condition(onClass = ElasticsearchClient.class, onProperty = "${easy-es.enable:true} = true")
 public class EsAutoConfiguration {
 
+    @Inject(required = false)
+    private EasyEsHeadersCustomizer easyEsHeadersCustomizer;
+
     /**
      * 加载easy-es属性变量
      * @param properties 配置
@@ -31,8 +37,7 @@ public class EsAutoConfiguration {
      * @author MoJie
      */
     @Bean
-    public EasyEsProperties easyEsProperties(
-            @Inject(value = "${easy-es}", autoRefreshed = true) EasyEsProperties properties) {
+    public EasyEsProperties easyEsProperties(@Inject(value = "${easy-es}", autoRefreshed = true) EasyEsProperties properties) {
         return properties;
     }
 
@@ -43,12 +48,16 @@ public class EsAutoConfiguration {
      * @author MoJie
      */
     @Bean
-    public EasyEsDynamicProperties easyEsDynamicProperties(
-            @Inject(value = "${easy-es.dynamic:}", autoRefreshed = true) EasyEsDynamicProperties dynamicProperties) {
+    public EasyEsDynamicProperties easyEsDynamicProperties(@Inject(value = "${easy-es.dynamic:}", autoRefreshed = true) EasyEsDynamicProperties dynamicProperties) {
         if (dynamicProperties == null) {
             return new EasyEsDynamicProperties();
         }
         return dynamicProperties;
+    }
+
+    @Bean
+    public ObjectMapperBean objectMapperBean(@Inject(required = false) EasyEsObjectMapperCustomizer customizer, EasyEsProperties properties) {
+        return new ObjectMapperBean(customizer, properties);
     }
 
     /**
@@ -58,8 +67,8 @@ public class EsAutoConfiguration {
      */
     @Bean
     @Condition(onMissingBean = ElasticsearchClient.class)
-    public ElasticsearchClient elasticClient(EasyEsProperties easyEsProperties) {
-        return EsClientUtils.buildClient(easyEsProperties);
+    public ElasticsearchClient elasticClient(EasyEsProperties easyEsProperties, ObjectMapperBean objectMapperBean) {
+        return EsClientUtils.buildClient(easyEsProperties, objectMapperBean.getObjectMapper(), easyEsHeadersCustomizer);
     }
 
     /**
@@ -70,7 +79,7 @@ public class EsAutoConfiguration {
      * @author MoJie
      */
     @Bean
-    public EsClientUtils esClientUtils(EasyEsProperties properties, EasyEsDynamicProperties dynamicProperties) {
+    public EsClientUtils esClientUtils(EasyEsProperties properties, EasyEsDynamicProperties dynamicProperties, ObjectMapperBean objectMapperBean) {
         EsClientUtils esClientUtils = new EsClientUtils();
         Map<String, EasyEsProperties> datasourceMap = dynamicProperties.getDatasource();
         if (CollectionUtils.isEmpty(datasourceMap)) {
@@ -79,7 +88,8 @@ public class EsAutoConfiguration {
         }
         for (String key : datasourceMap.keySet()) {
             EasyEsProperties easyEsConfigProperties = datasourceMap.get(key);
-            EsClientUtils.registerClient(key, () -> EsClientUtils.buildClient(easyEsConfigProperties));
+            EsClientUtils.registerClient(key,
+                    () -> EsClientUtils.buildClient(easyEsConfigProperties, objectMapperBean.getObjectMapper(), easyEsHeadersCustomizer));
         }
         return esClientUtils;
     }

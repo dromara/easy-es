@@ -107,6 +107,10 @@ public class EntityFieldInfo {
      */
     private List<InnerFieldInfo> innerFieldInfoList;
 
+    private Boolean index;
+
+    private Boolean docValues;
+
     /**
      * 存在 TableField 注解时, 使用的构造函数
      *
@@ -122,6 +126,8 @@ public class EntityFieldInfo {
         } else {
             this.fieldStrategy = tableField.strategy();
         }
+        this.index = tableField.index();
+        this.docValues = tableField.docValues();
     }
 
     /**
@@ -133,6 +139,8 @@ public class EntityFieldInfo {
     public EntityFieldInfo(GlobalConfig.DbConfig dbConfig, Field field) {
         this.fieldStrategy = dbConfig.getFieldStrategy();
         this.column = field.getName();
+        this.index = Boolean.TRUE;
+        this.docValues = Boolean.TRUE;
     }
 
     /**

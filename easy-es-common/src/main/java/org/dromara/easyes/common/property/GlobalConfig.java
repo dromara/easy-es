@@ -7,6 +7,7 @@ import org.dromara.easyes.annotation.rely.RefreshPolicy;
 import org.dromara.easyes.common.enums.ProcessIndexStrategyEnum;
 
 import static org.dromara.easyes.common.constants.BaseEsConstants.EMPTY_STR;
+import static org.dromara.easyes.common.constants.BaseEsConstants.DEFAULT_DATE_TIME_FORMAT;
 
 /**
  * easy-es全局置项
@@ -99,5 +100,14 @@ public class GlobalConfig {
          * Whether to intelligently add the. keyword suffix to the field. This configuration is enabled by default. The field type is KEYWORD only for annotation configuration_ The String field of TEXT or unconfigured type takes effect and only takes effect when the query requires that the field be of keyword type, so it is called smart! 是否智能为字段添加.keyword后缀 默认开启 此配置仅对注解配置字段类型为KEYWORD_TEXT或未配置类型的String字段生效，并且只会在查询要求该字段必须为keyword类型的查询中才生效，因此谓之智能!
          */
         private boolean smartAddKeywordSuffix = true;
+        /**
+         * whether to enable knn-plugin. This configuration is enabled by default.If the plugin is not installed, it can be turned off temporarily (not recommended, poor performance).  是否开启knn插件 - 默认开启,若未安装该插件则可临时配置关闭(不推荐,性能表现差)
+         */
+        private boolean enableKnnPlugin = true;
+
+        /**
+         * default date format 默认日期format格式
+         */
+        private String defaultDateFormat = DEFAULT_DATE_TIME_FORMAT;
     }
 }

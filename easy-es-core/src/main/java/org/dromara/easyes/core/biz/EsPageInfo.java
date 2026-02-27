@@ -1,18 +1,20 @@
 package org.dromara.easyes.core.biz;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * 分页参数 来源:https://github.com/pagehelper/Mybatis-PageHelper
+ * 分页参数 来源:<a href="https://github.com/pagehelper/Mybatis-PageHelper">Mybatis-PageHelper</a>
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 @Data
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class EsPageInfo<T> extends PageSerializable<T> {
     /**
      * 当前页
@@ -105,17 +107,17 @@ public class EsPageInfo<T> extends PageSerializable<T> {
         this.pages = this.pageSize > 0 ? 1 : 0;
         this.size = list.size();
         this.startRow = 0;
-        this.endRow = list.size() > 0 ? list.size() - 1 : 0;
+        this.endRow = !list.isEmpty() ? list.size() - 1 : 0;
 
         this.navigatePages = navigatePages;
     }
 
     public static <T> EsPageInfo<T> of(List<T> list) {
-        return new EsPageInfo<T>(list);
+        return new EsPageInfo<>(list);
     }
 
     public static <T> EsPageInfo<T> of(List<T> list, int navigatePages) {
-        return new EsPageInfo<T>(list, navigatePages);
+        return new EsPageInfo<>(list, navigatePages);
     }
 
     /**

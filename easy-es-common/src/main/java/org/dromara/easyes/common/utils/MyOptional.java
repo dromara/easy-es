@@ -51,6 +51,15 @@ public final class MyOptional<T> {
         }
     }
 
+    public void ifFalse(Consumer<? super T> consumer) {
+        if (value != null && value instanceof Boolean) {
+            boolean condition = (boolean) (Object) value;
+            if (!condition) {
+                consumer.accept(value);
+            }
+        }
+    }
+
     public void ifPresent(Consumer<? super T> present, Supplier<?> other) {
         if (value != null) {
             present.accept(value);

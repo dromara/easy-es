@@ -17,6 +17,10 @@ public class HighLightParam {
      */
     private Integer fragmentSize;
     /**
+     * 如果没有匹配的高亮片段，从字段开头返回的文本长度.默认与100
+     */
+    private Integer noMatchSize;
+    /**
      * 搜索返回的高亮片段数量 默认全部返回
      */
     private Integer numberOfFragments;

@@ -116,4 +116,16 @@ public @interface IndexField {
      * @return 默认嵌套类
      */
     Class<?> nestedOrObjectClass() default DefaultNestedOrObjectClass.class;
+
+    /**
+     * false时禁用倒排索引，无法搜索
+     * @return 是否启用
+     */
+    boolean index() default true;
+
+    /**
+     * false时禁用列式存储，不可排序、聚合或脚本访问
+     * @return 是否启用
+     */
+    boolean docValues() default true;
 }

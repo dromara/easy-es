@@ -58,6 +58,7 @@ public class AllTest {
     @Test
     @Order(0)
     public void testCreateIndex() {
+        documentMapper.deleteIndex();
         // 0.前置操作 创建索引 需确保索引托管模式处于manual手动挡,若为自动挡则会冲突.
         boolean success = documentMapper.createIndex();
         Assertions.assertTrue(success);
@@ -85,7 +86,7 @@ public class AllTest {
         document.setMultiField("葡萄糖酸钙口服溶液");
         document.setEnglish("Calcium Gluconate");
         document.setBigNum(new BigDecimal("66.66"));
-        document.setVector(new double[]{0.39684247970581666, 0.768707156181666, 0.5145490765571666});
+        document.setVectors(new double[]{0.39684247970581666, 0.768707156181666, 0.5145490765571666});
 //        System.out.println(JsonUtils.toJsonPrettyStr(document));
         int successCount = documentMapper.insert(document);
         Assertions.assertEquals(successCount, 1);
@@ -106,7 +107,7 @@ public class AllTest {
             Point point = new Point(13.400544 + i, 52.530286 + i);
             document.setGeoLocation(point.toString());
             document.setStarNum(i);
-            document.setVector(new double[]{35.89684247970581666, 86.268707156181666, 133.1145490765571666});
+            document.setVectors(new double[]{35.89684247970581666, 86.268707156181666, 133.1145490765571666});
             // 针对个别数据 造一些差异项 方便测试不同场景
             if (i == 2) {
                 document.setLocation("40.17836693398477,116.64002551005981");
@@ -919,8 +920,8 @@ public class AllTest {
                 .query(QueryBuilders.matchAll().build()._toQuery())
                 .script(d -> d.inline(e -> e
                         .lang("painless")
-                        .params("vector", JsonData.of(new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594}))
-                        .source("cosineSimilarity(params.vector, 'vector') + 1.0")
+                        .params("vectors", JsonData.of(new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594}))
+                        .source("cosineSimilarity(params.vectors, 'vectors') + 1.0")
                 ))
         ));
         SearchRequest.Builder searchSourceBuilder = new SearchRequest.Builder();

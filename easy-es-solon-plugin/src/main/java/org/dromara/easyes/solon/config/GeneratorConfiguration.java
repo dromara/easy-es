@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.dromara.easyes.core.config.GeneratorConfig;
 import org.dromara.easyes.core.toolkit.Generator;
 import org.noear.solon.annotation.Component;
+import org.noear.solon.annotation.Condition;
 import org.noear.solon.annotation.Inject;
 
 /**
@@ -12,6 +13,7 @@ import org.noear.solon.annotation.Inject;
  * @since 2.0
  */
 @Component
+@Condition(onBean = ElasticsearchClient.class)
 public class GeneratorConfiguration extends Generator {
 
     @Inject

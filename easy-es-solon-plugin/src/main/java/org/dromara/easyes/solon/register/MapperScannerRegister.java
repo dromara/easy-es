@@ -23,9 +23,9 @@ import org.dromara.easyes.extension.context.InterceptorChain;
 import org.dromara.easyes.extension.context.InterceptorChainHolder;
 import org.dromara.easyes.solon.factory.IndexStrategyFactory;
 import org.noear.solon.Solon;
+import org.noear.solon.annotation.Component;
+import org.noear.solon.annotation.Condition;
 import org.noear.solon.core.AppContext;
-import org.noear.solon.core.BeanBuilder;
-import org.noear.solon.core.BeanWrap;
 import org.noear.solon.core.util.ClassUtil;
 
 import java.lang.reflect.Proxy;
@@ -42,16 +42,32 @@ import static org.dromara.easyes.common.utils.EsClientUtils.DEFAULT_DS;
  * <p>
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
-public class MapperScannerRegister implements BeanBuilder<EsMapperScan> {
-
+@Component
+@Condition(onBean = EsClientUtils.class)
+public class MapperScannerRegister {
+    private final AutoProcessIndexStrategy processIndexStrategy;
+    private final EsClientUtils esClientUtils;
     private final AppContext context;
 
-    public MapperScannerRegister(AppContext context) {
+    public MapperScannerRegister(EasyEsProperties easyEsProperties,
+                                 IndexStrategyFactory indexStrategyFactory,
+                                 EsClientUtils esClientUtils,
+                                 AppContext context) {
+        this.esClientUtils = esClientUtils;
         this.context = context;
+        GlobalConfig globalConfig = easyEsProperties.getGlobalConfig();
+        GlobalConfigCache.setGlobalConfig(globalConfig);
+        if (!ProcessIndexStrategyEnum.MANUAL.equals(globalConfig.getProcessIndexMode())) {
+            this.processIndexStrategy = indexStrategyFactory.getByStrategyType(globalConfig.getProcessIndexMode().getStrategyType());
+        } else {
+            this.processIndexStrategy = null;
+            LogUtils.info("===> manual index mode activated");
+        }
+        doScan();
     }
 
-    @Override
-    public void doBuild(Class<?> clz, BeanWrap bw, EsMapperScan anno) throws Throwable {
+    private void doScan() {
+        EsMapperScan anno = Solon.app().source().getAnnotation(EsMapperScan.class);
         boolean banner = Solon.cfg().getBool(ENABLE_BANNER, true);
         if (banner) {
             boolean iKunMode = Solon.cfg().getBool(ENABLE_I_KUN_MODE, false);
@@ -132,7 +148,6 @@ public class MapperScannerRegister implements BeanBuilder<EsMapperScan> {
                 }
             }
         }
-
     }
 
     /**
@@ -141,13 +156,9 @@ public class MapperScannerRegister implements BeanBuilder<EsMapperScan> {
      * @author MoJie
      */
     private void beanWrapPut(Class<?> clazz) {
-        EasyEsProperties esConfigProperties = context.getBean(EasyEsProperties.class);
-        EsClientUtils esClientUtils = context.getBeanOrNew(EsClientUtils.class);
         EsMapperProxy<?> esMapperProxy = new EsMapperProxy<>(clazz, new ConcurrentHashMap<>());
         // 获取实体类
         Class<?> entityClass = TypeUtils.getInterfaceT(clazz, ZERO);
-        // 初始化缓存
-        GlobalConfigCache.setGlobalConfig(esConfigProperties.getGlobalConfig());
 
         // 初始化entity缓存
         BaseCache.initEntityCache(entityClass);
@@ -170,19 +181,11 @@ public class MapperScannerRegister implements BeanBuilder<EsMapperScan> {
         InterceptorChain interceptorChain = this.initInterceptorChain();
 
         // 异步处理索引创建/更新/数据迁移等
-        GlobalConfig globalConfig = esConfigProperties.getGlobalConfig();
-        if (!ProcessIndexStrategyEnum.MANUAL.equals(globalConfig.getProcessIndexMode())) {
-            // 父子类型,仅针对父类型创建索引,子类型不创建索引
-            EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
-            boolean isChild = entityInfo.isChild();
-            if (!isChild) {
-                IndexStrategyFactory indexStrategyFactory = context.getBeanOrNew(IndexStrategyFactory.class);
-                AutoProcessIndexStrategy autoProcessIndexService = indexStrategyFactory
-                        .getByStrategyType(globalConfig.getProcessIndexMode().getStrategyType());
-                autoProcessIndexService.processIndexAsync(entityClass, client);
-            }
-        } else {
-            LogUtils.info("===> manual index mode activated");
+        // 父子类型,仅针对父类型创建索引,子类型不创建索引
+        EntityInfo entityInfo = EntityInfoHelper.getEntityInfo(entityClass);
+        boolean isChild = entityInfo.isChild();
+        if (!isChild && processIndexStrategy != null) {
+            processIndexStrategy.processIndexAsync(entityClass, client);
         }
         // 将拦截器链推入容器
         context.wrapAndPut(clazz, interceptorChain.pluginAll(mapperProxy));

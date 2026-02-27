@@ -37,7 +37,7 @@ public class CreateIndexParam {
     /**
      * 用户通过自定义注解指定的settings信息
      */
-    private IndexSettings.Builder indexSettings;
+    private IndexSettings indexSettings;
     /**
      * 用户手动指定的settings信息,优先级最高
      */

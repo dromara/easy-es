@@ -73,6 +73,10 @@ public class EsIndexParam {
      */
     private List<InnerFieldParam> innerFieldParamList;
 
+    private Boolean index;
+
+    private Boolean docValues;
+
     /**
      * 内部段参数
      */

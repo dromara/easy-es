@@ -32,7 +32,7 @@ public class VectorTest {
         Document document = new Document();
         document.setEsId("35f6fff8-1d3b-48b6-a765-028ec81b1437");
         document.setContent("测试插入数据");
-        document.setVector(new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594});
+        document.setVectors(new double[]{0.39684247970581055, 0.7687071561813354, 0.5145490765571594});
         int successCount = documentMapper.insert(document);
         Assertions.assertEquals(1, successCount);
     }
@@ -43,7 +43,7 @@ public class VectorTest {
         Document document = new Document();
         document.setEsId("35f6fff8-1d3b-48b6-a765-028ec81b1437");
         document.setContent("测试更新向量数据");
-        document.setVector(new double[]{0.39684247970581666, 0.768707156181666, 0.5145490765571666});
+        document.setVectors(new double[]{0.39684247970581666, 0.768707156181666, 0.5145490765571666});
         int successCount = documentMapper.updateById(document);
         Assertions.assertEquals(1, successCount);
     }

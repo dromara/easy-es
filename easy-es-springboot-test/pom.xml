@@ -7,10 +7,11 @@
     <parent>
         <groupId>org.dromara.easy-es</groupId>
         <artifactId>easy-es</artifactId>
-        <version>3.0.0</version>
+        <version>3.0.1</version>
     </parent>
 
     <artifactId>easy-es-springboot-test</artifactId>
+    <name>easy-es-springboot-test</name>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>

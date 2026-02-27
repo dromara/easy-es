@@ -52,18 +52,21 @@ public class FieldUtils {
         if (!(func instanceof SFunction)) {
             throw new RuntimeException("not support this type of column");
         }
-
         try {
-            // 通过获取对象方法，判断是否存在该方法
-            Method method = func.getClass().getDeclaredMethod("writeReplace");
-            method.setAccessible(Boolean.TRUE);
-            // 利用jdk的SerializedLambda 解析方法引用
-            SerializedLambda serializedLambda = (SerializedLambda) method.invoke(func);
+            SerializedLambda serializedLambda = getSerializedLambda(func);
             String getter = serializedLambda.getImplMethodName();
             return resolveFieldName(getter);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static <R> SerializedLambda getSerializedLambda(R func) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        // 通过获取对象方法，判断是否存在该方法
+        Method method = func.getClass().getDeclaredMethod("writeReplace");
+        method.setAccessible(Boolean.TRUE);
+        // 利用jdk的SerializedLambda 解析方法引用
+        return (SerializedLambda) method.invoke(func);
     }
 
 
@@ -85,9 +88,7 @@ public class FieldUtils {
                 Executable executable = MethodHandles.reflectAs(Executable.class, dmh);
                 getter = executable.getName();
             } else {
-                Method method = func.getClass().getDeclaredMethod("writeReplace");
-                method.setAccessible(Boolean.TRUE);
-                SerializedLambda serializedLambda = (SerializedLambda) method.invoke(func);
+                SerializedLambda serializedLambda = getSerializedLambda(func);
                 getter = serializedLambda.getImplMethodName();
             }
             return resolveFieldName(getter);

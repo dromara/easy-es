@@ -16,6 +16,7 @@ easy-es:
       field-strategy: not_empty
       refresh-policy: immediate
       enable-track-total-hits: true
+#      default-date-format: yyyyMMdd HHmmss
         #      index-prefix: dev_
         #  dynamic:
         #    datasource:

@@ -34,6 +34,14 @@ public @interface HighLight {
     int fragmentSize() default DEFAULT_FRAGMENT_SIZE;
 
     /**
+     * 如果没有匹配的高亮片段，从字段开头返回的文本长度.默认与100
+     * 0，表示不返回任何内容
+     *
+     * @return 固定大小的文本
+     */
+    int noMatchSize() default DEFAULT_MATCH_SIZE;
+
+    /**
      * 搜索返回的高亮片段数量,默认全部返回
      *
      * @return 高亮片段数量

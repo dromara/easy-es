@@ -261,6 +261,10 @@ public interface BaseEsConstants {
     String LOWERCASE_NORMALIZER = "lowercase_normalizer";
 
     /**
+     * 忽略index.analysis.normalizer.lowercase_normalizer.filter
+     */
+    String LOWERCASE = "lowercase";
+    /**
      * 默认缩放因子
      */
     Double DEFAULT_SCALING_FACTOR = 100.0;
@@ -284,4 +288,6 @@ public interface BaseEsConstants {
      * 默认日期格式化格式
      */
     String DEFAULT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    String UTC_WITH_XXX_OFFSET_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+    String ES_DEFAULT_DATE_TIME_FORMAT = "strict_date_optional_time||epoch_millis";
 }
