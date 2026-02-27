@@ -180,8 +180,8 @@ String indexName = "document";
 
 </br>
 
-<a href="https://www.misboot.com/?from=easy-es">
-  <img alt="ad" src="https://iknow.hs.net/68963214-7a61-4f38-b5b5-a068c07a35f1.png">
+<a href="https://ai.haozcloud.com/">
+  <img alt="ad" src="https://iknow.hs.net/40a46cfb-9057-467e-af09-ef446aae51f1.jpg">
 </a>
 
 </br>
