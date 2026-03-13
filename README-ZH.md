@@ -185,6 +185,10 @@ QQ | 微信:252645816
   <img alt="ad" src="https://iknow.hs.net/00b4a54c-6505-4776-9232-f0a9d9768fac.jpg">
 </a>
 
+<a href="https://easysearch.cn">
+  <img alt="ad" src="https://iknow.hs.net/eb47a2c4-d264-43a6-8112-d53e01886e2e.png">
+</a>
+
 
 # 赞助商 | Sponsor
 
