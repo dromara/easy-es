@@ -192,8 +192,8 @@ String indexName = "document";
 
 </br>
 
-<a href="https://www.jnpfsoft.com/index.html?from=easy-es/">
-  <img alt="ad" src="https://iknow.hs.net/a3b07ec6-c94e-48c5-b1b4-743a4d6ba09f.png">
+<a href="https://easysearch.cn">
+  <img alt="ad" src="https://iknow.hs.net/eb47a2c4-d264-43a6-8112-d53e01886e2e.png">
 </a>
 
 ## Donate
