@@ -715,6 +715,14 @@ public class BaseEsMapperImpl<T> implements BaseEsMapper<T> {
     }
 
     /**
+     * 获取客户端
+     * @return es 客户端
+     */
+    public ElasticsearchClient getClient() {
+        return client;
+    }
+
+    /**
      * 执行批量插入数据
      *
      * @param entityList 数据列表
