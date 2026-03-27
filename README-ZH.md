@@ -186,7 +186,7 @@ QQ | 微信:252645816
 </a>
 
 <a href="https://easysearch.cn">
-  <img alt="ad" src="https://iknow.hs.net/eb47a2c4-d264-43a6-8112-d53e01886e2e.png">
+  <img alt="ad" src="https://infinilabs.cn/img/download/media-assets/easysearch-banner-4.webp">
 </a>
 
 
