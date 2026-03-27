@@ -176,4 +176,12 @@ public class BaseCache {
         String idFieldName = EntityInfoHelper.getEntityInfo(entityClass).getKeyProperty();
         return getterInvoke(entityClass, idFieldName, obj);
     }
+
+    /**
+     * 获取所有BaseEsMapperImpl实例
+     * @return 实例集合
+     */
+    public static Collection<BaseEsMapperImpl<?>> getAllImpl() {
+        return baseEsMapperInstanceMap.values();
+    }
 }

@@ -17,7 +17,7 @@
         <module>easy-es-spring-test</module>
         <module>easy-es-springboot-sample</module>
         <module>easy-es-springboot-test</module>
-
+        <module>easy-es-actuator</module>
     </modules>
 
     <properties>
@@ -79,6 +79,11 @@
                 <groupId>org.noear</groupId>
                 <artifactId>solon-logging-logback</artifactId>
                 <version>${solon.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-actuator-autoconfigure</artifactId>
+                <version>${spring-boot.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
