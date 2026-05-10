@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.dromara.easy-es</groupId>
         <artifactId>easy-es</artifactId>
-        <version>3.0.1</version>
+        <version>3.0.2</version>
     </parent>
 
     <artifactId>easy-es-springboot-test</artifactId>

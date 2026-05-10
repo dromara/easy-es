@@ -440,9 +440,176 @@ public class WrapperProcessor {
             fieldTypeMap = entityInfo.getFieldTypeMap();
         }
 
+        // 检查当前层级是否存在or(consumer)类型的节点,需要特殊处理
+        boolean hasOrNested = paramList.stream().anyMatch(WrapperProcessor::isOrNestedWithChildren);
+        if (hasOrNested) {
+            // 按NESTED_OR节点分割参数列表,每段作为should的一个分支
+            return buildShouldFromOrSegments(paramList, builder, entityInfo, path, mappingColumnMap, fieldTypeMap);
+        }
+
         // 批量初始化每一个参数至BoolQueryBuilder
         paramList.forEach(param -> initBool(builder, param, entityInfo, mappingColumnMap, fieldTypeMap));
         return builder;
+    }
+
+    /**
+     * 判断参数是否为带子条件的or(consumer)节点
+     *
+     * @param param 查询参数
+     * @return 是否为or(consumer)节点
+     */
+    private static boolean isOrNestedWithChildren(Param param) {
+        return NESTED_OR.equals(param.getQueryTypeEnum())
+                && CollectionUtils.isNotEmpty(param.getChildren());
+    }
+
+    /**
+     * 当参数列表中存在or(consumer)节点时,将列表按NESTED_OR边界分割,
+     * 每段前置条件和每个NESTED_OR的子条件分别作为should的一个分支
+     *
+     * @param paramList        参数列表
+     * @param builder          BoolQuery构建器
+     * @param entityInfo       实体信息缓存
+     * @param path             嵌套路径
+     * @param mappingColumnMap 字段名称映射
+     * @param fieldTypeMap     字段类型映射
+     * @return 构建完成的BoolQuery构建器
+     */
+    private static BoolQuery.Builder buildShouldFromOrSegments(List<Param> paramList, BoolQuery.Builder builder,
+                                                                EntityInfo entityInfo, String path,
+                                                                Map<String, String> mappingColumnMap,
+                                                                Map<String, String> fieldTypeMap) {
+        // 将参数列表按or(consumer)节点分割成多个段
+        List<List<Param>> segments = new ArrayList<>();
+        List<Param> currentSegment = new ArrayList<>();
+
+        for (Param param : paramList) {
+            if (isOrNestedWithChildren(param)) {
+                // 遇到or(consumer)节点,先保存之前积累的段
+                if (!currentSegment.isEmpty()) {
+                    segments.add(currentSegment);
+                    currentSegment = new ArrayList<>();
+                }
+                // NESTED_OR节点作为独立的一段
+                segments.add(Collections.singletonList(param));
+            } else {
+                currentSegment.add(param);
+            }
+        }
+        if (!currentSegment.isEmpty()) {
+            segments.add(currentSegment);
+        }
+
+        // 将每段构建为should的一个分支
+        for (List<Param> segment : segments) {
+            Param firstParam = segment.get(0);
+            if (segment.size() == ONE && isOrNestedWithChildren(firstParam)) {
+                // NESTED_OR节点: 递归处理其children
+                addOrNestedShouldBranch(builder, firstParam, entityInfo, path);
+            } else if (segment.size() == ONE) {
+                // 单个普通条件: 直接构建query加入should,避免多余的bool包装
+                addSingleParamShouldBranch(builder, firstParam, entityInfo, mappingColumnMap, fieldTypeMap);
+            } else {
+                // 多个普通条件段: 构建为一个bool.must分支
+                addMultiParamShouldBranch(builder, segment, entityInfo, mappingColumnMap, fieldTypeMap);
+            }
+        }
+
+        // 设置minimumShouldMatch确保至少匹配一个should分支
+        builder.minimumShouldMatch(String.valueOf(ONE));
+
+        return builder;
+    }
+
+    /**
+     * 将NESTED_OR节点的子条件作为should的一个分支
+     *
+     * @param builder    BoolQuery构建器
+     * @param orParam    NESTED_OR参数节点
+     * @param entityInfo 实体信息缓存
+     * @param path       嵌套路径
+     */
+    @SuppressWarnings("unchecked")
+    private static void addOrNestedShouldBranch(BoolQuery.Builder builder, Param orParam,
+                                                 EntityInfo entityInfo, String path) {
+        List<Param> children = Optional.ofNullable(orParam.getChildren())
+                .map(c -> (List<Param>) c)
+                .orElse(Collections.emptyList());
+        Query query = Query.of(t -> t.bool(b -> getBool(children, b, entityInfo, path)));
+        builder.should(query);
+    }
+
+    /**
+     * 将单个普通条件参数作为should的一个分支,提取内部query避免多余的bool包装
+     *
+     * @param builder          BoolQuery构建器
+     * @param param            查询参数
+     * @param entityInfo       实体信息缓存
+     * @param mappingColumnMap 字段名称映射
+     * @param fieldTypeMap     字段类型映射
+     */
+    private static void addSingleParamShouldBranch(BoolQuery.Builder builder, Param param,
+                                                    EntityInfo entityInfo,
+                                                    Map<String, String> mappingColumnMap,
+                                                    Map<String, String> fieldTypeMap) {
+        BoolQuery.Builder tempBool = QueryBuilders.bool();
+        initBool(tempBool, param, entityInfo, mappingColumnMap, fieldTypeMap);
+        BoolQuery built = tempBool.build();
+        // 从临时bool中提取出唯一的query,避免多余的bool嵌套
+        Query singleQuery = extractSingleQuery(built);
+        builder.should(singleQuery != null ? singleQuery : Query.of(t -> t.bool(built)));
+    }
+
+    /**
+     * 将多个普通条件参数组合为bool.must后作为should的一个分支
+     *
+     * @param builder          BoolQuery构建器
+     * @param segment          参数段
+     * @param entityInfo       实体信息缓存
+     * @param mappingColumnMap 字段名称映射
+     * @param fieldTypeMap     字段类型映射
+     */
+    private static void addMultiParamShouldBranch(BoolQuery.Builder builder, List<Param> segment,
+                                                   EntityInfo entityInfo,
+                                                   Map<String, String> mappingColumnMap,
+                                                   Map<String, String> fieldTypeMap) {
+        BoolQuery.Builder innerBool = QueryBuilders.bool();
+        segment.forEach(param -> initBool(innerBool, param, entityInfo, mappingColumnMap, fieldTypeMap));
+        builder.should(Query.of(t -> t.bool(innerBool.build())));
+    }
+
+    /**
+     * 从只包含单个query的BoolQuery中提取出该query,避免多余的bool嵌套
+     * 例如 bool{must:[termQuery]} 提取出 termQuery
+     *
+     * @param boolQuery BoolQuery实例
+     * @return 提取出的单个query, 若不满足提取条件则返回null
+     */
+    private static Query extractSingleQuery(BoolQuery boolQuery) {
+        if (boolQuery == null) {
+            return null;
+        }
+        List<Query> must = boolQuery.must();
+        List<Query> should = boolQuery.should();
+        List<Query> filter = boolQuery.filter();
+        List<Query> mustNot = boolQuery.mustNot();
+        int total = must.size() + should.size() + filter.size() + mustNot.size();
+        if (total != ONE) {
+            return null;
+        }
+        if (!must.isEmpty()) {
+            return must.get(0);
+        }
+        if (!should.isEmpty()) {
+            return should.get(0);
+        }
+        if (!filter.isEmpty()) {
+            return filter.get(0);
+        }
+        if (!mustNot.isEmpty()) {
+            return mustNot.get(0);
+        }
+        return null;
     }
 
 

@@ -20,7 +20,7 @@ public interface DocumentMapper extends BaseEsMapper<Document> {
      */
     default List<Document> testDefaultMethod() {
         LambdaEsQueryWrapper<Document> wrapper = EsWrappers.lambdaQuery(Document.class)
-                .eq(Document::getTitle, "测试文档4").match(Document::getContent, "内容");
+                .eq(Document::getTitle, "测试文档3").match(Document::getContent, "内容");
         return selectList(wrapper);
     }
 

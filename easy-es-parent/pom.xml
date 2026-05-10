@@ -6,7 +6,7 @@
 
     <groupId>org.dromara.easy-es</groupId>
     <artifactId>easy-es-parent</artifactId>
-    <version>3.0.1</version>
+    <version>3.0.2</version>
 
     <name>easy-es-parent</name>
     <description>easy use for elastic search</description>
@@ -164,7 +164,6 @@
         <developerConnection>scm:git:ssh://git@github.com:dromara/easy-es.git</developerConnection>
         <url>https://github.com/dromara/easy-es</url>
     </scm>
-
 
     <!-- 使用个人资料：由于生成javadoc和源jar以及使用GPG签署组件是一个相当耗时的过程，因此这些执行通常与正常的构建配置隔离并移动到配置文件中。然后，在通过激活配置文件执行部署时，将使用此配置文件。 -->
     <profiles>

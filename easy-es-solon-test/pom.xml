@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.dromara.easy-es</groupId>
         <artifactId>easy-es</artifactId>
-        <version>3.0.1</version>
+        <version>3.0.2</version>
     </parent>
     <artifactId>easy-es-solon-test</artifactId>
     <name>easy-es-solon-test</name>

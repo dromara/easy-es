@@ -57,7 +57,7 @@ public interface BaseEsConstants {
     /**
      * 默认字段boost权重
      */
-    Float DEFAULT_BOOST = 1.0F;
+    Float DEFAULT_BOOST = null;
     /**
      * 空字符串
      */

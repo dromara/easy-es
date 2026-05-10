@@ -983,25 +983,45 @@ public class AllTest {
     @Order(79)
     public void testComplex() {
         // SQL写法
-        // where business_type = 1 and (state = 9 or (state = 8 and bidding_sign = 1)) or (business_type = 2 and state in (2,3))
+        // where business_type = 1 and (state = 9 or (state = 8 and bidding_sign = 1)) or (business_type = 1 and state in (2,3))
 
         // ElasticsearchClient写法
-        List<FieldValue> values = Arrays.asList(WrapperProcessor.fieldValue(2), WrapperProcessor.fieldValue(3));
-        BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool()
-                .must(a -> a.term(b -> b.field("business_type").value(1)))
-                .must(a -> a.bool(b -> b
-                        .must(c -> c.term(d -> d.field("state").value(9)))
-                        .should(c -> c.bool(d -> d
-                                .must(f -> f.term(e -> e.field("state").value(8)))
-                                .must(f -> f.term(e -> e.field("bidding_sign").value(1)))
+        // 创建 BoolQuery Builder
+        BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
+
+        // 第一个条件：business_type = 1 and (state = 9 or (state = 8 and bidding_sign = 1))
+        BoolQuery.Builder firstCondition = new BoolQuery.Builder()
+                .must(m -> m.term(t -> t.field("business_type").value(1)))
+                .must(m -> m.bool(b -> b
+                        .should(s -> s.term(t -> t.field("state").value(9)))
+                        .should(s -> s.bool(inner -> inner
+                                .must(mu -> mu.term(t -> t.field("state").value(8)))
+                                .must(mu -> mu.term(t -> t.field("bidding_sign").value(1)))
                         ))
-                ))
-                .should(a -> a.bool(c -> c
-                        .must(d -> d.term(e -> e.field("business_type").value(2)))
-                        .must(d -> d.terms(e -> e.field("state").terms(f -> f.value(values))))
+                        .minimumShouldMatch("1")
                 ));
 
-        Query query = boolQueryBuilder.build()._toQuery();
+        // 第二个条件：business_type = 1 and state in (2,3)
+        BoolQuery.Builder secondCondition = new BoolQuery.Builder()
+                .must(m -> m.term(t -> t.field("business_type").value(1)))
+                .must(m -> m.terms(te -> te
+                        .field("state")
+                        .terms(tv -> tv.value(Arrays.asList(
+                                FieldValue.of(2),
+                                FieldValue.of(3)
+                        )))
+                ));
+
+        // 最终查询：第一个条件 OR 第二个条件
+        boolQueryBuilder
+                .should(s -> s.bool(firstCondition.build()))
+                .should(s -> s.bool(secondCondition.build()))
+                .minimumShouldMatch("1");
+
+        // 构建查询
+        Query query = new Query.Builder()
+                .bool(boolQueryBuilder.build())
+                .build();
         System.out.println(query.toString());
         System.out.println("--------------------");
 
@@ -1009,13 +1029,15 @@ public class AllTest {
         LambdaEsQueryWrapper<Document> wrapper = new LambdaEsQueryWrapper<>();
         wrapper.eq("business_type", 1)
                 .and(a -> a.eq("state", 9).or(b -> b.eq("state", 8).eq("bidding_sign", 1)))
-                .or(i -> i.eq("business_type", 2).in("state", 2, 3));
+                .or(i -> i.eq("business_type", 1).in("state", 2, 3));
         SearchRequest.Builder searchBuilder = documentMapper.getSearchBuilder(wrapper);
         Query qry = searchBuilder.build().query();
         if (qry != null) {
             System.out.println(qry);
         }
-        List<Document> documents = documentMapper.selectList(wrapper);
+
+        Assertions.assertEquals(query.toString(), qry.toString());
     }
+
 
 }
