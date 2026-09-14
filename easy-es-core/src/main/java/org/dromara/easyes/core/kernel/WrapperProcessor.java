@@ -805,17 +805,6 @@ public class WrapperProcessor {
      * @param searchBuilder    查询参数建造者
      */
     private static void setSort(Wrapper<?> wrapper, Map<String, String> mappingColumnMap, EntityInfo entityInfo, SearchRequest.Builder searchBuilder) {
-        // 批量设置排序字段
-        if (CollectionUtils.isNotEmpty(wrapper.baseSortParams)) {
-            wrapper.baseSortParams.forEach(baseSortParam -> {
-                // 获取es中的实际字段 有可能已经被用户自定义或者驼峰转成下划线
-                String realField = Objects.isNull(baseSortParam.getSortField()) ?
-                        null : getRealFieldAndSuffix(baseSortParam.getSortField(), mappingColumnMap, entityInfo);
-                SortOptions sortBuilder = getSortBuilder(realField, baseSortParam);
-                Optional.ofNullable(sortBuilder).ifPresent(searchBuilder::sort);
-            });
-        }
-
         // 设置以String形式指定的自定义排序字段及规则(此类排序通常由前端传入,满足部分用户个性化需求)
         if (CollectionUtils.isNotEmpty(wrapper.orderByParams)) {
             wrapper.orderByParams.forEach(orderByParam -> {
@@ -842,6 +831,17 @@ public class WrapperProcessor {
                 searchBuilder.sort(x -> x.field(fieldSortBuilder.build()));
             });
         }
+        // 批量设置排序字段
+        if (CollectionUtils.isNotEmpty(wrapper.baseSortParams)) {
+            wrapper.baseSortParams.forEach(baseSortParam -> {
+                // 获取es中的实际字段 有可能已经被用户自定义或者驼峰转成下划线
+                String realField = Objects.isNull(baseSortParam.getSortField()) ?
+                        null : getRealFieldAndSuffix(baseSortParam.getSortField(), mappingColumnMap, entityInfo);
+                SortOptions sortBuilder = getSortBuilder(realField, baseSortParam);
+                Optional.ofNullable(sortBuilder).ifPresent(searchBuilder::sort);
+            });
+        }
+
     }
 
 
