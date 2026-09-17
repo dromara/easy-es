@@ -898,41 +898,65 @@ public class WrapperProcessor {
             return;
         }
 
-        // 构建聚合树
-        String rootName = null;
-        Aggregation.Builder.ContainerBuilder root = null;
-        Aggregation.Builder.ContainerBuilder cursor = null;
+        // 拆分管道聚合与普通聚合
+        List<AggregationParam> pipelineList = new ArrayList<>();
+        List<AggregationParam> normalList = new ArrayList<>();
         for (AggregationParam aggParam : aggregationParamList) {
+            if (aggParam.isEnablePipeline()) {
+                pipelineList.add(aggParam);
+            } else {
+                normalList.add(aggParam);
+            }
+        }
+
+        // 非管道聚合, 平铺到顶层
+        for (AggregationParam aggParam : normalList) {
             String realField = getRealFieldAndSuffix(aggParam.getField(), mappingColumnMap, entityInfo);
             Aggregation.Builder.ContainerBuilder builder = getRealAggregationBuilder(
                     aggParam.getAggregationType(), realField, wrapper.size, wrapper.bucketOrders);
             // 解决同一个字段聚合多次，如min(starNum), max(starNum) 字段名重复问题
             String aggName = aggParam.getName() + aggParam.getAggregationType().getValue();
-            if (aggParam.isEnablePipeline()) {
-                // 管道聚合, 构造聚合树
-                if (root == null) {
-                    root = builder;
-                    rootName = aggName;
-                    cursor = root;
-                } else {
-                    Aggregation agg = builder.build();
-                    cursor.aggregations(aggName, agg);
-                    // 解决max、min、avg和sum聚合函数不支持sub-aggregations的问题
-                    if (agg._kind().equals(Aggregation.Kind.Terms)) {
-                        cursor = builder;
-                    }
-                }
-            } else {
-                // 非管道聚合
-                if (builder != null) {
-                    searchSourceBuilder.aggregations(aggName, builder.build());
-                }
-            }
+            searchSourceBuilder.aggregations(aggName, builder.build());
+        }
 
+        // 管道聚合: 按 terms 分层, metric 挂在当前最深层; 自底向上构建嵌套树,
+        // 避免过早 build 导致第 3 个及之后的字段丢失 (issue #167)
+        Aggregation innerAgg = null;
+        String innerName = null;
+        String rootName = null;
+        List<String> metricNames = new ArrayList<>();
+        List<Aggregation.Builder.ContainerBuilder> metricBuilders = new ArrayList<>();
+        for (int i = pipelineList.size() - 1; i >= 0; i--) {
+            AggregationParam aggParam = pipelineList.get(i);
+            String realField = getRealFieldAndSuffix(aggParam.getField(), mappingColumnMap, entityInfo);
+            Aggregation.Builder.ContainerBuilder builder = getRealAggregationBuilder(
+                    aggParam.getAggregationType(), realField, wrapper.size, wrapper.bucketOrders);
+            String aggName = aggParam.getName() + aggParam.getAggregationType().getValue();
+            if (aggParam.getAggregationType() == AggregationTypeEnum.TERMS) {
+                for (int m = 0; m < metricBuilders.size(); m++) {
+                    builder.aggregations(metricNames.get(m), metricBuilders.get(m).build());
+                }
+                metricNames.clear();
+                metricBuilders.clear();
+                if (innerAgg != null) {
+                    builder.aggregations(innerName, innerAgg);
+                }
+                rootName = aggName;
+                innerAgg = builder.build();
+                innerName = aggName;
+            } else {
+                metricNames.add(aggName);
+                metricBuilders.add(builder);
+            }
         }
-        if (root != null) {
-            searchSourceBuilder.aggregations(rootName, root.build());
+        // 管道聚合中未挂在 terms 下的 metric(首个或全部为 metric 的罕见场景), 平铺到顶层
+        for (int m = 0; m < metricBuilders.size(); m++) {
+            searchSourceBuilder.aggregations(metricNames.get(m), metricBuilders.get(m).build());
         }
+        if (innerAgg != null) {
+            searchSourceBuilder.aggregations(rootName, innerAgg);
+        }
+
 
         if (!GlobalConfigCache.getGlobalConfig().getDbConfig().isEnableAggHits()) {
             // 配置关闭了聚合返回结果集Hits, 可提升查询效率
