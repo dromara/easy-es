@@ -902,6 +902,8 @@ public class WrapperProcessor {
         String rootName = null;
         Aggregation.Builder.ContainerBuilder root = null;
         Aggregation.Builder.ContainerBuilder cursor = null;
+        List<Aggregation.Builder.ContainerBuilder> parents = new ArrayList<>();
+        List<String> childNames = new ArrayList<>();
         for (AggregationParam aggParam : aggregationParamList) {
             String realField = getRealFieldAndSuffix(aggParam.getField(), mappingColumnMap, entityInfo);
             Aggregation.Builder.ContainerBuilder builder = getRealAggregationBuilder(
@@ -915,11 +917,13 @@ public class WrapperProcessor {
                     rootName = aggName;
                     cursor = root;
                 } else {
-                    Aggregation agg = builder.build();
-                    cursor.aggregations(aggName, agg);
                     // 解决max、min、avg和sum聚合函数不支持sub-aggregations的问题
-                    if (agg._kind().equals(Aggregation.Kind.Terms)) {
+                    if (aggParam.getAggregationType() == AggregationTypeEnum.TERMS) {
+                        parents.add(cursor);
+                        childNames.add(aggName);
                         cursor = builder;
+                    } else {
+                        cursor.aggregations(aggName, builder.build());
                     }
                 }
             } else {
@@ -931,7 +935,12 @@ public class WrapperProcessor {
 
         }
         if (root != null) {
-            searchSourceBuilder.aggregations(rootName, root.build());
+            // 子聚合构建完成后再挂载到父节点，避免后续修改丢失
+            Aggregation aggregation = cursor.build();
+            for (int i = parents.size() - 1; i >= 0; i--) {
+                aggregation = parents.get(i).aggregations(childNames.get(i), aggregation).build();
+            }
+            searchSourceBuilder.aggregations(rootName, aggregation);
         }
 
         if (!GlobalConfigCache.getGlobalConfig().getDbConfig().isEnableAggHits()) {
