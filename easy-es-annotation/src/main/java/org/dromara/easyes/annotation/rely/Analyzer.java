@@ -48,6 +48,15 @@ public interface Analyzer {
      */
     String SNOWBALL = "snowball";
 
+    /**
+     * 阿拉伯语分词器，Elasticsearch 内置
+     */
+    String ARABIC = "arabic";
+    /**
+     * 中日韩基础分词器，Elasticsearch 内置
+     */
+    String CJK = "cjk";
+
     //-------------三方分词，需要另外安装配置，否则无法使用-------------
     /**
      * ik智能分词器
@@ -61,4 +70,8 @@ public interface Analyzer {
      * 拼音分词器
      */
     String PINYIN = "pinyin";
+    /**
+     * 韩语 Nori 分词器，需要在每个 Elasticsearch 节点安装 analysis-nori 插件并重启
+     */
+    String NORI = "nori";
 }
